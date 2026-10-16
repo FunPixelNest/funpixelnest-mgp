@@ -82,9 +82,23 @@ Set your team under *Signing & Capabilities* and run. The Xcode build calls Grad
 ./gradlew :composeApp:testDebugUnitTest
 ```
 
+## App navigation
+
+Bottom bar: **Rewards · Store · Games · Featured · Profile** (Games is the home tab, in the center).
+
+| Tab | What's there |
+|---|---|
+| Rewards | 7-day login streak, free coins from videos (3/day), missions with coin rewards |
+| Store | Coin packs (demo mode: added free, real billing comes later) |
+| Games | All games with category filter |
+| Featured | Hero banner, new games, big prize events (join directly) |
+| Profile | Stats, balance, my tournaments, coin history |
+
+Tapping the coin balance in the top bar opens the Store.
+
 ## Trying the demo flow
 
-1. **Play** tab → pick a game → **Join** a tournament (you start with 1,000 coins).
+1. **Games** tab → pick a game → **Join** a tournament (you start with 1,000 coins).
 2. The placeholder game screen shows exactly what Unity will receive (game id, seed, ticket). Tap **Finish & submit demo score**.
 3. Watch the 5-player leaderboard fill in. Other players are **simulated "Demo" players** — this exists only in `FakePlatformRepository` for UI development. The real backend never adds bots.
 4. When all 5 finish, ranks lock and the top 3 are paid into the wallet.

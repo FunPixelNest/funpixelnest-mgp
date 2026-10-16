@@ -1,6 +1,7 @@
 package com.funpixelnest.mgp.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -14,15 +15,18 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.funpixelnest.mgp.ui.theme.MgpColors
 
 @Composable
-fun CoinBadge(coins: Long, modifier: Modifier = Modifier) {
+fun CoinBadge(coins: Long, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
     Row(
         modifier = modifier
-            .background(MgpColors.SurfaceRaised, RoundedCornerShape(50))
+            .clip(RoundedCornerShape(50))
+            .background(MgpColors.SurfaceRaised)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -33,7 +37,19 @@ fun CoinBadge(coins: Long, modifier: Modifier = Modifier) {
             color = MgpColors.Primary,
             fontWeight = FontWeight.Bold,
         )
+        if (onClick != null) Text("+", color = MgpColors.Primary, fontWeight = FontWeight.Bold)
     }
+}
+
+/** Section heading used inside tab screens. */
+@Composable
+fun SectionTitle(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier = modifier.padding(top = 8.dp),
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,6 +58,7 @@ fun MgpTopBar(
     title: String,
     coins: Long?,
     onBack: (() -> Unit)? = null,
+    onCoinsClick: (() -> Unit)? = null,
 ) {
     TopAppBar(
         title = { Text(title, fontWeight = FontWeight.Bold) },
@@ -53,7 +70,7 @@ fun MgpTopBar(
             }
         },
         actions = {
-            if (coins != null) CoinBadge(coins, Modifier.padding(end = 12.dp))
+            if (coins != null) CoinBadge(coins, Modifier.padding(end = 12.dp), onClick = onCoinsClick)
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MgpColors.Background,

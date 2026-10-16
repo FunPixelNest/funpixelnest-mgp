@@ -4,6 +4,8 @@ import com.funpixelnest.mgp.domain.Game
 import com.funpixelnest.mgp.domain.MatchTicket
 import com.funpixelnest.mgp.domain.Player
 import com.funpixelnest.mgp.domain.Pool
+import com.funpixelnest.mgp.domain.RewardsState
+import com.funpixelnest.mgp.domain.StorePack
 import com.funpixelnest.mgp.domain.Tournament
 import com.funpixelnest.mgp.domain.Wallet
 import com.funpixelnest.mgp.game.GameResult
@@ -36,6 +38,39 @@ interface PlatformRepository {
 
     /** Live updates for one pool's leaderboard. */
     fun observePool(poolId: String): Flow<Pool?>
+
+    // ---------------------------------------------------------------- Featured
+
+    /** Highlighted tournaments for the Featured tab. */
+    fun featuredTournaments(): List<Tournament>
+
+    /** Games marked as new on the Featured tab. */
+    fun newGames(): List<Game>
+
+    // ---------------------------------------------------------------- Rewards
+
+    val rewards: StateFlow<RewardsState>
+
+    /** Claims today's login-streak reward. Returns coins granted (0 if already claimed). */
+    suspend fun claimDailyReward(): Long
+
+    /** Grants free coins after a rewarded video. Returns coins granted (0 if none left today). */
+    suspend fun claimFreeCoins(): Long
+
+    /** Claims a completed mission. Returns coins granted (0 if not claimable). */
+    suspend fun claimMission(missionId: String): Long
+
+    // ---------------------------------------------------------------- Store
+
+    fun storePacks(): List<StorePack>
+
+    /** Buys a coin pack. Payments aren't connected yet, so the fake backend grants it as a demo. */
+    suspend fun purchasePack(packId: String): PurchaseResult
+}
+
+sealed interface PurchaseResult {
+    data class Success(val coinsAdded: Long) : PurchaseResult
+    data class Error(val message: String) : PurchaseResult
 }
 
 sealed interface JoinResult {

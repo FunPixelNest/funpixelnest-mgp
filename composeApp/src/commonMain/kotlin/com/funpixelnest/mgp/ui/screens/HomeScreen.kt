@@ -10,14 +10,20 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,12 +35,18 @@ import androidx.compose.ui.unit.sp
 import com.funpixelnest.mgp.domain.Game
 import com.funpixelnest.mgp.ui.theme.MgpColors
 
+private const val ALL = "All"
+
 @Composable
 fun HomeScreen(
     games: List<Game>,
     onGameClick: (Game) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var category by remember { mutableStateOf(ALL) }
+    val categories = remember(games) { listOf(ALL) + games.map { it.category }.distinct() }
+    val shown = if (category == ALL) games else games.filter { it.category == category }
+
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 150.dp),
         modifier = modifier.fillMaxSize(),
@@ -42,44 +54,38 @@ fun HomeScreen(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item(span = { GridItemSpan(maxLineSpan) }) { FeaturedBanner() }
         item(span = { GridItemSpan(maxLineSpan) }) {
-            Text(
-                "All games",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp),
-            )
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(categories) { name ->
+                    CategoryChip(name, selected = name == category, onClick = { category = name })
+                }
+            }
         }
-        items(games, key = { it.id }) { game ->
+        items(shown, key = { it.id }) { game ->
             GameCard(game = game, onClick = { onGameClick(game) })
         }
     }
 }
 
 @Composable
-private fun FeaturedBanner() {
-    Column(
+private fun CategoryChip(name: String, selected: Boolean, onClick: () -> Unit) {
+    Text(
+        text = name,
+        color = if (selected) MgpColors.OnPrimary else MgpColors.TextPrimary,
+        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
         modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(Brush.horizontalGradient(listOf(MgpColors.Secondary, Color(0xFFE040FB))))
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Text("5-player tournaments", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-        Text(
-            "Same board for everyone. Top 3 win: 50% · 30% · 20%",
-            color = Color.White.copy(alpha = 0.9f),
-        )
-    }
+            .clip(RoundedCornerShape(50))
+            .background(if (selected) MgpColors.Primary else MgpColors.Surface)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    )
 }
 
 @Composable
-private fun GameCard(game: Game, onClick: () -> Unit) {
+fun GameCard(game: Game, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val accent = Color(game.accentColor)
     Column(
-        modifier = Modifier
+        modifier = modifier
             .clip(RoundedCornerShape(18.dp))
             .background(MgpColors.Surface)
             .clickable(onClick = onClick),

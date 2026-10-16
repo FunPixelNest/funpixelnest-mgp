@@ -22,13 +22,14 @@ import com.funpixelnest.mgp.ui.Navigator
 import com.funpixelnest.mgp.ui.Screen
 import com.funpixelnest.mgp.ui.Tab
 import com.funpixelnest.mgp.ui.components.MgpTopBar
+import com.funpixelnest.mgp.ui.screens.FeaturedScreen
 import com.funpixelnest.mgp.ui.screens.GameDetailScreen
 import com.funpixelnest.mgp.ui.screens.HomeScreen
-import com.funpixelnest.mgp.ui.screens.MyGamesScreen
 import com.funpixelnest.mgp.ui.screens.PlaceholderGameScreen
 import com.funpixelnest.mgp.ui.screens.PoolLeaderboardScreen
 import com.funpixelnest.mgp.ui.screens.ProfileScreen
-import com.funpixelnest.mgp.ui.screens.WalletScreen
+import com.funpixelnest.mgp.ui.screens.RewardsScreen
+import com.funpixelnest.mgp.ui.screens.StoreScreen
 import com.funpixelnest.mgp.ui.theme.MgpColors
 import com.funpixelnest.mgp.ui.theme.MgpTheme
 import kotlinx.coroutines.launch
@@ -78,9 +79,10 @@ fun App(
             is Screen.PlayGame -> "Playing"
             is Screen.PoolLeaderboard -> "Leaderboard"
             null -> when (navigator.tab) {
+                Tab.Rewards -> "Rewards"
+                Tab.Store -> "Store"
                 Tab.Home -> "FunPixelNest"
-                Tab.MyGames -> "My Games"
-                Tab.Wallet -> "Wallet"
+                Tab.Featured -> "Featured"
                 Tab.Profile -> "Profile"
             }
         }
@@ -94,6 +96,12 @@ fun App(
                     // No back button mid-game: the entry is paid, use Quit instead.
                     onBack = if (navigator.canGoBack && current !is Screen.PlayGame) {
                         { navigator.back() }
+                    } else {
+                        null
+                    },
+                    // Tapping the balance opens the Store (not mid-game).
+                    onCoinsClick = if (current !is Screen.PlayGame) {
+                        { navigator.selectTab(Tab.Store) }
                     } else {
                         null
                     },
@@ -153,21 +161,32 @@ fun App(
                 )
 
                 null -> when (navigator.tab) {
+                    Tab.Rewards -> RewardsScreen(repository = repository, modifier = modifier)
+
+                    Tab.Store -> StoreScreen(repository = repository, modifier = modifier)
+
                     Tab.Home -> HomeScreen(
                         games = repository.games(),
                         onGameClick = { navigator.push(Screen.GameDetail(it.id)) },
                         modifier = modifier,
                     )
 
-                    Tab.MyGames -> MyGamesScreen(
-                        pools = myPools,
+                    Tab.Featured -> FeaturedScreen(
                         repository = repository,
-                        onPoolClick = { navigator.push(Screen.PoolLeaderboard(it.id)) },
+                        coins = wallet.coins,
+                        onJoined = { ticket -> onJoined(ticket) },
+                        onGameClick = { navigator.push(Screen.GameDetail(it.id)) },
                         modifier = modifier,
                     )
 
-                    Tab.Wallet -> WalletScreen(wallet = wallet, modifier = modifier)
-                    Tab.Profile -> ProfileScreen(repository = repository, pools = myPools, modifier = modifier)
+                    Tab.Profile -> ProfileScreen(
+                        repository = repository,
+                        pools = myPools,
+                        wallet = wallet,
+                        onPoolClick = { navigator.push(Screen.PoolLeaderboard(it.id)) },
+                        onGetCoins = { navigator.selectTab(Tab.Store) },
+                        modifier = modifier,
+                    )
                 }
             }
         }

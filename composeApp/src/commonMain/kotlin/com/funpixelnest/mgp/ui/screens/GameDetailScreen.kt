@@ -101,12 +101,14 @@ fun GameDetailScreen(
 }
 
 @Composable
-private fun TournamentCard(
+fun TournamentCard(
     tournament: Tournament,
     accent: Color,
     canAfford: Boolean,
     isJoining: Boolean,
     onJoin: () -> Unit,
+    /** Shown above the title, e.g. the game name on the Featured tab. */
+    overline: String? = null,
 ) {
     val payouts = Leaderboard.prizePayouts(tournament)
     Column(
@@ -119,6 +121,7 @@ private fun TournamentCard(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
+                overline?.let { Text(it, color = MgpColors.Primary, style = MaterialTheme.typography.labelMedium) }
                 Text(tournament.title, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 Text(
                     "Prize pool 🪙 ${formatCoins(Leaderboard.prizePool(tournament))}",

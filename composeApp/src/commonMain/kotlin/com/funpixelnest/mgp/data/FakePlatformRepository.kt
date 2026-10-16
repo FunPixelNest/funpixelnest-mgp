@@ -1,12 +1,16 @@
 package com.funpixelnest.mgp.data
 
+import com.funpixelnest.mgp.domain.DailyReward
 import com.funpixelnest.mgp.domain.Game
 import com.funpixelnest.mgp.domain.Leaderboard
 import com.funpixelnest.mgp.domain.MatchTicket
+import com.funpixelnest.mgp.domain.Mission
 import com.funpixelnest.mgp.domain.Player
 import com.funpixelnest.mgp.domain.Pool
 import com.funpixelnest.mgp.domain.PoolEntry
 import com.funpixelnest.mgp.domain.PoolStatus
+import com.funpixelnest.mgp.domain.RewardsState
+import com.funpixelnest.mgp.domain.StorePack
 import com.funpixelnest.mgp.domain.Tournament
 import com.funpixelnest.mgp.domain.Wallet
 import com.funpixelnest.mgp.domain.WalletTransaction
@@ -61,6 +65,15 @@ class FakePlatformRepository(
     private val _myPools = MutableStateFlow<List<Pool>>(emptyList())
     override val myPools: StateFlow<List<Pool>> = _myPools.asStateFlow()
 
+    // Rewards state (in production the server tracks dates, streak resets and limits).
+    private var dailyDay = 1
+    private var dailyClaimedToday = false
+    private var freeCoinsLeft = 3
+    private val claimedMissions = mutableSetOf<String>()
+
+    private val _rewards = MutableStateFlow(buildRewards())
+    override val rewards: StateFlow<RewardsState> = _rewards.asStateFlow()
+
     override fun games(): List<Game> = SampleCatalog.games
     override fun game(gameId: String): Game? = SampleCatalog.games.find { it.id == gameId }
     override fun tournamentsFor(gameId: String): List<Tournament> =
@@ -98,6 +111,83 @@ class FakePlatformRepository(
 
     override fun observePool(poolId: String): Flow<Pool?> =
         pools.map { it[poolId] }.distinctUntilChanged()
+
+    // ---------------------------------------------------------------- featured
+
+    override fun featuredTournaments(): List<Tournament> =
+        SampleCatalog.featuredTournamentIds.mapNotNull { tournament(it) }
+
+    override fun newGames(): List<Game> = SampleCatalog.newGameIds.mapNotNull { game(it) }
+
+    // ---------------------------------------------------------------- rewards
+
+    override suspend fun claimDailyReward(): Long = mutex.withLock {
+        if (dailyClaimedToday) return 0L
+        val coins = _rewards.value.daily.todayCoins
+        addTransaction(coins, "Daily reward · Day $dailyDay")
+        dailyClaimedToday = true
+        refreshRewards()
+        coins
+    }
+
+    override suspend fun claimFreeCoins(): Long = mutex.withLock {
+        if (freeCoinsLeft <= 0) return 0L
+        freeCoinsLeft--
+        addTransaction(FREE_COINS, "Free coins (video)")
+        refreshRewards()
+        FREE_COINS
+    }
+
+    override suspend fun claimMission(missionId: String): Long = mutex.withLock {
+        val mission = _rewards.value.missions.find { it.id == missionId }
+        if (mission == null || !mission.canClaim) return 0L
+        claimedMissions += missionId
+        addTransaction(mission.rewardCoins, "Mission: ${mission.title}")
+        refreshRewards()
+        mission.rewardCoins
+    }
+
+    // ---------------------------------------------------------------- store
+
+    override fun storePacks(): List<StorePack> = SampleCatalog.storePacks
+
+    override suspend fun purchasePack(packId: String): PurchaseResult = mutex.withLock {
+        val pack = SampleCatalog.storePacks.find { it.id == packId }
+            ?: return PurchaseResult.Error("This pack isn't available.")
+        // DEMO: no payment is taken. The real flow goes through Google Play / App Store billing.
+        addTransaction(pack.totalCoins, "Store: ${pack.name} (demo, no charge)")
+        PurchaseResult.Success(pack.totalCoins)
+    }
+
+    private fun buildRewards(): RewardsState {
+        val mine = pools.value.values.filter { p -> p.entries.any { it.playerId == player.id } }
+        val myRows = mine
+            .filter { it.status == PoolStatus.COMPLETED }
+            .mapNotNull { pool ->
+                val t = tournament(pool.tournamentId) ?: return@mapNotNull null
+                Leaderboard.rank(pool, t).find { it.entry.playerId == player.id }
+            }
+        val distinctGames = mine.mapNotNull { tournament(it.tournamentId)?.gameId }.distinct().size
+
+        fun mission(id: String, title: String, target: Int, progress: Int, reward: Long) =
+            Mission(id, title, target, progress.coerceAtMost(target), reward, claimed = id in claimedMissions)
+
+        return RewardsState(
+            daily = DailyReward(day = dailyDay, claimedToday = dailyClaimedToday),
+            freeCoinsAmount = FREE_COINS,
+            freeCoinsLeftToday = freeCoinsLeft,
+            missions = listOf(
+                mission("play_3", "Play 3 tournaments", 3, mine.size, 100),
+                mission("variety_3", "Play 3 different games", 3, distinctGames, 200),
+                mission("top_3", "Finish in the top 3", 1, myRows.count { it.prize > 0 }, 150),
+                mission("win_1", "Win a tournament", 1, myRows.count { it.rank == 1 }, 250),
+            ),
+        )
+    }
+
+    private fun refreshRewards() {
+        _rewards.value = buildRewards()
+    }
 
     // ---------------------------------------------------------------- simulation
 
@@ -175,6 +265,7 @@ class FakePlatformRepository(
         _myPools.value = updated.values
             .filter { p -> p.entries.any { it.playerId == player.id } }
             .reversed()
+        refreshRewards()
     }
 
     private fun addTransaction(amount: Long, description: String) {
@@ -190,6 +281,7 @@ class FakePlatformRepository(
     private fun gameName(tournament: Tournament) = game(tournament.gameId)?.name ?: tournament.gameId
 
     private companion object {
+        const val FREE_COINS = 50L
         val DEMO_NAMES = listOf(
             "Aarav", "Maya", "Leo", "Sofia", "Kabir", "Zoe", "Ishaan", "Emma", "Rohan", "Nora",
         )

@@ -7,11 +7,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.funpixelnest.mgp.domain.MatchTicket
 
-/** Bottom-bar tabs. */
+/** Bottom-bar tabs, in display order. Games (home) sits in the center. */
 enum class Tab(val label: String, val icon: String) {
-    Home("Play", "🎮"),
-    MyGames("My Games", "🏆"),
-    Wallet("Wallet", "🪙"),
+    Rewards("Rewards", "🎁"),
+    Store("Store", "🛒"),
+    Home("Games", "🎮"),
+    Featured("Featured", "⭐"),
     Profile("Profile", "👤"),
 }
 

@@ -76,7 +76,7 @@ fun GameDetailScreen(
             )
         }
         message?.let { text ->
-            item { Text(text, color = Color(0xFFFF8A80)) }
+            item { Text(text, color = MgpColors.Error) }
         }
         items(repository.tournamentsFor(game.id), key = { it.id }) { tournament ->
             TournamentCard(

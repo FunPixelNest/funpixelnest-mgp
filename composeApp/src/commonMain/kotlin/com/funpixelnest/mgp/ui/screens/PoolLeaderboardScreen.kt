@@ -163,7 +163,7 @@ private fun EmptySlotRow() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, MgpColors.SurfaceRaised, RoundedCornerShape(14.dp))
+            .border(1.dp, MgpColors.Border, RoundedCornerShape(14.dp))
             .padding(horizontal = 14.dp, vertical = 16.dp),
     ) {
         Text("Waiting for player…", color = MgpColors.TextMuted)

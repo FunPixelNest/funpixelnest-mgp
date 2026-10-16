@@ -18,12 +18,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -45,6 +47,7 @@ fun AnimatedBottomBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .shadow(12.dp)
             .background(MgpColors.Surface)
             .navigationBarsPadding()
             .padding(horizontal = 4.dp, vertical = 6.dp),
@@ -109,15 +112,18 @@ private fun BottomBarItem(
                         scaleX = 0.6f + 0.4f * glowAlpha
                         scaleY = 0.6f + 0.4f * glowAlpha
                     }
-                    .background(MgpColors.Primary.copy(alpha = 0.22f), CircleShape),
+                    .background(MgpColors.Sunshine.copy(alpha = 0.45f), CircleShape),
             )
-            Text(
-                tab.icon,
-                fontSize = 20.sp,
-                modifier = Modifier.graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                },
+            Icon(
+                imageVector = if (isSelected) tab.selectedIcon else tab.icon,
+                contentDescription = null, // the label below names the tab
+                tint = labelColor,
+                modifier = Modifier
+                    .size(24.dp)
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                    },
             )
         }
         Text(

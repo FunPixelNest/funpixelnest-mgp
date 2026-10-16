@@ -63,7 +63,7 @@ fun FeaturedScreen(
         }
 
         item { SectionTitle("Big prize events") }
-        message?.let { text -> item { Text(text, color = Color(0xFFFF8A80)) } }
+        message?.let { text -> item { Text(text, color = MgpColors.Error) } }
         items(repository.featuredTournaments(), key = { it.id }) { tournament ->
             val game = repository.game(tournament.gameId)
             TournamentCard(
@@ -96,7 +96,7 @@ private fun HeroBanner() {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(Brush.horizontalGradient(listOf(MgpColors.Secondary, Color(0xFFE040FB))))
+            .background(Brush.horizontalGradient(listOf(MgpColors.Secondary, MgpColors.SecondaryLight)))
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {

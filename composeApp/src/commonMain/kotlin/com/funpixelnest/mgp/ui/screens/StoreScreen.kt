@@ -66,7 +66,7 @@ fun StoreScreen(
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Text(
                     text,
-                    color = if (ok) MgpColors.Win else Color(0xFFFF8A80),
+                    color = if (ok) MgpColors.Win else MgpColors.Error,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
                         .fillMaxWidth()

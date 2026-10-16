@@ -47,6 +47,8 @@ kotlin {
             implementation(compose.material3)
             implementation(compose.ui)
             implementation(compose.components.resources)
+            // Rounded/outlined icon sets for the bottom bar (unused icons are stripped from builds).
+            implementation(compose.materialIconsExtended)
             implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {

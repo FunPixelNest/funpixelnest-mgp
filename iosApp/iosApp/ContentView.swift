@@ -15,6 +15,6 @@ struct ContentView: View {
     var body: some View {
         ComposeView()
             .ignoresSafeArea()
-            .background(Color(red: 14 / 255, green: 11 / 255, blue: 31 / 255))
+            .background(Color(red: 217 / 255, green: 240 / 255, blue: 255 / 255))
     }
 }

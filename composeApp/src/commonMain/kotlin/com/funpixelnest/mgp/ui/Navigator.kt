@@ -1,19 +1,34 @@
 package com.funpixelnest.mgp.ui
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CardGiftcard
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.SportsEsports
+import androidx.compose.material.icons.outlined.StarOutline
+import androidx.compose.material.icons.outlined.Storefront
+import androidx.compose.material.icons.rounded.CardGiftcard
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.SportsEsports
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.Storefront
 import androidx.compose.runtime.Stable
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.funpixelnest.mgp.domain.MatchTicket
 
-/** Bottom-bar tabs, in display order. Games (home) sits in the center. */
-enum class Tab(val label: String, val icon: String) {
-    Rewards("Rewards", "🎁"),
-    Store("Store", "🛒"),
-    Home("Games", "🎮"),
-    Featured("Featured", "⭐"),
-    Profile("Profile", "👤"),
+/**
+ * Bottom-bar tabs, in display order. Games (home) sits in the center.
+ * Each tab has an outlined icon (not selected) and a filled icon (selected).
+ */
+enum class Tab(val label: String, val icon: ImageVector, val selectedIcon: ImageVector) {
+    Rewards("Rewards", Icons.Outlined.CardGiftcard, Icons.Rounded.CardGiftcard),
+    Store("Store", Icons.Outlined.Storefront, Icons.Rounded.Storefront),
+    Home("Games", Icons.Outlined.SportsEsports, Icons.Rounded.SportsEsports),
+    Featured("Featured", Icons.Outlined.StarOutline, Icons.Rounded.Star),
+    Profile("Profile", Icons.Outlined.Person, Icons.Rounded.Person),
 }
 
 /** Screens pushed on top of a tab. */

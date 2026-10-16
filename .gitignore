@@ -1,0 +1,32 @@
+# Gradle / Kotlin
+.gradle/
+build/
+.kotlin/
+local.properties
+captures/
+*.iml
+
+# IDEs
+.idea/
+.fleet/
+.vscode/
+
+# Android
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# iOS / Xcode
+iosApp/iosApp.xcodeproj/
+iosApp/iosApp/Info.plist
+xcuserdata/
+DerivedData/
+*.xcworkspace/xcuserdata/
+
+# Unity exports (added later, kept out of git; produced by the Unity project)
+unityLibrary/
+UnityFramework/
+
+# OS
+.DS_Store

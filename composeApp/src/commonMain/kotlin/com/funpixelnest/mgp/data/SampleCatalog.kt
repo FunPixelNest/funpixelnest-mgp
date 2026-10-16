@@ -10,7 +10,7 @@ object SampleCatalog {
     val games: List<Game> = listOf(
         Game("solitaire", "Solitaire", "Cards", "🃏", 0xFF2E7D32),
         Game("block_puzzle", "Block Puzzle", "Puzzle", "🧩", 0xFF6A1B9A),
-        Game("bingo", "Bingo", "Classic", "🎱", 0xFFC62828),
+        Game("bingo", "Bingo Flash", "Classic", "🎱", 0xFFC62828),
         Game("bubble_shooter", "Bubble Shooter", "Arcade", "🫧", 0xFF0277BD),
         Game("mahjong", "Mahjong", "Puzzle", "🀄", 0xFF00695C),
         Game("blackjack", "Blackjack", "Cards", "♠️", 0xFF37474F),
@@ -21,10 +21,11 @@ object SampleCatalog {
         Game("flap_dash", "Flap Dash", "Arcade", "🐤", 0xFFF9A825),
         Game("kitty_hole", "Kitty Hole", "Casual", "🐱", 0xFF5D4037),
         Game("catdoku", "Catdoku", "Puzzle", "😺", 0xFF4527A0),
+        Game("rugby_rumble", "Rugby Rumble", "Sports", "🏉", 0xFF1565C0),
     )
 
     val featuredTournamentIds = listOf("solitaire_elite", "bubble_shooter_pro", "mahjong_elite", "bingo_pro")
-    val newGameIds = listOf("catdoku", "kitty_hole", "snake_war", "arrows")
+    val newGameIds = listOf("rugby_rumble", "catdoku", "kitty_hole", "snake_war", "arrows")
 
     /** Display prices only; real payments come in a later phase. */
     val storePacks: List<StorePack> = listOf(

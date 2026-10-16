@@ -44,7 +44,8 @@ fun HomeScreen(
     val shown = if (category == ALL) games else games.filter { it.category == category }
 
     LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 150.dp),
+        // Always 2 per row so the icons stay big; the grid scrolls vertically.
+        columns = GridCells.Fixed(2),
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -85,14 +86,15 @@ fun GameCard(game: Game, onClick: () -> Unit, modifier: Modifier = Modifier) {
             .background(MgpColors.Surface)
             .clickable(onClick = onClick),
     ) {
+        // Square, so the full icon artwork shows without cropping.
         GameArt(
             game = game,
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1.4f),
+                .aspectRatio(1f),
         )
         Column(Modifier.padding(12.dp)) {
-            Text(game.name, fontWeight = FontWeight.Bold)
+            Text(game.name, fontWeight = FontWeight.Bold, maxLines = 1)
             Text(game.category, color = MgpColors.TextMuted, style = MaterialTheme.typography.bodySmall)
         }
     }

@@ -28,6 +28,7 @@ import com.funpixelnest.mgp.domain.PoolStatus
 import com.funpixelnest.mgp.domain.Wallet
 import com.funpixelnest.mgp.ui.components.SectionTitle
 import com.funpixelnest.mgp.ui.components.formatCoins
+import com.funpixelnest.mgp.ui.components.GameIcon
 import com.funpixelnest.mgp.ui.theme.MgpColors
 
 private const val HISTORY_LIMIT = 15
@@ -125,7 +126,7 @@ fun ProfileScreen(
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(game?.emoji ?: "🎮", fontSize = 28.sp)
+                if (game != null) GameIcon(game, size = 40.dp) else Text("🎮", fontSize = 28.sp)
                 Column(
                     Modifier
                         .weight(1f)

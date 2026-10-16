@@ -3,7 +3,6 @@ package com.funpixelnest.mgp.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
@@ -24,15 +23,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.funpixelnest.mgp.domain.Game
+import com.funpixelnest.mgp.ui.components.GameArt
 import com.funpixelnest.mgp.ui.theme.MgpColors
 
 private const val ALL = "All"
@@ -83,22 +79,18 @@ private fun CategoryChip(name: String, selected: Boolean, onClick: () -> Unit) {
 
 @Composable
 fun GameCard(game: Game, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val accent = Color(game.accentColor)
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(18.dp))
             .background(MgpColors.Surface)
             .clickable(onClick = onClick),
     ) {
-        Box(
+        GameArt(
+            game = game,
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1.4f)
-                .background(Brush.verticalGradient(listOf(accent, accent.copy(alpha = 0.55f)))),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(game.emoji, fontSize = 44.sp)
-        }
+                .aspectRatio(1.4f),
+        )
         Column(Modifier.padding(12.dp)) {
             Text(game.name, fontWeight = FontWeight.Bold)
             Text(game.category, color = MgpColors.TextMuted, style = MaterialTheme.typography.bodySmall)

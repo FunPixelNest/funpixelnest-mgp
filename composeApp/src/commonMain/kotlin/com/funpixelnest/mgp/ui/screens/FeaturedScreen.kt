@@ -71,7 +71,8 @@ fun FeaturedScreen(
                 accent = Color(game?.accentColor ?: 0xFF7C5CFF),
                 canAfford = coins >= tournament.entryFee,
                 isJoining = joiningId == tournament.id,
-                overline = game?.let { "${it.emoji} ${it.name}" },
+                overline = game?.name,
+                leadingGame = game,
                 onJoin = {
                     joiningId = tournament.id
                     message = null

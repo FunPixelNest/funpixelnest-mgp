@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.funpixelnest.mgp.domain.Game
 import com.funpixelnest.mgp.domain.MatchTicket
 import com.funpixelnest.mgp.game.GameResult
+import com.funpixelnest.mgp.ui.components.GameIcon
 import com.funpixelnest.mgp.ui.theme.MgpColors
 import kotlin.random.Random
 
@@ -46,7 +47,7 @@ fun PlaceholderGameScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
     ) {
-        Text(game.emoji, fontSize = 72.sp)
+        GameIcon(game, size = 96.dp)
         Text(game.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Column(
             modifier = Modifier

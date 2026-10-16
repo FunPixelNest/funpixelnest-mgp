@@ -35,6 +35,7 @@ import com.funpixelnest.mgp.domain.Pool
 import com.funpixelnest.mgp.domain.PoolStatus
 import com.funpixelnest.mgp.domain.Tournament
 import com.funpixelnest.mgp.ui.components.formatCoins
+import com.funpixelnest.mgp.ui.components.GameIcon
 import com.funpixelnest.mgp.ui.theme.MgpColors
 import com.funpixelnest.mgp.ui.theme.medalColor
 
@@ -87,11 +88,17 @@ private fun StatusHeader(pool: Pool, tournament: Tournament, repository: Platfor
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(
-            "${game?.emoji ?: ""} ${game?.name ?: ""} · ${tournament.title}",
-            fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.titleMedium,
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            game?.let {
+                GameIcon(it, size = 36.dp)
+                Spacer(Modifier.width(10.dp))
+            }
+            Text(
+                "${game?.name ?: ""} · ${tournament.title}",
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium,
+            )
+        }
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (pool.status != PoolStatus.COMPLETED) {
                 CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)

@@ -37,6 +37,7 @@ import com.funpixelnest.mgp.domain.Leaderboard
 import com.funpixelnest.mgp.domain.MatchTicket
 import com.funpixelnest.mgp.domain.Tournament
 import com.funpixelnest.mgp.ui.components.formatCoins
+import com.funpixelnest.mgp.ui.components.GameIcon
 import com.funpixelnest.mgp.ui.theme.MgpColors
 import kotlinx.coroutines.launch
 
@@ -59,7 +60,7 @@ fun GameDetailScreen(
     ) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(game.emoji, fontSize = 48.sp)
+                GameIcon(game, size = 64.dp)
                 Spacer(Modifier.width(12.dp))
                 Column {
                     Text(game.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
@@ -109,6 +110,8 @@ fun TournamentCard(
     onJoin: () -> Unit,
     /** Shown above the title, e.g. the game name on the Featured tab. */
     overline: String? = null,
+    /** When set, the game's icon is shown at the start of the card (Featured tab). */
+    leadingGame: Game? = null,
 ) {
     val payouts = Leaderboard.prizePayouts(tournament)
     Column(
@@ -120,6 +123,10 @@ fun TournamentCard(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
+            leadingGame?.let {
+                GameIcon(it, size = 48.dp)
+                Spacer(Modifier.width(12.dp))
+            }
             Column(Modifier.weight(1f)) {
                 overline?.let { Text(it, color = MgpColors.Primary, style = MaterialTheme.typography.labelMedium) }
                 Text(tournament.title, fontWeight = FontWeight.Bold, fontSize = 18.sp)

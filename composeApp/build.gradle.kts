@@ -46,6 +46,7 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
+            implementation(compose.components.resources)
             implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
@@ -57,6 +58,13 @@ kotlin {
             implementation(libs.kotlinx.coroutines.android)
         }
     }
+}
+
+compose.resources {
+    // Generated accessors: com.funpixelnest.mgp.resources.Res.drawable.<file name>
+    packageOfResClass = "com.funpixelnest.mgp.resources"
+    publicResClass = false
+    generateResClass = always
 }
 
 android {

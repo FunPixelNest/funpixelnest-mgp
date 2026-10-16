@@ -1,11 +1,7 @@
 package com.funpixelnest.mgp
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,6 +17,7 @@ import com.funpixelnest.mgp.game.GameResult
 import com.funpixelnest.mgp.ui.Navigator
 import com.funpixelnest.mgp.ui.Screen
 import com.funpixelnest.mgp.ui.Tab
+import com.funpixelnest.mgp.ui.components.AnimatedBottomBar
 import com.funpixelnest.mgp.ui.components.MgpTopBar
 import com.funpixelnest.mgp.ui.screens.FeaturedScreen
 import com.funpixelnest.mgp.ui.screens.GameDetailScreen
@@ -109,21 +106,7 @@ fun App(
             },
             bottomBar = {
                 if (current == null) {
-                    NavigationBar(containerColor = MgpColors.Surface) {
-                        Tab.entries.forEach { tab ->
-                            NavigationBarItem(
-                                selected = navigator.tab == tab,
-                                onClick = { navigator.selectTab(tab) },
-                                icon = { Text(tab.icon) },
-                                label = { Text(tab.label) },
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedTextColor = MgpColors.Primary,
-                                    unselectedTextColor = MgpColors.TextMuted,
-                                    indicatorColor = MgpColors.SurfaceRaised,
-                                ),
-                            )
-                        }
-                    }
+                    AnimatedBottomBar(selected = navigator.tab, onSelect = { navigator.selectTab(it) })
                 }
             },
         ) { padding ->

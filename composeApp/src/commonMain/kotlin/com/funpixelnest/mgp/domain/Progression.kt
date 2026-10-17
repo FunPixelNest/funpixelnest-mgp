@@ -92,19 +92,19 @@ data class LeagueState(
 /** League points for one finished match (same rule as the server). */
 object LeaguePoints {
     fun forResult(rank: Int?, isDuel: Boolean): Long = when {
-        isDuel -> if (rank == 1) 80 else 10
-        rank == 1 -> 100
-        rank == 2 -> 60
-        rank == 3 -> 30
-        else -> 10
+        isDuel -> if (rank == 1) 80L else 10L
+        rank == 1 -> 100L
+        rank == 2 -> 60L
+        rank == 3 -> 30L
+        else -> 10L
     }
 
-    fun xpForResult(rank: Int?, isDuel: Boolean): Long = 20 + when {
-        isDuel -> if (rank == 1) 30 else 0
-        rank == 1 -> 30
-        rank == 2 -> 15
-        rank == 3 -> 5
-        else -> 0
+    fun xpForResult(rank: Int?, isDuel: Boolean): Long = 20L + when {
+        isDuel -> if (rank == 1) 30L else 0L
+        rank == 1 -> 30L
+        rank == 2 -> 15L
+        rank == 3 -> 5L
+        else -> 0L
     }
 }
 

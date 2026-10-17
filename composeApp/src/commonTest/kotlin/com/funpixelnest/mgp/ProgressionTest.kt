@@ -28,11 +28,11 @@ class ProgressionTest {
 
     @Test
     fun levelMathMatchesServer() {
-        assertEquals(LevelInfo(1, 0, 250), LevelInfo.fromXp(0))
-        assertEquals(LevelInfo(2, 0, 500), LevelInfo.fromXp(250))
+        assertEquals(LevelInfo(1, 0L, 250L), LevelInfo.fromXp(0))
+        assertEquals(LevelInfo(2, 0L, 500L), LevelInfo.fromXp(250))
         // Mockup: level 18 with 2,850 / 4,500 XP.
         val xpBefore18 = (1 until 18).sumOf { 250L * it }
-        assertEquals(LevelInfo(18, 2_850, 4_500), LevelInfo.fromXp(xpBefore18 + 2_850))
+        assertEquals(LevelInfo(18, 2_850L, 4_500L), LevelInfo.fromXp(xpBefore18 + 2_850))
     }
 
     @Test
@@ -43,10 +43,10 @@ class ProgressionTest {
         assertEquals(3, LeagueTier.SILVER.division(1_000))
         assertEquals(1, LeagueTier.SILVER.division(1_999))
         assertNull(LeagueTier.CHAMPION.division(6_000))
-        assertEquals(100, LeaguePoints.forResult(1, isDuel = false))
-        assertEquals(80, LeaguePoints.forResult(1, isDuel = true))
-        assertEquals(10, LeaguePoints.forResult(5, isDuel = false))
-        assertEquals(50, LeaguePoints.xpForResult(1, isDuel = true))
+        assertEquals(100L, LeaguePoints.forResult(1, isDuel = false))
+        assertEquals(80L, LeaguePoints.forResult(1, isDuel = true))
+        assertEquals(10L, LeaguePoints.forResult(5, isDuel = false))
+        assertEquals(50L, LeaguePoints.xpForResult(1, isDuel = true))
     }
 
     @Test
@@ -93,8 +93,8 @@ class ProgressionTest {
         assertNotNull(pool)
 
         // 1st of 5: 20 + 30 XP and 100 league points.
-        assertEquals(50, repo.profile.value.xp)
-        assertEquals(100, repo.league.value.trophies)
+        assertEquals(50L, repo.profile.value.xp)
+        assertEquals(100L, repo.league.value.trophies)
         assertEquals(1, repo.profile.value.stats.gamesWon)
         val win = repo.challenges.value.challenges.first { it.id == "d_win_1" }
         assertTrue(win.canClaim)

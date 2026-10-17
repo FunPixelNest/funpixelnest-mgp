@@ -24,8 +24,9 @@
  * Pause hides the game so the app's pause menu shows, and tells Unity (GameObject "FunPixelNestPlatform").
  * The bar's Pause button (and the browser Back button, handled by the app) call FPNHost.onPauseRequest.
  *
- * FPNHost.embedded = true (set by play.html inside the native apps) shows the game full screen with no
- * bar: no title, Pause or test buttons. The phone's Back button pauses, and the game's own Submit ends it.
+ * FPNHost.embedded = true (native apps via play.html, and the web app) shows the game with no bar: no title,
+ * Pause or test buttons. The app draws its own HUD instead (pause button, score, timer), FPNHost.topInset px
+ * tall above the game; the game reports live values with FPN.hud(score, secondsLeft) → FPNHost.onHud.
  */
 (function () {
   "use strict";
@@ -75,6 +76,8 @@
     controls: null,
     onPauseRequest: null,
     embedded: false,
+    topInset: 0,
+    onHud: null,
 
     pause: function () { if (this.controls) this.controls.pause(); },
     resume: function () { if (this.controls) this.controls.resume(); },
@@ -150,6 +153,7 @@
       cover.appendChild(loadingText); cover.appendChild(track);
       stage.appendChild(canvas); stage.appendChild(cover);
       if (!self.embedded) root.appendChild(bar);
+      if (self.embedded && self.topInset > 0) root.style.top = self.topInset + "px";
       root.appendChild(stage);
       document.body.appendChild(root);
 
@@ -185,6 +189,11 @@
         },
         quit: function () { finish(null); },
         log: function (message) { console.log("[FunPixelNest game]", message); },
+        hud: function (score, secondsLeft) {
+          if (done || typeof self.onHud !== "function") return;
+          var t = Number(secondsLeft);
+          self.onHud(Number(score) || 0, isNaN(t) ? -1 : t);
+        },
       };
 
       function showMessage(text, buttons) {

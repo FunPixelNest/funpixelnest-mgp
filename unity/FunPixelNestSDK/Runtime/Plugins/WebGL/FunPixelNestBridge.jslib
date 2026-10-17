@@ -6,7 +6,8 @@
 //                   "ticketId":"...","playerId":"...","displayName":"..."}',
 //     submitScore: function (score, durationMs, eventLogJson) {},
 //     quit: function () {},
-//     log: function (message) {}   // optional
+//     log: function (message) {},  // optional
+//     hud: function (score, secondsLeft) {}  // optional: live values for the app's HUD (secondsLeft < 0 = no timer)
 //   };
 //
 // Every function is safe when window.FPN (or any member) is missing: it returns 0 / does nothing.
@@ -59,6 +60,16 @@ mergeInto(LibraryManager.library, {
       }
     } catch (e) {
       if (typeof console !== 'undefined') console.error('[FPN] quit threw', e);
+    }
+  },
+
+  FPN_Hud: function (score, secondsLeft) {
+    try {
+      if (typeof window !== 'undefined' && window.FPN && typeof window.FPN.hud === 'function') {
+        window.FPN.hud(score, secondsLeft);
+      }
+    } catch (e) {
+      // the HUD must never break the game
     }
   },
 

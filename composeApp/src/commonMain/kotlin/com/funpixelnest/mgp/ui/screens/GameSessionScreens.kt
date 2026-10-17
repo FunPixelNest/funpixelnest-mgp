@@ -85,18 +85,11 @@ const val PAUSE_LIMIT_MILLIS = 5 * 60_000L
 fun PlaceholderGameScreen(
     game: Game,
     ticket: MatchTicket,
-    onPause: () -> Unit,
     onFinished: (GameResult?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var submitting by remember { mutableStateOf(false) }
     Box(modifier.fillMaxSize()) {
-        TileIconButton(
-            Icons.Rounded.Pause,
-            "Pause",
-            onPause,
-            modifier = Modifier.align(Alignment.TopEnd).padding(14.dp),
-        )
         Column(
             Modifier.fillMaxSize().padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,

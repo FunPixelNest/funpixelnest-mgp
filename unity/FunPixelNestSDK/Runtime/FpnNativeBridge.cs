@@ -26,6 +26,7 @@ namespace FunPixelNest
         [DllImport("__Internal")] private static extern void FPN_SubmitScore(double score, double durationMs, string eventLogJson);
         [DllImport("__Internal")] private static extern void FPN_Quit();
         [DllImport("__Internal")] private static extern void FPN_Log(string message);
+        [DllImport("__Internal")] private static extern void FPN_Hud(double score, double secondsLeft);
 
         /// <summary>Returns true when the host is present; outputs the raw launch JSON (may be null).</summary>
         internal static bool DetectHost(out string launchJson)
@@ -49,6 +50,11 @@ namespace FunPixelNest
         internal static void SendLog(string message)
         {
             FPN_Log(message ?? string.Empty);
+        }
+
+        internal static void SendHud(long score, double secondsLeft)
+        {
+            FPN_Hud((double)score, secondsLeft);
         }
 
 #elif UNITY_ANDROID && !UNITY_EDITOR
@@ -96,6 +102,8 @@ namespace FunPixelNest
             // Debug.Log already reaches logcat (tag "Unity"); nothing extra to do.
         }
 
+        internal static void SendHud(long score, double secondsLeft) { /* Unity as a Library: not wired yet */ }
+
 #elif UNITY_IOS && !UNITY_EDITOR
         // Implemented in Plugins/iOS/FunPixelNestBridge.mm. The .mm returns a strdup()'d (malloc) copy;
         // the IL2CPP marshaler converts it to a managed string and free()s the native buffer.
@@ -124,6 +132,8 @@ namespace FunPixelNest
             // Debug.Log already reaches the Xcode console; nothing extra to do.
         }
 
+        internal static void SendHud(long score, double secondsLeft) { /* Unity as a Library: not wired yet */ }
+
 #else
         // Editor, standalone, or any other target: never hosted.
         internal static bool DetectHost(out string launchJson)
@@ -137,6 +147,8 @@ namespace FunPixelNest
         internal static void SendQuit(FpnLaunchData data) { }
 
         internal static void SendLog(string message) { }
+
+        internal static void SendHud(long score, double secondsLeft) { }
 #endif
     }
 }

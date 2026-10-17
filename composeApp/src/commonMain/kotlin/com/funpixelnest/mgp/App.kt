@@ -49,6 +49,7 @@ import com.funpixelnest.mgp.domain.RewardGrant
 import com.funpixelnest.mgp.domain.Tournament
 import com.funpixelnest.mgp.game.GameLaunchRequest
 import com.funpixelnest.mgp.game.GameLauncher
+import com.funpixelnest.mgp.game.GameHud
 import com.funpixelnest.mgp.game.GameResult
 import com.funpixelnest.mgp.game.LaunchMode
 import com.funpixelnest.mgp.platform.PlatformBackHandler
@@ -66,6 +67,7 @@ import com.funpixelnest.mgp.ui.screens.ChallengesScreen
 import com.funpixelnest.mgp.ui.screens.EconomyActions
 import com.funpixelnest.mgp.ui.screens.EndGameScreen
 import com.funpixelnest.mgp.ui.screens.GameDetailScreen
+import com.funpixelnest.mgp.ui.screens.GameHudBar
 import com.funpixelnest.mgp.ui.screens.GameRunningBackdrop
 import com.funpixelnest.mgp.ui.screens.GamesScreen
 import com.funpixelnest.mgp.ui.screens.HelpCenterScreen
@@ -287,6 +289,12 @@ private fun MainApp(
         }
     }
 
+    fun hudLabel(ticket: MatchTicket): String = when (modeFor(ticket)) {
+        LaunchMode.PRACTICE -> "Practice"
+        LaunchMode.DUEL -> "1v1"
+        LaunchMode.TOURNAMENT -> "Tournament"
+    }
+
     fun startPractice(gameId: String) = startMatch(MatchTicket.practice(gameId, Random.nextLong()))
 
     fun play(tournament: Tournament) {
@@ -406,19 +414,29 @@ private fun MainApp(
                             val game = repository.game(current.ticket.gameId)
                             val s = session
                             if (game != null) {
-                                PlaceholderGameScreen(
-                                    game = game,
-                                    ticket = current.ticket,
-                                    onPause = { pauseGame() },
-                                    onFinished = { result -> if (s != null) gameEnded(s, result) else navigator.back() },
-                                    modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
-                                )
+                                Column(Modifier.fillMaxSize()) {
+                                    GameHudBar(GameHud(), hudLabel(current.ticket), onPause = { pauseGame() })
+                                    PlaceholderGameScreen(
+                                        game = game,
+                                        ticket = current.ticket,
+                                        onFinished = { result -> if (s != null) gameEnded(s, result) else navigator.back() },
+                                        modifier = Modifier.weight(1f).windowInsetsPadding(WindowInsets.navigationBars),
+                                    )
+                                }
                             }
                         }
                         is Screen.GameRunning -> {
-                            repository.game(current.ticket.gameId)?.let { GameRunningBackdrop(it) }
-                            // Android draws the game here (WebView); on web it opens on top of the app.
-                            gameLauncher?.GameView(Modifier.fillMaxSize())
+                            // The app's HUD (same for every game) above the game.
+                            val launcher = gameLauncher
+                            val hud = launcher?.hud?.collectAsState()?.value ?: GameHud()
+                            Column(Modifier.fillMaxSize()) {
+                                GameHudBar(hud, hudLabel(current.ticket), onPause = { pauseGame() })
+                                Box(Modifier.weight(1f).fillMaxWidth()) {
+                                    repository.game(current.ticket.gameId)?.let { GameRunningBackdrop(it) }
+                                    // Android draws the game here (WebView); on web it opens over this area.
+                                    launcher?.GameView(Modifier.fillMaxSize())
+                                }
+                            }
                         }
                         is Screen.PoolLeaderboard -> PoolLeaderboardScreen(
                             poolId = current.poolId,

@@ -2,6 +2,7 @@ package com.funpixelnest.mgp.game
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.funpixelnest.mgp.domain.Game
 import com.funpixelnest.mgp.domain.MatchTicket
 import kotlinx.serialization.SerialName
@@ -9,6 +10,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /** What kind of match the game is being opened for. Sent to Unity as "practice" / "tournament" / "duel". */
 enum class LaunchMode(val wireName: String) {
@@ -50,6 +54,26 @@ data class GameLaunchRequest(
 /** Player options from the pause menu / Settings, passed to the game. */
 data class GameSettings(val music: Boolean = true, val sound: Boolean = true, val vibration: Boolean = true)
 
+/**
+ * Live values for the app's in-game HUD, reported by the game while it runs (Unity: FpnPlatform.UpdateHud).
+ * [secondsLeft] is null for games without a timer. [reported] stays false until the game sends anything.
+ */
+data class GameHud(val score: Long = 0, val secondsLeft: Int? = null, val reported: Boolean = false) {
+    companion object {
+        /** Parses the bridge payload "score,secondsLeft" (secondsLeft < 0 = no timer). */
+        fun parse(score: Double, secondsLeft: Double): GameHud = GameHud(
+            score = score.toLong().coerceAtLeast(0),
+            secondsLeft = if (secondsLeft.isNaN() || secondsLeft < 0) null else secondsLeft.toInt(),
+            reported = true,
+        )
+    }
+}
+
+/** Height of the app's HUD bar above every game (web uses it to place the game below it). */
+val GAME_HUD_HEIGHT = 64.dp
+
+private val noHud: StateFlow<GameHud> = MutableStateFlow(GameHud()).asStateFlow()
+
 /** Sent back Unity → native when the match ends. */
 data class GameResult(
     val score: Long,
@@ -84,6 +108,9 @@ interface GameLauncher {
 
     /** End the running game now (the pending [launch] returns null). */
     fun forfeit() {}
+
+    /** Score / time left of the running game, for the app's HUD. */
+    val hud: StateFlow<GameHud> get() = noHud
 
     /** Music / sound / vibration changed while the game runs. */
     fun applySettings(settings: GameSettings) {}

@@ -19,6 +19,9 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -31,9 +34,10 @@ import java.net.URLEncoder
 /**
  * Plays Unity WebGL builds inside the Android app, in a WebView.
  *
- * The builds are hosted on Cloudflare (see /games-host): `<gamesBaseUrl>catalog.json` lists them and
+ * The builds are hosted on GitHub Pages (see /games-host): `<gamesBaseUrl>catalog.json` lists them and
  * `<gamesBaseUrl>play.html#<launch JSON>` runs one with the same host script as the web app.
- * The page talks back through `window.FPNNative` (result, pause request).
+ * The page talks back through `window.FPNNative` (result, pause request, live HUD values).
+ * The page shows only the game; the app draws the HUD (pause, score, timer) above it.
  */
 class WebViewGameLauncher(gamesBaseUrl: String) : GameLauncher {
 
@@ -50,6 +54,8 @@ class WebViewGameLauncher(gamesBaseUrl: String) : GameLauncher {
     private var session by mutableStateOf<Session?>(null)
     private var webView: WebView? = null
     private var pauseListener: (() -> Unit)? = null
+    private val hudState = MutableStateFlow(GameHud())
+    override val hud: StateFlow<GameHud> = hudState.asStateFlow()
 
     init {
         refreshCatalog()
@@ -75,6 +81,7 @@ class WebViewGameLauncher(gamesBaseUrl: String) : GameLauncher {
 
     override suspend fun launch(request: GameLaunchRequest): GameResult? {
         val done = CompletableDeferred<String>()
+        hudState.value = GameHud()
         val url = base + "play.html#" + URLEncoder.encode(request.toLaunchJson(), "UTF-8").replace("+", "%20")
         session = Session(url, done)
         return try {
@@ -117,6 +124,15 @@ class WebViewGameLauncher(gamesBaseUrl: String) : GameLauncher {
         @JavascriptInterface
         fun onPauseRequest(@Suppress("UNUSED_PARAMETER") unused: String) {
             main.post { pauseListener?.invoke() }
+        }
+
+        /** "score,secondsLeft" (secondsLeft < 0 = no timer). */
+        @JavascriptInterface
+        fun onHud(values: String) {
+            val parts = values.split(',')
+            val score = parts.getOrNull(0)?.toDoubleOrNull() ?: return
+            val seconds = parts.getOrNull(1)?.toDoubleOrNull() ?: -1.0
+            hudState.value = GameHud.parse(score, seconds)
         }
 
         @JavascriptInterface

@@ -67,6 +67,8 @@ namespace FunPixelNest
             s_quitSent = false;
             s_events.Clear();
             s_eventCapWarned = false;
+            s_hudScore = long.MinValue;
+            s_hudSeconds = int.MinValue;
             OnScoreSubmitted = null;
         }
 
@@ -271,6 +273,43 @@ namespace FunPixelNest
             catch (Exception e)
             {
                 Debug.LogWarning(LogPrefix + "Quit failed (host bridge missing?): " + e.Message);
+            }
+        }
+
+        // ------------------------------------------------------------------ app HUD
+
+        /// <summary>
+        /// True when the app draws the in-game HUD (score, timer, pause button) above the game.
+        /// Hide your own score / timer / pause button when this is true, and report values with
+        /// <see cref="UpdateHud"/>. Same as <see cref="IsHosted"/>.
+        /// </summary>
+        public static bool AppShowsHud
+        {
+            get { return IsHosted; }
+        }
+
+        private static long s_hudScore = long.MinValue;
+        private static int s_hudSeconds = int.MinValue;
+
+        /// <summary>
+        /// Sends the live score and remaining time to the app's HUD. Cheap to call every frame: only
+        /// changes are sent (score, or the whole second shown on the timer).
+        /// </summary>
+        /// <param name="score">Current score.</param>
+        /// <param name="secondsLeft">Time left in seconds; negative = this game has no timer.</param>
+        public static void UpdateHud(long score, float secondsLeft = -1f)
+        {
+            int shown = secondsLeft < 0f ? -1 : Mathf.CeilToInt(secondsLeft);
+            if (score == s_hudScore && shown == s_hudSeconds) return;
+            s_hudScore = score;
+            s_hudSeconds = shown;
+            try
+            {
+                if (IsHosted) FpnNativeBridge.SendHud(score, shown);
+            }
+            catch (Exception)
+            {
+                // The HUD must never break the game.
             }
         }
 

@@ -310,7 +310,7 @@ class SupabasePlatformRepository(
         else -> when {
             e is HttpRequestException -> "Check your internet connection and try again."
             (e.message ?: "").contains("anonymous", ignoreCase = true) ->
-                "Guest sign-in is turned off. In Supabase, enable Auth → Sign In / Providers → Allow anonymous sign-ins."
+                "Guest sign-in is turned off. In Supabase, enable Auth > Sign In / Providers > Allow anonymous sign-ins."
             else -> "Something went wrong. Please try again."
         }
     }

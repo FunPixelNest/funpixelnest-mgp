@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp.ui.screens
 
+import androidx.compose.material.icons.rounded.PlayArrow
 import com.funpixelnest.mgp.ui.components.CoinText
 import com.funpixelnest.mgp.ui.components.CoinIcon
 import androidx.compose.material.icons.Icons
@@ -102,7 +103,8 @@ fun RewardsScreen(
                     onClick = { grant { repository.claimFreeCoins() } },
                     enabled = rewards.freeCoinsLeftToday > 0,
                 ) {
-                    Text("▶ Watch")
+                    Icon(Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Text("Watch")
                 }
             }
         }

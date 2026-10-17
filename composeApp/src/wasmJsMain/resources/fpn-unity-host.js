@@ -23,6 +23,9 @@
  * The app controls a running game with FPNHost.pause() / resume() / forfeit() / settings(json).
  * Pause hides the game so the app's pause menu shows, and tells Unity (GameObject "FunPixelNestPlatform").
  * The bar's Pause button (and the browser Back button, handled by the app) call FPNHost.onPauseRequest.
+ *
+ * FPNHost.embedded = true (set by play.html inside the native apps) shows the game full screen with no
+ * bar: no title, Pause or test buttons. The phone's Back button pauses, and the game's own Submit ends it.
  */
 (function () {
   "use strict";
@@ -71,6 +74,7 @@
     active: null,
     controls: null,
     onPauseRequest: null,
+    embedded: false,
 
     pause: function () { if (this.controls) this.controls.pause(); },
     resume: function () { if (this.controls) this.controls.resume(); },
@@ -145,7 +149,8 @@
       var track = el("div", "fpn-track"); var fill = el("div", "fpn-fill"); track.appendChild(fill);
       cover.appendChild(loadingText); cover.appendChild(track);
       stage.appendChild(canvas); stage.appendChild(cover);
-      root.appendChild(bar); root.appendChild(stage);
+      if (!self.embedded) root.appendChild(bar);
+      root.appendChild(stage);
       document.body.appendChild(root);
 
       var done = false;

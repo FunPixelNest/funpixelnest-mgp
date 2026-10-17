@@ -40,6 +40,7 @@
 
       var host = window.FPNHost;
       host.init("");
+      host.embedded = true; // full screen: no title / pause / test buttons
       host.onPauseRequest = function () { native("onPauseRequest", ""); };
       host.loadCatalog().then(function () {
         if (!host.has(launch.gameId)) { msg.textContent = "This game isn't available yet."; native("onResult", ""); return; }

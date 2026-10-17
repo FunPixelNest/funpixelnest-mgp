@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   android-and-web:
     runs-on: ubuntu-latest
@@ -20,13 +24,13 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Unit tests (shared logic)
-        run: ./gradlew :composeApp:testDebugUnitTest
+        run: set -o pipefail; ./gradlew --console=plain :composeApp:testDebugUnitTest 2>&1 | tee -a ci.log
 
       - name: Android debug APK
-        run: ./gradlew :composeApp:assembleDebug
+        run: set -o pipefail; ./gradlew --console=plain :composeApp:assembleDebug 2>&1 | tee -a ci.log
 
       - name: Web (Wasm) build
-        run: ./gradlew :composeApp:wasmJsBrowserDistribution
+        run: set -o pipefail; ./gradlew --console=plain :composeApp:wasmJsBrowserDistribution 2>&1 | tee -a ci.log
 
       - uses: actions/upload-artifact@v4
         with:
@@ -50,6 +54,21 @@ jobs:
           publish_branch: preview
           force_orphan: true
 
+      # On failure, keep the build output readable on the `ci-logs` branch.
+      - name: Save failure log
+        if: failure() && github.event_name == 'push'
+        run: |
+          mkdir -p logs && tail -n 400 ci.log > logs/android-and-web.log || true
+          grep -nE "^e: |error:|What went wrong|FAILED|Could not" ci.log | head -200 > logs/android-and-web-errors.log || true
+      - name: Publish failure log
+        if: failure() && github.event_name == 'push'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./logs
+          publish_branch: ci-logs-android-and-web
+          force_orphan: true
+
   ios:
     runs-on: macos-latest
     steps:
@@ -61,4 +80,18 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: iOS framework (simulator)
-        run: ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
+        run: set -o pipefail; ./gradlew --console=plain :composeApp:linkDebugFrameworkIosSimulatorArm64 2>&1 | tee -a ci.log
+
+      - name: Save failure log
+        if: failure() && github.event_name == 'push'
+        run: |
+          mkdir -p logs && tail -n 400 ci.log > logs/ios.log || true
+          grep -nE "^e: |error:|What went wrong|FAILED|Could not" ci.log | head -200 > logs/ios-errors.log || true
+      - name: Publish failure log
+        if: failure() && github.event_name == 'push'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./logs
+          publish_branch: ci-logs-ios
+          force_orphan: true

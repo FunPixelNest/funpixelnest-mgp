@@ -11,14 +11,25 @@ plugins {
 }
 
 // ---------- Backend configuration ----------
-// Read from environment variables (CI) or local.properties (your machine). Never commit real keys.
+// Public values (Supabase URL + anon key) live in config/backend.properties.
 // Empty SUPABASE_URL = the app runs on the built-in demo backend.
-val localProps = Properties().apply {
-    val file = rootProject.file("local.properties")
+fun loadProps(path: String) = Properties().apply {
+    val file = rootProject.file(path)
     if (file.exists()) file.inputStream().use { load(it) }
 }
-fun configValue(key: String, default: String = ""): String =
-    System.getenv(key)?.takeIf { it.isNotBlank() } ?: localProps.getProperty(key)?.takeIf { it.isNotBlank() } ?: default
+val localProps = loadProps("local.properties")          // your machine, never committed
+val sharedProps = loadProps("config/backend.properties") // public values, committed
+// FPN_DEMO_BACKEND=true builds against the built-in demo backend (e.g. for the in-chat web preview).
+val forceDemoBackend = System.getenv("FPN_DEMO_BACKEND") == "true"
+
+// Priority: environment variable → local.properties → config/backend.properties → default.
+fun configValue(key: String, default: String = ""): String {
+    if (forceDemoBackend && key.startsWith("SUPABASE_")) return ""
+    return System.getenv(key)?.takeIf { it.isNotBlank() }
+        ?: localProps.getProperty(key)?.takeIf { it.isNotBlank() }
+        ?: sharedProps.getProperty(key)?.takeIf { it.isNotBlank() }
+        ?: default
+}
 
 val backendConfigValues = linkedMapOf(
     "SUPABASE_URL" to configValue("SUPABASE_URL"),

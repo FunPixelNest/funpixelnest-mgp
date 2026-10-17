@@ -76,7 +76,7 @@ create table if not exists public.tournaments (
 );
 create index if not exists tournaments_game_idx on public.tournaments (game_id);
 
--- A pool = one match of `pool_size` players who all get the same `seed`.
+-- A pool = one match of pool_size players who all get the same seed.
 --   open      -> still has free seats
 --   full      -> all seats taken, waiting for scores
 --   completed -> everyone submitted, ranked and paid

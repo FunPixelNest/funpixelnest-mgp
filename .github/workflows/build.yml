@@ -29,7 +29,11 @@ jobs:
       - name: Android debug APK
         run: set -o pipefail; ./gradlew --console=plain :composeApp:assembleDebug 2>&1 | tee -a ci.log
 
-      - name: Web (Wasm) build
+      # The in-chat preview page can't reach outside servers, so this web build uses the demo backend.
+      # The Android APK above uses the real Supabase backend from config/backend.properties.
+      - name: Web (Wasm) build (demo backend)
+        env:
+          FPN_DEMO_BACKEND: "true"
         run: set -o pipefail; ./gradlew --console=plain :composeApp:wasmJsBrowserDistribution 2>&1 | tee -a ci.log
 
       - uses: actions/upload-artifact@v4

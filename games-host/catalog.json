@@ -1,4 +1,16 @@
 {
   "devControls": true,
-  "games": {}
+  "games": {
+    "block_puzzle": {
+      "path": "block_puzzle/v1/",
+      "loaderUrl": "Build/BlockPuzzle.loader.js",
+      "dataUrl": "Build/BlockPuzzle.data",
+      "frameworkUrl": "Build/BlockPuzzle.framework.js",
+      "codeUrl": "Build/BlockPuzzle.wasm",
+      "streamingAssetsUrl": "StreamingAssets",
+      "companyName": "FunPixelNest",
+      "productName": "Block Puzzle",
+      "productVersion": "v1"
+    }
+  }
 }

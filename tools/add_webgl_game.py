@@ -4,8 +4,8 @@ Add a Unity WebGL build to the FunPixelNest games catalog.
 
     python3 tools/add_webgl_game.py <game_id> <build.zip or build folder> [--games-dir DIR] [--version v1]
 
-- Copies the build into <games-dir>/<game_id>/<version>/ (default games dir: games-host/, which Cloudflare Pages
-  publishes at https://funpixelnest-games.pages.dev/ on every push; the Android and web apps load games from there).
+- Copies the build into <games-dir>/<game_id>/<version>/ (default games dir: games-host/, which
+  CI publishes to GitHub Pages at https://funpixelnest.github.io/funpixelnest-mgp/ on every push; the apps load games from there).
 - Finds the Unity files in Build/ (loader, data, framework, wasm) and writes/updates <games-dir>/catalog.json.
 - Warns when the build needs special server headers (compressed without "Decompression Fallback").
 

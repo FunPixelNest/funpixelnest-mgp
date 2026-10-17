@@ -68,6 +68,17 @@ jobs:
           publish_branch: preview
           force_orphan: true
 
+      # Unity WebGL games (games-host/) → `games` branch, served by GitHub Pages at
+      # https://funpixelnest.github.io/funpixelnest-mgp/ (Settings → Pages → branch "games").
+      - name: Publish games (GitHub Pages)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./games-host
+          publish_branch: games
+          force_orphan: true
+
       # On failure, keep the build output readable on the `ci-logs` branch.
       - name: Save failure log
         if: failure() && github.event_name == 'push'

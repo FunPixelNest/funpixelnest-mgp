@@ -1,5 +1,11 @@
 package com.funpixelnest.mgp.ui.screens
 
+import com.funpixelnest.mgp.ui.components.CoinText
+import com.funpixelnest.mgp.ui.components.CoinIcon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -60,7 +66,7 @@ fun RewardsScreen(
     ) {
         notice?.let { text ->
             item {
-                Text(
+                CoinText(
                     text,
                     color = MgpColors.Win,
                     fontWeight = FontWeight.Bold,
@@ -86,7 +92,7 @@ fun RewardsScreen(
             ) {
                 Column(Modifier.weight(1f)) {
                     Text("Watch a short video", fontWeight = FontWeight.Bold)
-                    Text(
+                    CoinText(
                         "🪙 ${formatCoins(rewards.freeCoinsAmount)} each · ${rewards.freeCoinsLeftToday} left today",
                         color = MgpColors.TextMuted,
                         style = MaterialTheme.typography.bodySmall,
@@ -143,7 +149,11 @@ private fun DailyRewardCard(daily: DailyReward, onClaim: () -> Unit) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text("D$dayNumber", color = MgpColors.TextMuted, style = MaterialTheme.typography.labelSmall)
-                    Text(if (claimed) "✓" else "🪙", textAlign = TextAlign.Center)
+                    if (claimed) {
+                        Icon(Icons.Rounded.Check, contentDescription = "Claimed", tint = MgpColors.Win, modifier = Modifier.size(18.dp))
+                    } else {
+                        CoinIcon(Modifier.size(18.dp))
+                    }
                     Text(
                         formatCoins(coins),
                         style = MaterialTheme.typography.labelSmall,
@@ -153,7 +163,7 @@ private fun DailyRewardCard(daily: DailyReward, onClaim: () -> Unit) {
             }
         }
         Button(onClick = onClaim, enabled = !daily.claimedToday, modifier = Modifier.fillMaxWidth()) {
-            Text(
+            CoinText(
                 if (daily.claimedToday) "Come back tomorrow for Day ${daily.day % 7 + 1}"
                 else "Claim Day ${daily.day} · 🪙 ${formatCoins(daily.todayCoins)}",
             )
@@ -179,7 +189,7 @@ private fun MissionRow(mission: Mission, onClaim: () -> Unit) {
                 color = MgpColors.Primary,
                 trackColor = MgpColors.SurfaceRaised,
             )
-            Text(
+            CoinText(
                 "${mission.progress}/${mission.target} · 🪙 ${formatCoins(mission.rewardCoins)}",
                 color = MgpColors.TextMuted,
                 style = MaterialTheme.typography.bodySmall,

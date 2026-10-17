@@ -1,5 +1,11 @@
 package com.funpixelnest.mgp.ui.screens
 
+import com.funpixelnest.mgp.ui.components.CoinText
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material.icons.rounded.SportsEsports
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
@@ -74,7 +80,7 @@ fun ProfileScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text("👤", fontSize = 44.sp)
+                Icon(Icons.Rounded.AccountCircle, contentDescription = null, tint = MgpColors.Secondary, modifier = Modifier.size(56.dp))
                 PlayerNameEditor(repository = repository, modifier = Modifier.weight(1f))
             }
         }
@@ -96,7 +102,7 @@ fun ProfileScreen(
             ) {
                 Column(Modifier.weight(1f)) {
                     Text("Balance", color = MgpColors.TextMuted)
-                    Text(
+                    CoinText(
                         "🪙 ${formatCoins(wallet.coins)}",
                         color = MgpColors.Primary,
                         fontSize = 30.sp,
@@ -141,7 +147,7 @@ fun ProfileScreen(
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (game != null) GameIcon(game, size = 40.dp) else Text("🎮", fontSize = 28.sp)
+                if (game != null) GameIcon(game, size = 40.dp) else Icon(Icons.Rounded.SportsEsports, contentDescription = null, tint = MgpColors.Secondary, modifier = Modifier.size(40.dp))
                 Column(
                     Modifier
                         .weight(1f)
@@ -152,7 +158,7 @@ fun ProfileScreen(
                 }
                 val prize = myRow?.prize ?: 0L
                 if (prize > 0L) {
-                    Text("+🪙 ${formatCoins(prize)}", color = MgpColors.Win, fontWeight = FontWeight.Bold)
+                    CoinText("+🪙 ${formatCoins(prize)}", color = MgpColors.Win, fontWeight = FontWeight.Bold)
                 }
             }
         }

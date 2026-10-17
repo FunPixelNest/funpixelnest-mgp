@@ -1,5 +1,27 @@
 package com.funpixelnest.mgp.ui.components
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,7 +53,7 @@ fun CoinBadge(coins: Long, modifier: Modifier = Modifier, onClick: (() -> Unit)?
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Text("🪙")
+        CoinIcon(Modifier.size(18.dp))
         Text(
             text = formatCoins(coins),
             color = MgpColors.Primary,
@@ -65,7 +87,7 @@ fun MgpTopBar(
         navigationIcon = {
             if (onBack != null) {
                 TextButton(onClick = onBack) {
-                    Text("←", style = MaterialTheme.typography.titleLarge, color = MgpColors.TextPrimary)
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back", tint = MgpColors.TextPrimary)
                 }
             }
         },
@@ -85,4 +107,73 @@ fun formatCoins(value: Long): String {
     val digits = (if (negative) -value else value).toString()
     val grouped = digits.reversed().chunked(3).joinToString(",").reversed()
     return if (negative) "-$grouped" else grouped
+}
+
+/** Marker used in strings for "a coin goes here"; [CoinText] draws it as [CoinIcon]. */
+const val COIN = "\uD83E\uDE99"
+
+/**
+ * A drawn gold coin. Used instead of the 🪙 emoji, which the web version can't display
+ * (it renders text with the app's own fonts, which have no emoji).
+ */
+@Composable
+fun CoinIcon(modifier: Modifier = Modifier.size(16.dp)) {
+    Canvas(modifier) {
+        val r = size.minDimension / 2f
+        drawCircle(color = Color(0xFFE09A00), radius = r)
+        drawCircle(color = Color(0xFFFFC93C), radius = r * 0.80f)
+        drawCircle(color = Color(0xFFFFE28A), radius = r * 0.32f, center = center + Offset(-r * 0.22f, -r * 0.22f))
+        drawCircle(color = Color(0xFFE09A00), radius = r * 0.55f, style = Stroke(width = r * 0.12f))
+    }
+}
+
+/** Text where every [COIN] marker is drawn as a coin, sized to the text. */
+@Composable
+fun CoinText(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = Color.Unspecified,
+    fontSize: TextUnit = TextUnit.Unspecified,
+    fontWeight: FontWeight? = null,
+    textAlign: TextAlign? = null,
+    style: TextStyle = LocalTextStyle.current,
+) {
+    val parts = text.split(COIN)
+    val annotated = buildAnnotatedString {
+        parts.forEachIndexed { index, part ->
+            if (index > 0) appendInlineContent(COIN_INLINE_ID, "[coin]")
+            append(part)
+        }
+    }
+    val inline = mapOf(
+        COIN_INLINE_ID to InlineTextContent(Placeholder(1.1.em, 1.1.em, PlaceholderVerticalAlign.TextCenter)) {
+            CoinIcon(Modifier.fillMaxSize())
+        },
+    )
+    Text(
+        text = annotated,
+        modifier = modifier,
+        color = color,
+        fontSize = fontSize,
+        fontWeight = fontWeight,
+        textAlign = textAlign,
+        inlineContent = inline,
+        style = style,
+    )
+}
+
+private const val COIN_INLINE_ID = "coin"
+
+/** Round medal with the rank number (gold / silver / bronze for 1–3). */
+@Composable
+fun MedalBadge(rank: Int, modifier: Modifier = Modifier.size(18.dp)) {
+    val color = when (rank) {
+        1 -> MgpColors.Gold
+        2 -> MgpColors.Silver
+        3 -> MgpColors.Bronze
+        else -> MgpColors.SurfaceRaised
+    }
+    Box(modifier.background(color, CircleShape), contentAlignment = Alignment.Center) {
+        Text(rank.toString(), fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = MgpColors.TextPrimary)
+    }
 }

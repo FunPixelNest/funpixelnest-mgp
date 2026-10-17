@@ -1,5 +1,9 @@
 package com.funpixelnest.mgp.ui.screens
 
+import com.funpixelnest.mgp.ui.components.CoinText
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.EmojiEvents
+import androidx.compose.material3.Icon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -122,7 +126,7 @@ private fun StatusHeader(pool: Pool, tournament: Tournament, repository: Platfor
             )
         }
         if (tournament.isDuel) {
-            Text(
+            CoinText(
                 "Winner takes 🪙 ${formatCoins(Leaderboard.prizePool(tournament))}",
                 fontWeight = FontWeight.Bold,
                 color = MgpColors.Primary,
@@ -151,13 +155,14 @@ private fun DuelResultBanner(rows: List<Leaderboard.Row>, myId: String) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
+        if (iWon) Icon(Icons.Rounded.EmojiEvents, contentDescription = null, tint = MgpColors.Gold, modifier = Modifier.size(40.dp))
         Text(
-            if (iWon) "🏆 You won!" else "${winner?.entry?.displayName ?: "Your opponent"} won",
+            if (iWon) "You won!" else "${winner?.entry?.displayName ?: "Your opponent"} won",
             color = Color.White,
             fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.headlineSmall,
         )
-        Text(
+        CoinText(
             if (iWon) "+🪙 ${formatCoins(me?.prize ?: 0L)} added to your balance" else "Close one! Try a rematch.",
             color = Color.White,
         )
@@ -199,7 +204,7 @@ private fun LeaderboardRow(row: Leaderboard.Row, isMe: Boolean) {
         Column(horizontalAlignment = Alignment.End) {
             row.entry.score?.let { Text(formatCoins(it), fontWeight = FontWeight.Bold) }
             if (row.prize > 0) {
-                Text("+🪙 ${formatCoins(row.prize)}", color = MgpColors.Win, style = MaterialTheme.typography.bodySmall)
+                CoinText("+🪙 ${formatCoins(row.prize)}", color = MgpColors.Win, style = MaterialTheme.typography.bodySmall)
             }
         }
     }

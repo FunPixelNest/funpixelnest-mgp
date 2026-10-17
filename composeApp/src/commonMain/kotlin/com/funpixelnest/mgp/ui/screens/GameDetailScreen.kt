@@ -1,5 +1,7 @@
 package com.funpixelnest.mgp.ui.screens
 
+import com.funpixelnest.mgp.ui.components.CoinText
+import com.funpixelnest.mgp.ui.components.MedalBadge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -180,7 +182,7 @@ fun TournamentCard(
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                 )
-                Text(
+                CoinText(
                     if (tournament.isDuel) "Winner takes 🪙 ${formatCoins(Leaderboard.prizePool(tournament))}"
                     else "Prize pool 🪙 ${formatCoins(Leaderboard.prizePool(tournament))}",
                     color = MgpColors.TextMuted,
@@ -191,7 +193,7 @@ fun TournamentCard(
                 enabled = canAfford && !isJoining,
                 colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.White),
             ) {
-                Text(
+                CoinText(
                     when {
                         isJoining -> "Joining…"
                         tournament.isDuel -> "Play 🪙 ${formatCoins(tournament.entryFee)}"
@@ -212,17 +214,14 @@ fun TournamentCard(
 
 @Composable
 fun PrizeChip(rank: Int, prize: Long) {
-    val label = when (rank) {
-        1 -> "🥇"
-        2 -> "🥈"
-        3 -> "🥉"
-        else -> "#$rank"
-    }
-    Text(
-        text = "$label ${formatCoins(prize)}",
+    Row(
         modifier = Modifier
             .background(MgpColors.SurfaceRaised, RoundedCornerShape(50))
-            .padding(horizontal = 10.dp, vertical = 4.dp),
-        style = MaterialTheme.typography.bodySmall,
-    )
+            .padding(start = 4.dp, end = 10.dp, top = 3.dp, bottom = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+    ) {
+        MedalBadge(rank)
+        CoinText("🪙 ${formatCoins(prize)}", style = MaterialTheme.typography.bodySmall)
+    }
 }

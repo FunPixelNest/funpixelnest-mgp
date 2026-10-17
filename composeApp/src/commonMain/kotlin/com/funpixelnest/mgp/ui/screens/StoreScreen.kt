@@ -1,5 +1,8 @@
 package com.funpixelnest.mgp.ui.screens
 
+import com.funpixelnest.mgp.ui.components.CoinText
+import com.funpixelnest.mgp.ui.components.CoinIcon
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -64,7 +67,7 @@ fun StoreScreen(
         }
         notice?.let { (text, ok) ->
             item(span = { GridItemSpan(maxLineSpan) }) {
-                Text(
+                CoinText(
                     text,
                     color = if (ok) MgpColors.Win else MgpColors.Error,
                     fontWeight = FontWeight.Bold,
@@ -122,7 +125,7 @@ private fun PackCard(pack: StorePack, isBuying: Boolean, onBuy: () -> Unit) {
                 },
             )
         }
-        Text("🪙", fontSize = 40.sp)
+        CoinIcon(Modifier.size(44.dp))
         Text(pack.name, color = MgpColors.TextMuted)
         Text(formatCoins(pack.coins), fontWeight = FontWeight.Bold, fontSize = 22.sp, color = MgpColors.Primary)
         Text(

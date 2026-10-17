@@ -198,9 +198,10 @@ private fun ChallengeRow(challenge: Challenge, onClaim: (Challenge) -> Unit, onG
             )
         }
         Spacer(Modifier.width(8.dp))
-        RewardChip(challenge.reward, fontSize = 14.sp, iconSize = 22.dp)
-        Spacer(Modifier.width(8.dp))
-        ChallengeButton(challenge, onClaim, onGo)
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            RewardChip(challenge.reward, fontSize = 14.sp, iconSize = 20.dp)
+            ChallengeButton(challenge, onClaim, onGo)
+        }
     }
 }
 

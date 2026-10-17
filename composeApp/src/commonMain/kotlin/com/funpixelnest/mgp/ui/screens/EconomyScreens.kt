@@ -362,15 +362,18 @@ fun DayTile(day: DailyBonusDay, bonus: DailyBonusState, modifier: Modifier, onCl
         Text(
             when {
                 epic -> if (big) "EPIC CHEST" else "EPIC"
-                day.gems > 0 -> if (big) "${day.gems} GEMS" else "${day.gems}"
-                else -> if (big) "${formatCoins(day.coins)} COINS" else formatShort(day.coins)
+                day.gems > 0 -> "${day.gems}"
+                else -> if (big) formatCoins(day.coins) else formatShort(day.coins)
             },
             color = if (epic) MgpColors.Purple else MgpColors.Navy,
             fontWeight = FontWeight.ExtraBold,
-            fontSize = if (big) 14.sp else 11.sp,
+            fontSize = if (big) 18.sp else 11.sp,
             maxLines = 1,
             textAlign = TextAlign.Center,
         )
+        if (big && !epic) {
+            Text(if (day.gems > 0) "GEMS" else "COINS", color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp, maxLines = 1)
+        }
     }
 }
 

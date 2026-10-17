@@ -299,7 +299,7 @@ fun LoginScreen(repository: PlatformRepository) {
                         if (available(LoginMethod.FACEBOOK)) submit { repository.signInWithProvider(LoginMethod.FACEBOOK) } else notSetUp(LoginMethod.FACEBOOK)
                     }
                     Spacer(Modifier.height(10.dp))
-                    SocialButton("Continue with mobile number", null, Icons.Rounded.PhoneIphone) {
+                    SocialButton("Continue with mobile", null, Icons.Rounded.PhoneIphone) {
                         if (available(LoginMethod.PHONE)) {
                             error = null
                             mode = AuthMode.Phone

@@ -86,7 +86,7 @@ fun PoolLeaderboardScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         GameIcon(game, 96.dp, cornerRadius = 24.dp)
-        ArtImage(Art.trophy, 110.dp, Modifier.padding(top = 6.dp))
+        ArtImage(Art.trophy, 170.dp, Modifier.padding(top = 2.dp).height(80.dp))
         RibbonBanner(if (tournament.isDuel) "1V1 RESULT" else "LEADERBOARD", fontSize = 30.sp)
         Text(
             when {

@@ -115,7 +115,7 @@ private fun HeroBanner(onPlay: () -> Unit) {
     Box(
         Modifier
             .fillMaxWidth()
-            .height(230.dp)
+            .height(262.dp)
             .shadow(8.dp, RoundedCornerShape(26.dp))
             .clip(RoundedCornerShape(26.dp))
             .background(Brush.verticalGradient(listOf(Color(0xFFF4FAFF), Color(0xFFD3EBFF), Color(0xFFE9F6FF))))
@@ -130,8 +130,8 @@ private fun HeroBanner(onPlay: () -> Unit) {
             modifier = Modifier.align(Alignment.CenterEnd).padding(end = 4.dp).size(200.dp).offset(y = bob.dp),
         )
         Column(Modifier.padding(20.dp).fillMaxSize(), verticalArrangement = Arrangement.Center) {
-            DisplayText("PLAY\nGAMES", size = 34.sp, color = MgpColors.Navy)
-            DisplayText("WIN BIG", size = 34.sp, color = MgpColors.Primary)
+            DisplayText("PLAY\nGAMES", size = 31.sp, color = MgpColors.Navy)
+            DisplayText("WIN BIG", size = 31.sp, color = MgpColors.Primary)
             Text(
                 "Play, compete and win\nexciting rewards!",
                 color = MgpColors.Navy,
@@ -312,7 +312,7 @@ private fun TournamentCard(tournament: Tournament, style: TierStyle, index: Int,
     ) {
         // Left: tier + prize pool + art
         Box(Modifier.weight(1.05f).heightIn(min = 190.dp).background(Brush.horizontalGradient(listOf(style.tint, Color.White)))) {
-            Column(Modifier.padding(start = 14.dp, top = 14.dp, end = 6.dp)) {
+            Column(Modifier.padding(start = 14.dp, top = 14.dp, end = 6.dp, bottom = 8.dp)) {
                 Text(title.uppercase(), color = style.color, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, maxLines = 2)
                 LabelText("Prize pool", color = MgpColors.Navy, size = 11.sp, modifier = Modifier.padding(top = 2.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -320,8 +320,8 @@ private fun TournamentCard(tournament: Tournament, style: TierStyle, index: Int,
                     Spacer(Modifier.width(4.dp))
                     CoinIcon(26.dp)
                 }
+                ArtImage(Art.pack(index), 80.dp, Modifier.padding(top = 4.dp))
             }
-            ArtImage(Art.pack(index), 92.dp, Modifier.align(Alignment.BottomStart).padding(start = 8.dp, bottom = 6.dp))
         }
         // Middle: facts
         Column(Modifier.weight(1f).padding(vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {

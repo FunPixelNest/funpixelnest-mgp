@@ -214,9 +214,8 @@ fun GlossyButton(
         // Shine on the upper half.
         Box(
             Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .height(height * 0.42f)
+                .matchParentSize()
+                .padding(bottom = height * 0.55f)
                 .padding(horizontal = 10.dp, vertical = 3.dp)
                 .clip(RoundedCornerShape(height))
                 .background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.38f), Color.White.copy(alpha = 0.04f)))),
@@ -300,6 +299,7 @@ fun Panel(
 ) {
     Column(
         modifier
+            .fillMaxWidth()
             .shadow(8.dp, RoundedCornerShape(corner), ambientColor = Color(0x331E6CF2), spotColor = Color(0x331E6CF2))
             .clip(RoundedCornerShape(corner))
             .background(color)

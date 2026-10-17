@@ -89,6 +89,8 @@ data class PoolEntry(
     /** Final rank and prize, set by the server when the pool completes (null before). */
     val finalRank: Int? = null,
     val finalPrize: Long? = null,
+    /** Picture shown next to the name (1–15, see Avatars). */
+    val avatarId: Int = 1,
 ) {
     val hasSubmitted: Boolean get() = score != null
 }
@@ -128,12 +130,15 @@ data class MatchTicket(
 data class Wallet(
     val coins: Long,
     val transactions: List<WalletTransaction>,
+    /** Premium currency: opens chests. */
+    val gems: Long = 0,
 )
 
 data class WalletTransaction(
     val id: String,
     val amount: Long,
     val description: String,
+    val gems: Long = 0,
 )
 
 data class Player(

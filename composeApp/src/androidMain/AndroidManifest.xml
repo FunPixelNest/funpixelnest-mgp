@@ -19,6 +19,13 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Google / Apple / Facebook sign-in returns here: funpixelnest://login -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="funpixelnest" android:host="login" />
+            </intent-filter>
         </activity>
 
         <!-- Push notifications (Firebase Cloud Messaging). Inactive until FIREBASE_* values are configured. -->

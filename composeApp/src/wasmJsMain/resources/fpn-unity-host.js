@@ -19,6 +19,10 @@
  *
  * While a game runs, window.FPN is the bridge the FunPixelNest Unity SDK talks to:
  *   FPN.launchData (JSON string) · FPN.submitScore(score, durationMs, eventLogJson) · FPN.quit() · FPN.log(msg)
+ *
+ * The app controls a running game with FPNHost.pause() / resume() / forfeit() / settings(json).
+ * Pause hides the game so the app's pause menu shows, and tells Unity (GameObject "FunPixelNestPlatform").
+ * The bar's Pause button (and the browser Back button, handled by the app) call FPNHost.onPauseRequest.
  */
 (function () {
   "use strict";
@@ -65,6 +69,13 @@
     catalogPromise: null,
     loadedLoaders: {},
     active: null,
+    controls: null,
+    onPauseRequest: null,
+
+    pause: function () { if (this.controls) this.controls.pause(); },
+    resume: function () { if (this.controls) this.controls.resume(); },
+    forfeit: function () { if (this.controls) this.controls.forfeit(); },
+    settings: function (json) { if (this.controls) this.controls.settings(json); },
 
     init: function (base) {
       this.base = !base ? "" : base.charAt(base.length - 1) === "/" ? base : base + "/";
@@ -112,7 +123,7 @@
       var bar = el("div", "fpn-bar");
       var title = el("div", "fpn-title", gameName || gameId);
       var tag = el("span", "fpn-tag", launch.mode === "duel" ? "1v1" : isPaid ? "Tournament" : "Practice");
-      var exitBtn = el("button", "fpn-exit", "Exit");
+      var exitBtn = el("button", "fpn-exit", "Pause");
       exitBtn.type = "button";
       bar.appendChild(title); bar.appendChild(tag);
       if (this.catalog.devControls) {
@@ -144,6 +155,7 @@
         if (done) return;
         done = true;
         window.FPN = undefined;
+        self.controls = null;
         var finishUp = function () {
           if (root.parentNode) root.parentNode.removeChild(root);
           self.active = null;
@@ -181,7 +193,22 @@
         cover.appendChild(row);
       }
 
+      function toUnity(method, arg) {
+        if (instance && typeof instance.SendMessage === "function") {
+          try { instance.SendMessage("FunPixelNestPlatform", method, arg); } catch (e) { /* game without the SDK receiver */ }
+        }
+      }
+
+      // The app shows its own pause menu (with the 5-minute resume window).
+      self.controls = {
+        pause: function () { root.style.visibility = "hidden"; toUnity("OnPlatformPause", "1"); },
+        resume: function () { root.style.visibility = "visible"; toUnity("OnPlatformPause", "0"); canvas.focus(); },
+        forfeit: function () { finish(null); },
+        settings: function (json) { toUnity("OnPlatformSettings", json || "{}"); },
+      };
+
       exitBtn.onclick = function () {
+        if (typeof self.onPauseRequest === "function") { self.onPauseRequest(); return; }
         if (!isPaid) { finish(null); return; }
         var wasLoading = !instance;
         showMessage("Leave this match? Your entry is already paid, so leaving counts as a score of 0.", [
@@ -221,6 +248,10 @@
           if (done) { inst.Quit(); return; }
           cover.style.display = "none";
           canvas.focus();
+          // Starting music / sound / vibration from the launch data.
+          toUnity("OnPlatformSettings", JSON.stringify({
+            music: launch.music !== false, sound: launch.sound !== false, vibration: launch.vibration !== false,
+          }));
         })
         .catch(function (err) {
           console.error("[FunPixelNest] Unity failed to load", err);

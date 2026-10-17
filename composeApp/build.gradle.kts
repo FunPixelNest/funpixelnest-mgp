@@ -36,6 +36,8 @@ val backendConfigValues = linkedMapOf(
     "SUPABASE_ANON_KEY" to configValue("SUPABASE_ANON_KEY"),
     // Where WebGL game builds are served from (Cloudflare R2 later). Relative = same host as the web app.
     "GAMES_BASE_URL" to configValue("GAMES_BASE_URL", "games/"),
+    // Sign-in options that are set up in Supabase: guest,username,google,apple,facebook,phone
+    "AUTH_METHODS" to configValue("AUTH_METHODS", "guest,username"),
     "FIREBASE_PROJECT_ID" to configValue("FIREBASE_PROJECT_ID"),
     "FIREBASE_API_KEY" to configValue("FIREBASE_API_KEY"),
     "FIREBASE_ANDROID_APP_ID" to configValue("FIREBASE_ANDROID_APP_ID"),

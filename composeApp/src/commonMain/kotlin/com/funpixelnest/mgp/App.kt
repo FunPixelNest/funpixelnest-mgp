@@ -1,58 +1,112 @@
 package com.funpixelnest.mgp
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.funpixelnest.mgp.data.BackendStatus
+import com.funpixelnest.mgp.data.JoinResult
 import com.funpixelnest.mgp.data.PlatformRepository
+import com.funpixelnest.mgp.data.PurchaseResult
 import com.funpixelnest.mgp.data.createPlatformRepository
+import com.funpixelnest.mgp.domain.ChallengeCategory
+import com.funpixelnest.mgp.domain.ClaimResult
+import com.funpixelnest.mgp.domain.Game
 import com.funpixelnest.mgp.domain.MatchTicket
+import com.funpixelnest.mgp.domain.RewardGrant
+import com.funpixelnest.mgp.domain.Tournament
 import com.funpixelnest.mgp.game.GameLaunchRequest
 import com.funpixelnest.mgp.game.GameLauncher
 import com.funpixelnest.mgp.game.GameResult
 import com.funpixelnest.mgp.game.LaunchMode
+import com.funpixelnest.mgp.platform.PlatformBackHandler
+import com.funpixelnest.mgp.platform.edgeSwipeBack
+import com.funpixelnest.mgp.platform.usesEdgeSwipeBack
+import com.funpixelnest.mgp.ui.AppSettings
 import com.funpixelnest.mgp.ui.Navigator
+import com.funpixelnest.mgp.ui.Popup
 import com.funpixelnest.mgp.ui.Screen
 import com.funpixelnest.mgp.ui.Tab
-import com.funpixelnest.mgp.ui.components.AnimatedBottomBar
-import com.funpixelnest.mgp.ui.components.GameIcon
-import com.funpixelnest.mgp.ui.components.MgpTopBar
-import com.funpixelnest.mgp.ui.screens.FeaturedScreen
+import com.funpixelnest.mgp.ui.components.MgpBottomBar
+import com.funpixelnest.mgp.ui.components.PlayerHeader
+import com.funpixelnest.mgp.ui.components.SkyBackground
+import com.funpixelnest.mgp.ui.screens.ChallengesScreen
+import com.funpixelnest.mgp.ui.screens.EconomyActions
+import com.funpixelnest.mgp.ui.screens.EndGameScreen
 import com.funpixelnest.mgp.ui.screens.GameDetailScreen
-import com.funpixelnest.mgp.ui.screens.HomeScreen
+import com.funpixelnest.mgp.ui.screens.GameRunningBackdrop
+import com.funpixelnest.mgp.ui.screens.GamesScreen
+import com.funpixelnest.mgp.ui.screens.HelpCenterScreen
+import com.funpixelnest.mgp.ui.screens.InboxScreen
+import com.funpixelnest.mgp.ui.screens.JoiningScreen
+import com.funpixelnest.mgp.ui.screens.LeaguesScreen
+import com.funpixelnest.mgp.ui.screens.LegalScreen
+import com.funpixelnest.mgp.ui.screens.LoginScreen
+import com.funpixelnest.mgp.ui.screens.MenuItem
+import com.funpixelnest.mgp.ui.screens.MoreOptionsDrawer
+import com.funpixelnest.mgp.ui.screens.PAUSE_LIMIT_MILLIS
+import com.funpixelnest.mgp.ui.screens.PauseScreen
 import com.funpixelnest.mgp.ui.screens.PlaceholderGameScreen
 import com.funpixelnest.mgp.ui.screens.PoolLeaderboardScreen
+import com.funpixelnest.mgp.ui.screens.PopupActions
+import com.funpixelnest.mgp.ui.screens.PopupHost
 import com.funpixelnest.mgp.ui.screens.PracticeResultScreen
 import com.funpixelnest.mgp.ui.screens.ProfileScreen
+import com.funpixelnest.mgp.ui.screens.ReferEarnScreen
 import com.funpixelnest.mgp.ui.screens.RewardsScreen
+import com.funpixelnest.mgp.ui.screens.STORE_URL
+import com.funpixelnest.mgp.ui.screens.SUPPORT_EMAIL
+import com.funpixelnest.mgp.ui.screens.SettingsScreen
+import com.funpixelnest.mgp.ui.screens.SplashScreen
 import com.funpixelnest.mgp.ui.screens.StoreScreen
+import com.funpixelnest.mgp.ui.screens.SupportScreen
+import com.funpixelnest.mgp.ui.screens.WEBSITE_URL
+import com.funpixelnest.mgp.ui.screens.playerCode
 import com.funpixelnest.mgp.ui.theme.MgpColors
 import com.funpixelnest.mgp.ui.theme.MgpTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /**
  * Root of the shared app, used by Android, iOS and Web.
  *
  * @param repository backend access: Supabase when configured, otherwise the in-memory demo backend.
- * @param navigator hoisted so each platform can hook up its system Back button.
+ * @param navigator tabs, screens, pop-ups and the platform Back button.
  * @param gameLauncher platform game loader (Unity WebGL on web). Games it can't run use the placeholder screen.
  */
 @Composable
@@ -60,31 +114,101 @@ fun App(
     repository: PlatformRepository = remember { createPlatformRepository() },
     navigator: Navigator = remember { Navigator() },
     gameLauncher: GameLauncher? = null,
+    settings: AppSettings = remember { AppSettings() },
 ) {
     MgpTheme {
         val status by repository.status.collectAsState()
+        val scope = rememberCoroutineScope()
         LaunchedEffect(repository) { repository.initialize() }
 
-        when (val s = status) {
-            BackendStatus.Loading -> StartupScreen(message = null, onRetry = null)
-            is BackendStatus.Error -> {
-                val scope = rememberCoroutineScope()
-                StartupScreen(message = s.message, onRetry = { scope.launch { repository.initialize() } })
+        // Signed out (first launch or after Log out): start fresh on the Games tab.
+        LaunchedEffect(status) {
+            if (status == BackendStatus.SignedOut) navigator.reset()
+        }
+
+        PlatformBackHandler(enabled = status == BackendStatus.Ready && navigator.wantsBack) { navigator.handleBack() }
+
+        val root = if (usesEdgeSwipeBack) {
+            Modifier.fillMaxSize().edgeSwipeBack(status == BackendStatus.Ready && navigator.wantsBack) { navigator.handleBack() }
+        } else {
+            Modifier.fillMaxSize()
+        }
+        Box(root) {
+            when (val s = status) {
+                BackendStatus.Loading -> SplashScreen(message = null, onRetry = null)
+                is BackendStatus.Error -> SplashScreen(message = s.message, onRetry = { scope.launch { repository.initialize() } })
+                BackendStatus.SignedOut -> LoginScreen(repository)
+                BackendStatus.Ready -> MainApp(repository, navigator, gameLauncher, settings)
             }
-            BackendStatus.Ready -> MainScaffold(repository, navigator, gameLauncher)
         }
     }
 }
 
+/** A match in progress (the Unity game or the placeholder). */
+@Stable
+private class GameSession(val ticket: MatchTicket, val game: Game, val real: Boolean) {
+    var paused by mutableStateOf(false)
+    var confirmEnd by mutableStateOf(false)
+    var pauseStarted by mutableStateOf<TimeMark?>(null)
+    var ended = false
+}
+
 @Composable
-private fun MainScaffold(
+private fun MainApp(
     repository: PlatformRepository,
     navigator: Navigator,
     gameLauncher: GameLauncher?,
+    settings: AppSettings,
 ) {
     val wallet by repository.wallet.collectAsState()
-    val myPools by repository.myPools.collectAsState()
+    val profile by repository.profile.collectAsState()
+    val challenges by repository.challenges.collectAsState()
     val scope = rememberCoroutineScope()
+    val uriHandler = LocalUriHandler.current
+    @Suppress("DEPRECATION")
+    val clipboard = LocalClipboardManager.current
+
+    var joining by remember { mutableStateOf<Game?>(null) }
+    var session by remember { mutableStateOf<GameSession?>(null) }
+    var toast by remember { mutableStateOf<String?>(null) }
+
+    fun openUrl(url: String) {
+        runCatching { uriHandler.openUri(url) }.onFailure { toast = "Couldn't open $url" }
+    }
+
+    fun copy(text: String, message: String) {
+        runCatching { clipboard.setText(AnnotatedString(text)) }
+        toast = message
+    }
+
+    fun showClaim(result: ClaimResult, art: String? = null) {
+        when (result) {
+            is ClaimResult.Granted -> navigator.show(Popup.Reward(result.title, result.reward, art))
+            is ClaimResult.Failed -> navigator.show(Popup.Message("Oops", result.message))
+        }
+    }
+
+    // Welcome bonus, then the daily bonus, when the player arrives.
+    LaunchedEffect(Unit) {
+        repository.refreshProgress()
+        delay(500)
+        if (!repository.dailyBonus.value.claimedToday) navigator.show(Popup.DailyBonus)
+        if (repository.profile.value.welcomePending) navigator.show(Popup.Welcome)
+    }
+    // Fresh challenge / league / shop data whenever a tab opens.
+    LaunchedEffect(navigator.tab) { repository.refreshProgress() }
+    // Let a running game know when sound settings change.
+    LaunchedEffect(settings.music, settings.sound, settings.vibration) {
+        if (session?.real == true) gameLauncher?.applySettings(settings.forGame)
+    }
+    LaunchedEffect(toast) {
+        if (toast != null) {
+            delay(2_200)
+            toast = null
+        }
+    }
+
+    // ---------------------------------------------------------------- matches
 
     fun modeFor(ticket: MatchTicket): LaunchMode = when {
         ticket.isPractice -> LaunchMode.PRACTICE
@@ -93,18 +217,47 @@ private fun MainScaffold(
     }
 
     /** After a match: practice → result screen; paid match → submit score, then the leaderboard. */
-    fun finishMatch(ticket: MatchTicket, result: GameResult?, replaceTop: Boolean) {
+    fun finishMatch(ticket: MatchTicket, result: GameResult?) {
         if (ticket.isPractice) {
-            val screen = Screen.PracticeResult(ticket.gameId, result)
-            if (replaceTop) navigator.replace(screen) else navigator.push(screen)
+            navigator.push(Screen.PracticeResult(ticket.gameId, result))
             return
         }
         scope.launch {
             // A player who quits a paid match still used the entry, so it counts as score 0.
             runCatching { repository.submitScore(ticket, result ?: GameResult(score = 0, durationMillis = 0)) }
-            val leaderboard = Screen.PoolLeaderboard(ticket.poolId)
-            if (replaceTop) navigator.replace(leaderboard) else navigator.push(leaderboard)
+            navigator.push(Screen.PoolLeaderboard(ticket.poolId))
         }
+    }
+
+    fun gameEnded(s: GameSession, result: GameResult?) {
+        if (s.ended) return
+        s.ended = true
+        if (session === s) session = null
+        gameLauncher?.setPauseRequestListener(null)
+        navigator.popWhile { it is Screen.PlayGame || it is Screen.GameRunning }
+        finishMatch(s.ticket, result)
+    }
+
+    fun pauseGame() {
+        val s = session ?: return
+        if (s.paused) return
+        s.paused = true
+        s.confirmEnd = false
+        s.pauseStarted = TimeSource.Monotonic.markNow()
+        if (s.real) gameLauncher?.pause()
+    }
+
+    fun resumeGame() {
+        val s = session ?: return
+        s.paused = false
+        s.confirmEnd = false
+        if (s.real) gameLauncher?.resume()
+    }
+
+    fun endGameNow() {
+        val s = session ?: return
+        s.paused = false
+        if (s.real) gameLauncher?.forfeit() else gameEnded(s, null)
     }
 
     /** Opens the real game when this platform has it, otherwise the placeholder game screen. */
@@ -112,9 +265,14 @@ private fun MainScaffold(
         val game = repository.game(ticket.gameId) ?: return
         val launcher = gameLauncher
         if (launcher == null || !launcher.isAvailable(ticket.gameId)) {
+            session = GameSession(ticket, game, real = false)
             navigator.push(Screen.PlayGame(ticket))
             return
         }
+        val s = GameSession(ticket, game, real = true)
+        session = s
+        navigator.push(Screen.GameRunning(ticket))
+        launcher.setPauseRequestListener { pauseGame() }
         scope.launch {
             val request = GameLaunchRequest(
                 game = game,
@@ -122,154 +280,294 @@ private fun MainScaffold(
                 playerId = repository.player.id,
                 displayName = repository.player.displayName,
                 mode = modeFor(ticket),
+                settings = settings.forGame,
             )
             val result = launcher.launch(request)
-            finishMatch(ticket, result, replaceTop = false)
+            gameEnded(s, result)
         }
     }
 
     fun startPractice(gameId: String) = startMatch(MatchTicket.practice(gameId, Random.nextLong()))
 
+    fun play(tournament: Tournament) {
+        val game = repository.game(tournament.gameId) ?: return
+        if (joining != null) return
+        joining = game
+        scope.launch {
+            val started = TimeSource.Monotonic.markNow()
+            val result = repository.joinTournament(tournament.id)
+            val shown = started.elapsedNow().inWholeMilliseconds
+            if (shown < 1_400) delay(1_400 - shown)
+            joining = null
+            when (result) {
+                is JoinResult.Joined -> startMatch(result.ticket)
+                JoinResult.InsufficientCoins -> navigator.show(Popup.NeedCoins)
+                is JoinResult.Error -> navigator.show(Popup.Message("Couldn't join", result.message))
+            }
+        }
+    }
+
+    // Back during a match opens the pause menu; Back while paused resumes.
+    navigator.gameBackHandler = handler@{
+        val s = session ?: return@handler false
+        when {
+            s.confirmEnd -> s.confirmEnd = false
+            s.paused -> resumeGame()
+            else -> pauseGame()
+        }
+        true
+    }
+
+    // A paused match ends after 5 minutes.
+    val pausedSession = session?.takeIf { it.paused }
+    LaunchedEffect(pausedSession, pausedSession?.pauseStarted) {
+        val started = pausedSession?.pauseStarted ?: return@LaunchedEffect
+        val left = PAUSE_LIMIT_MILLIS - started.elapsedNow().inWholeMilliseconds
+        if (left > 0) delay(left)
+        if (session === pausedSession && pausedSession?.paused == true) endGameNow()
+    }
+
+    // ---------------------------------------------------------------- rewards & store actions
+
+    val economy = remember(repository) {
+        EconomyActions(
+            buyPack = { pack ->
+                scope.launch {
+                    when (val r = repository.purchasePack(pack.id)) {
+                        is PurchaseResult.Success -> navigator.show(Popup.Reward("${pack.name} (demo)", RewardGrant(r.coinsAdded)))
+                        is PurchaseResult.Error -> navigator.show(Popup.Message("Purchase failed", r.message))
+                    }
+                }
+            },
+            watchVideo = {
+                scope.launch {
+                    val coins = repository.claimFreeCoins()
+                    if (coins > 0) navigator.show(Popup.Reward("Free coins", RewardGrant(coins)))
+                    else navigator.show(Popup.Message("No more videos", "You've watched all of today's videos. Come back tomorrow!"))
+                }
+            },
+            invite = { navigator.push(Screen.ReferEarn) },
+            rate = { openUrl(STORE_URL) },
+            claimDaily = {
+                scope.launch {
+                    navigator.dismiss(Popup.DailyBonus)
+                    val result = repository.claimDailyBonus()
+                    val epic = result is ClaimResult.Granted && result.title.contains("Epic")
+                    showClaim(result, art = if (epic) "epic" else null)
+                }
+            },
+            spin = { navigator.show(Popup.LuckySpin) },
+            openChest = { id -> scope.launch { showClaim(repository.openChest(id), art = id) } },
+            claimChallenge = { c -> scope.launch { showClaim(repository.claimChallenge(c.id)) } },
+        )
+    }
+
+    // ---------------------------------------------------------------- layout
+
     val current = navigator.current
-    val title = when (current) {
-        is Screen.GameDetail -> repository.game(current.gameId)?.name ?: "Game"
-        is Screen.PlayGame -> if (current.ticket.isPractice) "Practice" else "Playing"
-        is Screen.PoolLeaderboard -> "Leaderboard"
-        is Screen.PracticeResult -> "Practice"
-        null -> when (navigator.tab) {
-            Tab.Rewards -> "Rewards"
-            Tab.Store -> "Store"
-            Tab.Home -> "FunPixelNest"
-            Tab.Featured -> "Featured"
-            Tab.Profile -> "Profile"
-        }
-    }
+    val onTabRoot = current == null
+    val showChrome = joining != null || onTabRoot || current is Screen.GameDetail
 
-    Scaffold(
-        containerColor = MgpColors.Background,
-        topBar = {
-            MgpTopBar(
-                title = title,
-                coins = wallet.coins,
-                // No back button mid-game: the entry is paid, use Quit instead.
-                onBack = if (navigator.canGoBack && current !is Screen.PlayGame) {
-                    { navigator.back() }
-                } else {
-                    null
-                },
-                // Tapping the balance opens the Store (not mid-game).
-                onCoinsClick = if (current !is Screen.PlayGame) {
-                    { navigator.selectTab(Tab.Store) }
-                } else {
-                    null
-                },
-            )
-        },
-        bottomBar = {
-            if (current == null) {
-                AnimatedBottomBar(selected = navigator.tab, onSelect = { navigator.selectTab(it) })
-            }
-        },
-    ) { padding ->
-        val modifier = Modifier.padding(padding)
-        when (current) {
-            is Screen.GameDetail -> {
-                val game = repository.game(current.gameId)
-                if (game != null) {
-                    GameDetailScreen(
-                        game = game,
-                        repository = repository,
-                        coins = wallet.coins,
-                        onJoined = { ticket -> startMatch(ticket) },
-                        onPractice = { startPractice(game.id) },
-                        modifier = modifier,
-                    )
-                }
-            }
-
-            is Screen.PlayGame -> {
-                val game = repository.game(current.ticket.gameId)
-                if (game != null) {
-                    PlaceholderGameScreen(
-                        game = game,
-                        ticket = current.ticket,
-                        onFinished = { result -> finishMatch(current.ticket, result, replaceTop = true) },
-                        modifier = modifier,
-                    )
-                }
-            }
-
-            is Screen.PoolLeaderboard -> PoolLeaderboardScreen(
-                poolId = current.poolId,
-                repository = repository,
-                modifier = modifier,
-            )
-
-            is Screen.PracticeResult -> {
-                val game = repository.game(current.gameId)
-                if (game != null) {
-                    PracticeResultScreen(
-                        game = game,
-                        result = current.result,
-                        onPlayAgain = {
-                            navigator.back()
-                            startPractice(game.id)
-                        },
-                        onPlayForCoins = { navigator.back() },
-                        modifier = modifier,
-                    )
-                }
-            }
-
-            null -> when (navigator.tab) {
-                Tab.Rewards -> RewardsScreen(repository = repository, modifier = modifier)
-
-                Tab.Store -> StoreScreen(repository = repository, modifier = modifier)
-
-                Tab.Home -> HomeScreen(
-                    games = repository.games(),
-                    onGameClick = { navigator.push(Screen.GameDetail(it.id)) },
-                    modifier = modifier,
-                )
-
-                Tab.Featured -> FeaturedScreen(
-                    repository = repository,
+    SkyBackground {
+        Column(Modifier.fillMaxSize()) {
+            if (showChrome) {
+                PlayerHeader(
+                    name = repository.player.displayName,
+                    avatarId = profile.avatarId,
+                    level = profile.levelInfo,
                     coins = wallet.coins,
-                    onJoined = { ticket -> startMatch(ticket) },
-                    onGameClick = { navigator.push(Screen.GameDetail(it.id)) },
-                    modifier = modifier,
+                    gems = wallet.gems,
+                    unread = profile.unreadNotifications,
+                    onAvatarClick = { navigator.push(Screen.Profile) },
+                    onCurrencyClick = { navigator.selectTab(Tab.Store) },
+                    onMenuClick = { navigator.drawerOpen = true },
                 )
-
-                Tab.Profile -> ProfileScreen(
-                    repository = repository,
-                    pools = myPools,
-                    wallet = wallet,
-                    onPoolClick = { navigator.push(Screen.PoolLeaderboard(it.id)) },
-                    onGetCoins = { navigator.selectTab(Tab.Store) },
-                    modifier = modifier,
+            }
+            val content = Modifier.weight(1f).fillMaxWidth()
+            Box(content) {
+                val joiningGame = joining
+                if (joiningGame != null) {
+                    JoiningScreen(joiningGame)
+                } else {
+                    when (current) {
+                        is Screen.GameDetail -> {
+                            val game = repository.game(current.gameId)
+                            if (game != null) {
+                                GameDetailScreen(
+                                    game = game,
+                                    tournaments = repository.tournamentsFor(game.id),
+                                    onPlay = { play(it) },
+                                    onPractice = { startPractice(game.id) },
+                                    onInfo = { navigator.show(Popup.HowToPlay(game.id)) },
+                                )
+                            }
+                        }
+                        is Screen.PlayGame -> {
+                            val game = repository.game(current.ticket.gameId)
+                            val s = session
+                            if (game != null) {
+                                PlaceholderGameScreen(
+                                    game = game,
+                                    ticket = current.ticket,
+                                    onPause = { pauseGame() },
+                                    onFinished = { result -> if (s != null) gameEnded(s, result) else navigator.back() },
+                                    modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
+                                )
+                            }
+                        }
+                        is Screen.GameRunning -> repository.game(current.ticket.gameId)?.let { GameRunningBackdrop(it) }
+                        is Screen.PoolLeaderboard -> PoolLeaderboardScreen(
+                            poolId = current.poolId,
+                            repository = repository,
+                            onPlayAgain = { t ->
+                                navigator.back()
+                                if (navigator.current !is Screen.GameDetail) navigator.push(Screen.GameDetail(t.gameId))
+                                play(t)
+                            },
+                            onExit = { navigator.back() },
+                        )
+                        is Screen.PracticeResult -> {
+                            val game = repository.game(current.gameId)
+                            if (game != null) {
+                                PracticeResultScreen(
+                                    game = game,
+                                    result = current.result,
+                                    onPlayAgain = {
+                                        navigator.back()
+                                        startPractice(game.id)
+                                    },
+                                    onPlayForCoins = { navigator.back() },
+                                )
+                            }
+                        }
+                        Screen.Profile -> ProfileScreen(
+                            repository = repository,
+                            onBack = { navigator.back() },
+                            onSettings = { navigator.push(Screen.Settings) },
+                            onRename = { navigator.show(Popup.Rename) },
+                            onCopy = { text, msg -> copy(text, msg) },
+                            onPoolClick = { navigator.push(Screen.PoolLeaderboard(it.id)) },
+                            onAvatarPick = { id -> scope.launch { repository.setAvatar(id)?.let { toast = it } } },
+                        )
+                        Screen.Inbox -> InboxScreen(repository) { navigator.back() }
+                        Screen.Settings -> SettingsScreen(repository, settings, onBack = { navigator.back() }, onLogout = { navigator.show(Popup.ConfirmLogout) })
+                        Screen.HelpCenter -> HelpCenterScreen { navigator.back() }
+                        Screen.Support -> SupportScreen(
+                            onBack = { navigator.back() },
+                            onEmail = { openUrl("mailto:$SUPPORT_EMAIL?subject=Help%20(${playerCode(repository.player.id)})") },
+                            onCopy = { text, msg -> copy(text, msg) },
+                            playerId = repository.player.id,
+                        )
+                        Screen.ReferEarn -> ReferEarnScreen(onBack = { navigator.back() }, playerId = repository.player.id, onCopy = { t, m -> copy(t, m) })
+                        is Screen.Legal -> LegalScreen(current.privacy) { navigator.back() }
+                        null -> when (navigator.tab) {
+                            Tab.Challenges -> ChallengesScreen(
+                                repository = repository,
+                                onClaim = economy.claimChallenge,
+                                onGo = { c ->
+                                    when {
+                                        c.gameId != null -> navigator.push(Screen.GameDetail(c.gameId))
+                                        c.category == ChallengeCategory.LEAGUE -> navigator.selectTab(Tab.Leagues)
+                                        else -> navigator.selectTab(Tab.Games)
+                                    }
+                                },
+                            )
+                            Tab.Leagues -> LeaguesScreen(
+                                repository = repository,
+                                onPlayNow = { navigator.selectTab(Tab.Games) },
+                                onViewRewards = { navigator.show(Popup.LeagueRewards) },
+                            )
+                            Tab.Games -> GamesScreen(repository.games(), onGameClick = { navigator.push(Screen.GameDetail(it.id)) })
+                            Tab.Rewards -> RewardsScreen(repository, economy, onViewChallenges = { navigator.selectTab(Tab.Challenges) })
+                            Tab.Store -> StoreScreen(repository, economy)
+                        }
+                    }
+                }
+            }
+            if (showChrome) {
+                MgpBottomBar(
+                    selected = navigator.tab,
+                    challengeBadge = challenges.claimableCount,
+                    onSelect = { navigator.selectTab(it) },
                 )
             }
         }
-    }
-}
 
-/** Shown while connecting to the backend, or when connecting failed. */
-@Composable
-private fun StartupScreen(message: String?, onRetry: (() -> Unit)?) {
-    Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Text("FunPixelNest", fontWeight = FontWeight.Bold, color = MgpColors.Primary)
-            if (message == null) {
-                CircularProgressIndicator()
-                Text("Getting your games ready…", color = MgpColors.TextMuted)
+        MoreOptionsDrawer(
+            open = navigator.drawerOpen,
+            repository = repository,
+            onClose = { navigator.drawerOpen = false },
+            onRename = { navigator.show(Popup.Rename) },
+            onItem = { item ->
+                navigator.drawerOpen = false
+                when (item) {
+                    MenuItem.Profile -> navigator.push(Screen.Profile)
+                    MenuItem.Inbox -> navigator.push(Screen.Inbox)
+                    MenuItem.Settings -> navigator.push(Screen.Settings)
+                    MenuItem.Help -> navigator.push(Screen.HelpCenter)
+                    MenuItem.Support -> navigator.push(Screen.Support)
+                    MenuItem.Refer -> navigator.push(Screen.ReferEarn)
+                    MenuItem.Rate -> openUrl(STORE_URL)
+                    MenuItem.Follow -> openUrl(WEBSITE_URL)
+                    MenuItem.Terms -> navigator.push(Screen.Legal(privacy = false))
+                    MenuItem.Privacy -> navigator.push(Screen.Legal(privacy = true))
+                    MenuItem.Logout -> navigator.show(Popup.ConfirmLogout)
+                }
+            },
+        )
+
+        // Pause menu over everything while a match is paused.
+        val s = session
+        val pauseStarted = s?.pauseStarted
+        if (s != null && s.paused && pauseStarted != null) {
+            if (s.confirmEnd) {
+                EndGameScreen(
+                    game = s.game,
+                    isPractice = s.ticket.isPractice,
+                    pauseStarted = pauseStarted,
+                    onResume = { resumeGame() },
+                    onEnd = { endGameNow() },
+                )
             } else {
-                Text("Couldn't connect", fontWeight = FontWeight.Bold)
-                Text(message, color = MgpColors.TextMuted, textAlign = TextAlign.Center)
-                if (onRetry != null) Button(onClick = onRetry) { Text("Try again") }
+                PauseScreen(
+                    game = s.game,
+                    pauseStarted = pauseStarted,
+                    settings = settings,
+                    onResume = { resumeGame() },
+                    onEndNow = { s.confirmEnd = true },
+                    onHowToPlay = { navigator.show(Popup.HowToPlay(s.game.id)) },
+                )
             }
+        }
+
+        PopupHost(
+            popup = navigator.popup,
+            repository = repository,
+            actions = PopupActions(
+                dismiss = { navigator.dismiss(it) },
+                ackWelcome = { scope.launch { repository.acknowledgeWelcome() } },
+                claimDaily = economy.claimDaily,
+                spin = { repository.spinWheel() },
+                rename = { name -> repository.setDisplayName(name) },
+                logout = { scope.launch { repository.signOut() } },
+                openStore = { navigator.selectTab(Tab.Store) },
+            ),
+        )
+
+        AnimatedVisibility(
+            toast != null,
+            enter = fadeIn() + slideInVertically { it },
+            exit = fadeOut() + slideOutVertically { it },
+            modifier = Modifier.align(Alignment.BottomCenter).windowInsetsPadding(WindowInsets.navigationBars).padding(bottom = 100.dp, start = 24.dp, end = 24.dp),
+        ) {
+            Text(
+                toast ?: "",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xE613205B)).padding(horizontal = 18.dp, vertical = 12.dp),
+            )
         }
     }
 }

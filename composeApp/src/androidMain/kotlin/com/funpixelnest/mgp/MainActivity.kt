@@ -8,7 +8,6 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -21,7 +20,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.core.content.ContextCompat
 import com.funpixelnest.mgp.data.BackendStatus
+import com.funpixelnest.mgp.data.PlatformRepository
+import com.funpixelnest.mgp.data.SupabasePlatformRepository
 import com.funpixelnest.mgp.data.createPlatformRepository
+import io.github.jan.supabase.auth.handleDeeplinks
 import com.funpixelnest.mgp.push.AndroidPush
 import com.funpixelnest.mgp.ui.Navigator
 import com.funpixelnest.mgp.ui.Screen
@@ -32,6 +34,9 @@ class MainActivity : ComponentActivity() {
     /** Pool to open when the app is started from a result notification. */
     private val pendingPoolId = mutableStateOf<String?>(null)
 
+    /** One repository for the activity, so Google/Apple/Facebook sign-in redirects reach it. */
+    private val repository: PlatformRepository by lazy { createPlatformRepository() }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Light background → dark status and navigation bar icons.
         enableEdgeToEdge(
@@ -40,18 +45,16 @@ class MainActivity : ComponentActivity() {
         )
         super.onCreate(savedInstanceState)
         pendingPoolId.value = intent.poolIdExtra()
+        handleSignInRedirect(intent)
         val pushEnabled = AndroidPush.init(applicationContext)
 
         setContent {
             val navigator = remember { Navigator() }
-            val repository = remember { createPlatformRepository() }
+            val repository = this@MainActivity.repository
             val status by repository.status.collectAsState()
             val scope = rememberCoroutineScope()
 
-            // System Back pops pushed screens; it's blocked mid-game (use Quit instead).
-            BackHandler(enabled = navigator.canGoBack) {
-                if (navigator.current !is Screen.PlayGame) navigator.back()
-            }
+            // System Back is handled inside App (pop-ups → menu → pause game → screens → Games tab → exit).
 
             // Push: ask for permission (Android 13+), then save this device's token for the signed-in player.
             val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
@@ -85,6 +88,13 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         intent.poolIdExtra()?.let { pendingPoolId.value = it }
+        handleSignInRedirect(intent)
+    }
+
+    /** funpixelnest://login#… — the browser hands the Google/Apple/Facebook session back to the app. */
+    private fun handleSignInRedirect(intent: Intent?) {
+        if (intent?.data?.scheme != "funpixelnest") return
+        (repository as? SupabasePlatformRepository)?.client?.handleDeeplinks(intent)
     }
 
     private fun Intent?.poolIdExtra(): String? = this?.getStringExtra("pool_id")?.takeIf { it.isNotBlank() }

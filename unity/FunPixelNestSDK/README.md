@@ -190,3 +190,25 @@ This path is ready in code. It will be finished during native integration.
 | `SkillzCrossPlatform.UpdatePlayersCurrentScore` | Not needed. Optionally use `FpnPlatform.AddEvent` for a move log. |
 
 Skillz's RNG produces a different sequence, so boards will not match old Skillz seeds. Remove the Skillz SDK and its `Plugins` before building for FunPixelNest.
+
+---
+
+## Pause, Back button and settings
+
+The platform app owns the pause menu. When the player presses **Back** (Android, browser) or **Pause**, the app
+hides the game, shows *Game Paused* (music / sound / vibration toggles, How to play, Resume, End now) and gives
+the player **5 minutes** to resume; after that, or on *End now*, the match ends (a paid match counts as score 0).
+
+The SDK handles this for you: while paused it sets `Time.timeScale = 0` and pauses audio, and restores both on
+resume. To react yourself:
+
+```csharp
+FpnSession.OnPaused   += () => myTimer.Stop();
+FpnSession.OnResumed  += () => myTimer.Start();
+FpnSession.OnSettingsChanged += s => { music.mute = !s.music; sfx.mute = !s.sound; };
+// FpnSession.AutoPause = false;   // if you want to handle time/audio completely yourself
+```
+
+The starting values are also in the launch data (`music`, `sound`, `vibration`), and in `FpnSession.Settings`
+once the platform sends them. Don't add your own in-game Back/Exit button for paid matches; the platform's pause
+menu is the way out.

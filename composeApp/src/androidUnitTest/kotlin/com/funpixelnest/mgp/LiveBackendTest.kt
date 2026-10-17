@@ -2,6 +2,7 @@ package com.funpixelnest.mgp
 
 import com.funpixelnest.mgp.config.BackendConfig
 import com.funpixelnest.mgp.data.BackendStatus
+import com.funpixelnest.mgp.domain.ClaimResult
 import com.funpixelnest.mgp.data.JoinResult
 import com.funpixelnest.mgp.data.SampleCatalog
 import com.funpixelnest.mgp.data.SupabasePlatformRepository
@@ -41,6 +42,9 @@ class LiveBackendTest {
 
         alpha.initialize()
         beta.initialize()
+        assertEquals(BackendStatus.SignedOut, alpha.status.value, "first launch shows the login screen")
+        assertNull(alpha.signInAsGuest(), "guest sign-in")
+        assertNull(beta.signInAsGuest(), "guest sign-in")
         assertEquals(BackendStatus.Ready, alpha.status.value, "alpha: ${alpha.status.value}")
         assertEquals(BackendStatus.Ready, beta.status.value, "beta: ${beta.status.value}")
         assertEquals(1000, alpha.wallet.value.coins, "new guest gets the welcome bonus")
@@ -75,10 +79,21 @@ class LiveBackendTest {
         println("LIVE: wallets alpha=${alpha.wallet.value.coins} beta=${beta.wallet.value.coins}")
         assertTrue(alpha.wallet.value.transactions.any { it.description == "Prize: won 1v1 Solitaire Quick" })
 
+        // Progression (migration 004): XP, trophies, challenges, daily bonus, avatar.
         withTimeout(15_000) {
-            while (alpha.rewards.value.missions.firstOrNull { it.id == "duel_1" }?.progress != 1) delay(300)
+            while (alpha.profile.value.trophies != 80L) delay(300)
         }
-        assertEquals(50, alpha.claimDailyReward())
+        assertEquals(50L, alpha.profile.value.xp, "duel winner: 20 + 30 XP")
+        assertTrue(alpha.profile.value.welcomePending)
+        alpha.refreshProgress()
+        assertEquals(1L, alpha.challenges.value.challenges.first { it.id == "d_play_3" }.progress)
+        assertEquals(80L, alpha.league.value.seasonPoints)
+        val bonus = alpha.claimDailyBonus()
+        assertIs<ClaimResult.Granted>(bonus)
+        assertEquals(100L, bonus.reward.coins, "day 1 bonus")
+        assertNull(alpha.setAvatar(7))
+        alpha.acknowledgeWelcome()
+        println("LIVE: progression ok, level ${alpha.profile.value.levelInfo.level}")
         assertTrue(alpha.myPools.value.any { it.id == settled.id })
         println("LIVE: all checks passed")
     }

@@ -22,6 +22,7 @@ data class GameLaunchRequest(
     val playerId: String,
     val displayName: String,
     val mode: LaunchMode,
+    val settings: GameSettings = GameSettings(),
 ) {
     /**
      * The launch data the Unity bridge reads (`FpnPlatform.LaunchData`).
@@ -36,9 +37,15 @@ data class GameLaunchRequest(
             ticketId = ticket.ticketId,
             playerId = playerId,
             displayName = displayName,
+            music = settings.music,
+            sound = settings.sound,
+            vibration = settings.vibration,
         ),
     )
 }
+
+/** Player options from the pause menu / Settings, passed to the game. */
+data class GameSettings(val music: Boolean = true, val sound: Boolean = true, val vibration: Boolean = true)
 
 /** Sent back Unity → native when the match ends. */
 data class GameResult(
@@ -62,6 +69,21 @@ interface GameLauncher {
 
     /** Runs the game and suspends until it ends. Returns null if the player quit. */
     suspend fun launch(request: GameLaunchRequest): GameResult?
+
+    /** The player pressed Back/Pause inside the running game: the app shows its pause menu. */
+    fun setPauseRequestListener(listener: (() -> Unit)?) {}
+
+    /** Freeze the running game and hide it so the app's pause menu is visible. */
+    fun pause() {}
+
+    /** Show the game again and continue. */
+    fun resume() {}
+
+    /** End the running game now (the pending [launch] returns null). */
+    fun forfeit() {}
+
+    /** Music / sound / vibration changed while the game runs. */
+    fun applySettings(settings: GameSettings) {}
 }
 
 @Serializable
@@ -72,7 +94,13 @@ private data class LaunchDataDto(
     @SerialName("ticketId") val ticketId: String,
     @SerialName("playerId") val playerId: String,
     @SerialName("displayName") val displayName: String,
+    @SerialName("music") val music: Boolean = true,
+    @SerialName("sound") val sound: Boolean = true,
+    @SerialName("vibration") val vibration: Boolean = true,
 )
+
+/** Settings JSON sent to a running game: {"music":true,"sound":true,"vibration":false}. */
+fun GameSettings.toJson(): String = """{"music":$music,"sound":$sound,"vibration":$vibration}"""
 
 /** Result payload the web host and native bridges send back: {"score":…, "durationMs":…, "eventLog":"[…]"}. */
 @Serializable

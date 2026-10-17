@@ -24,15 +24,40 @@ object SampleCatalog {
         Game("rugby_rumble", "Rugby Rumble", "Sports", "🏉", 0xFF1565C0),
     )
 
-    val featuredTournamentIds = listOf("solitaire_elite", "bubble_shooter_pro", "mahjong_elite", "bingo_pro")
-    val newGameIds = listOf("rugby_rumble", "catdoku", "kitty_hole", "snake_war", "arrows")
-
-    /** Display prices only; real payments come in a later phase. */
+    /** Same packs as the server seed (migration 004). Display prices only until billing is added. */
     val storePacks: List<StorePack> = listOf(
-        StorePack("pack_small", "Handful", coins = 500, bonusCoins = 0, priceLabel = "$0.99"),
-        StorePack("pack_medium", "Pouch", coins = 1_200, bonusCoins = 100, priceLabel = "$1.99"),
-        StorePack("pack_large", "Chest", coins = 3_000, bonusCoins = 500, priceLabel = "$4.99", tag = "Popular"),
-        StorePack("pack_huge", "Vault", coins = 6_500, bonusCoins = 1_500, priceLabel = "$9.99", tag = "Best value"),
+        StorePack("coins_10k", "10K Coins", coins = 10_000, bonusCoins = 0, priceLabel = "₹89.00"),
+        StorePack("coins_25k", "25K Coins", coins = 25_000, bonusCoins = 0, priceLabel = "₹179.00"),
+        StorePack("coins_50k", "50K Coins", coins = 50_000, bonusCoins = 0, priceLabel = "₹349.00", tag = "Best value"),
+        StorePack("coins_100k", "100K Coins", coins = 100_000, bonusCoins = 0, priceLabel = "₹699.00"),
+        StorePack("coins_250k", "250K Coins", coins = 250_000, bonusCoins = 0, priceLabel = "₹1,599.00"),
+    )
+
+    /** Short rules shown under "How to play". */
+    fun howToPlay(gameId: String): String = when (gameId) {
+        "solitaire" -> "Move all cards to the four foundations, Ace to King by suit. Fewer moves and faster finishes score more."
+        "block_puzzle" -> "Drag blocks onto the board. Fill a full row or column to clear it. Clear several at once for combo points."
+        "bingo" -> "Tap called numbers on your cards. Complete lines, columns or the full card for a BINGO. Quick daubs earn bonus points."
+        "bubble_shooter" -> "Aim and shoot bubbles. Match 3 or more of the same color to pop them. Drop big groups for extra points."
+        "mahjong" -> "Match pairs of free tiles (not covered and open on one side). Clear the board as fast as you can."
+        "blackjack" -> "Get closer to 21 than the dealer without going over. Hit, stand, double or split to grow your chips."
+        "arrows" -> "Tap arrows to slide them off the board in the direction they point. Don't let them crash into each other."
+        "slots" -> "Stop each reel at the right moment to line up symbols. Timing, not luck, decides your score."
+        "snake_war" -> "Steer your snake, eat to grow and avoid running into others. The biggest snake scores the most."
+        "flap_dash" -> "Tap to flap and fly through the gaps. Every gap you pass scores a point."
+        "kitty_hole" -> "Move the hole to swallow objects and grow. The bigger you get, the more you can eat."
+        "catdoku" -> "Fill the grid so every row, column and box has each cat exactly once."
+        "rugby_rumble" -> "Run, dodge and pass to score tries before the timer runs out."
+        else -> "Score as many points as you can. Everyone in your tournament plays the same board."
+    }
+
+    /** Tips shown while joining a tournament. */
+    val proTips = listOf(
+        "Plan your moves ahead to score higher!",
+        "Everyone in your pool gets the same board, so skill decides the winner.",
+        "Ties go to the player who finished faster.",
+        "Top 3 in a 5-player tournament win prizes.",
+        "Practice is free. Warm up before you play for coins!",
     )
 
     /** Three entry levels per game. Platform fee is a placeholder until the economy is designed. */

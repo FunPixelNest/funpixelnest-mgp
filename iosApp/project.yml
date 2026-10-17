@@ -23,6 +23,10 @@ targets:
         UILaunchScreen: {}
         CADisableMinimumFrameDurationOnPhone: true
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        # Google / Apple / Facebook sign-in returns to funpixelnest://login
+        CFBundleURLTypes:
+          - CFBundleURLName: com.funpixelnest.mgp.login
+            CFBundleURLSchemes: [funpixelnest]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.funpixelnest.mgp

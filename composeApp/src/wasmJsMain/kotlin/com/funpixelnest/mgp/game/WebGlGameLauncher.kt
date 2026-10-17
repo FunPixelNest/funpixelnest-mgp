@@ -26,7 +26,22 @@ class WebGlGameLauncher(gamesBaseUrl: String) : GameLauncher {
             if (cont.isActive) cont.resume(parseGameResult(raw))
         }
     }
+
+    override fun setPauseRequestListener(listener: (() -> Unit)?) {
+        hostSetPauseListener(listener ?: {})
+    }
+
+    override fun pause() = hostCall("pause", "")
+    override fun resume() = hostCall("resume", "")
+    override fun forfeit() = hostCall("forfeit", "")
+    override fun applySettings(settings: GameSettings) = hostCall("settings", settings.toJson())
 }
+
+@JsFun("(listener) => { if (window.FPNHost) window.FPNHost.onPauseRequest = () => listener(); }")
+private external fun hostSetPauseListener(listener: () -> Unit)
+
+@JsFun("(name, arg) => { if (window.FPNHost && window.FPNHost[name]) window.FPNHost[name](arg); }")
+private external fun hostCall(name: String, arg: String)
 
 @JsFun("(base) => { if (window.FPNHost) window.FPNHost.init(base); }")
 private external fun hostInit(base: String)

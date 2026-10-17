@@ -17,26 +17,37 @@ import com.funpixelnest.mgp.resources.nunito_semibold
 import org.jetbrains.compose.resources.Font
 
 /**
- * "Bright & Playful" theme: sky-blue background, white cards, orange buttons,
- * sunny-yellow highlights and navy text. Matches the FunPixelNest logo.
+ * "Sky Arcade" theme from the app mockups: light sky-blue background, frosted white cards,
+ * glossy blue/green/red buttons, gold coins, blue gems and deep navy text.
  */
 object MgpColors {
-    val Background = Color(0xFFD9F0FF)   // sky blue
-    val Surface = Color(0xFFFFFFFF)      // cards
-    val SurfaceRaised = Color(0xFFEAF5FF) // chips, tracks, inner panels
-    val Border = Color(0xFFBFDDF5)
-    val Primary = Color(0xFFF26B1D)      // orange: buttons, coins, selection
+    val Background = Color(0xFFDDEFFF)
+    val SkyTop = Color(0xFFCFE8FF)
+    val SkyBottom = Color(0xFFEFF7FF)
+    val Surface = Color(0xFFFFFFFF)
+    val SurfaceSoft = Color(0xF2F7FBFF)   // frosted cards
+    val SurfaceRaised = Color(0xFFEAF3FF) // chips, tracks, inner panels
+    val Border = Color(0xFFD3E5FA)
+    val Primary = Color(0xFF1E6CF2)       // blue: buttons, links, selection
+    val PrimaryDark = Color(0xFF0F4FC9)
+    val PrimaryLight = Color(0xFF3D8BFF)
     val OnPrimary = Color(0xFFFFFFFF)
-    val Sunshine = Color(0xFFFFC93C)     // yellow highlight / glow
-    val Secondary = Color(0xFF2B86F0)    // playful blue (banners)
-    val SecondaryLight = Color(0xFF2FA8F2)
-    val TextPrimary = Color(0xFF1D2B4F)  // navy
-    val TextMuted = Color(0xFF5D6E8C)
-    val Win = Color(0xFF17A34A)
+    val Navy = Color(0xFF13205B)           // titles
+    val NavyCard = Color(0xFF122A6B)       // dark league card
+    val TextPrimary = Color(0xFF13205B)
+    val TextMuted = Color(0xFF55658F)
+    val Green = Color(0xFF3FAE2A)
+    val Red = Color(0xFFE5342B)
+    val Purple = Color(0xFF7B3FE4)
+    val Orange = Color(0xFFF57C12)
+    val Pink = Color(0xFFE91E73)
+    val Gold = Color(0xFFFFC23A)
+    val Win = Color(0xFF2E9A1C)
     val Error = Color(0xFFD93025)
-    val Gold = Color(0xFFFFC93C)
     val Silver = Color(0xFFC9D6E3)
     val Bronze = Color(0xFFE6A46E)
+    val Secondary = Primary
+    val Sunshine = Gold
 }
 
 private val colorScheme = lightColorScheme(
@@ -44,7 +55,7 @@ private val colorScheme = lightColorScheme(
     onPrimary = MgpColors.OnPrimary,
     secondary = MgpColors.Secondary,
     onSecondary = Color.White,
-    tertiary = MgpColors.Sunshine,
+    tertiary = MgpColors.Gold,
     background = MgpColors.Background,
     onBackground = MgpColors.TextPrimary,
     surface = MgpColors.Surface,

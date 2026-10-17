@@ -21,5 +21,8 @@ done
 echo "== scenario test"
 "${PSQL[@]}" -f "$HERE/01_scenario_test.sql" 2>&1 | sed 's/^psql:[^ ]* NOTICE:  /  /'
 
+echo "== progression test"
+"${PSQL[@]}" -f "$HERE/03_progression_test.sql" 2>&1 | sed 's/^psql:[^ ]* NOTICE:  /  /'
+
 echo "== concurrency test"
 bash "$HERE/02_concurrency.sh" 2>&1 | sed 's/^psql:[^ ]* NOTICE:  /  /'

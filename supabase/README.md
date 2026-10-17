@@ -26,7 +26,7 @@ per player. Each notification is then sent as a push message. The app never deci
 
 ## 2. Run the migrations (create the database)
 
-Use **one** of the two ways below. Run the files **in order** (`...001`, then `...002`, then `...003`).
+Use **one** of the two ways below. Run the files **in order** (`...001`, then `...002`, then `...003`, then `...004`).
 You can safely run them again later. They only add what is missing and update the catalog.
 
 ### Option A: in the browser (SQL Editor)
@@ -34,7 +34,7 @@ You can safely run them again later. They only add what is missing and update th
 1. In the dashboard, open **SQL Editor** → **New query**.
 2. Open `migrations/20261017000001_core.sql` on your computer, copy **all** of it, paste it in and click **Run**.
    You should see "Success. No rows returned".
-3. Do the same with `20261017000002_seed.sql`, then with `20261017000003_push.sql`.
+3. Do the same with `20261017000002_seed.sql`, then `20261017000003_push.sql`, then `20261017000004_progression.sql`.
 4. To check it worked, open **Table Editor**. You should see `games` (13 rows) and `tournaments` (65 rows).
 
 ### Option B: with the Supabase CLI
@@ -303,4 +303,30 @@ raw realtime row, because there it is a plain number and can lose precision.
 
 `NOT_AUTHENTICATED`, `INVALID_NAME`, `TOURNAMENT_NOT_FOUND`, `INSUFFICIENT_COINS`,
 `TICKET_NOT_FOUND`, `TICKET_ALREADY_USED`, `INVALID_SCORE`, `PURCHASES_DISABLED`,
-`PACK_NOT_FOUND`, `INVALID_TOKEN`, `INVALID_PLATFORM`.
+`PACK_NOT_FOUND`, `INVALID_TOKEN`, `INVALID_PLATFORM`,
+`INVALID_AVATAR`, `UNKNOWN_CHALLENGE`, `CHALLENGE_NOT_COMPLETE`, `ALREADY_CLAIMED`,
+`UNKNOWN_CHEST`, `NOT_ENOUGH_GEMS`, `CHEST_NOT_READY`, `SPIN_NOT_READY`.
+
+## Progression (migration `20261017000004_progression.sql`)
+
+Avatars, XP and levels, gems, leagues, challenges, the 7-day daily bonus, chests and the lucky spin.
+Full rules and JSON shapes: [`PROGRESSION_CONTRACT.md`](PROGRESSION_CONTRACT.md).
+XP and league points are awarded automatically when a pool completes (trigger `pools_award_progress`).
+All times are sent as remaining milliseconds (`*_in_ms`). Day = UTC date; season = ISO week (Monday 00:00 UTC).
+
+| RPC | Returns |
+|---|---|
+| `get_profile()` | name, avatar, coins, gems, XP/level, trophies, welcome flag, unread count, stats |
+| `set_avatar(p_avatar_id)` | – (1..15, else `INVALID_AVATAR`) |
+| `ack_welcome()` | – (welcome popup shown) |
+| `get_wallet(p_limit)` | now also `gems`, and `gems` per transaction |
+| `get_league()` | trophies, tier, season points, time left, tier table, top 10, my rank |
+| `get_challenges()` | 17 daily/weekly challenges with progress and claim state |
+| `claim_challenge(p_challenge_id)` | `{coins, gems}` |
+| `get_daily_bonus()` / `claim_daily_bonus()` | 7-day streak; day 7 opens an epic chest |
+| `get_shop_state()` | chest prices, free-chest and spin timers, spin segments, free-coin videos |
+| `open_chest(p_chest_id)` | `{coins, gems}`; `free` every 4 hours, others cost gems |
+| `spin_wheel()` | `{segment, coins, gems}`; once per UTC day |
+
+The store packs are replaced by five packs (10K–250K coins, ₹ price labels; new `store_packs.tag` column).
+

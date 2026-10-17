@@ -80,7 +80,7 @@ begin
   -- ...but can read the catalog
   perform t.check((select count(*) from public.games) = 13, 'anon reads 13 games');
   perform t.check((select count(*) from public.tournaments) = 65, 'anon reads 65 tournaments');
-  perform t.check((select count(*) from public.store_packs) = 4, 'anon reads 4 packs');
+  perform t.check((select count(*) from public.store_packs) = 5, 'anon reads 5 packs (progression migration)');
   perform t.check((select count(*) from public.tournaments where featured) = 4, '4 featured tournaments');
 
   -- authenticated cannot call internal helpers or write tables directly
@@ -187,7 +187,7 @@ begin
   perform t.check(v -> 'entries' -> 0 -> 'score' = 'null'::jsonb and (v -> 'entries' -> 0 ->> 'prize')::int = 0,
                   'unsubmitted entry has null score and prize 0');
   perform t.check((select array_agg(k order by k) from jsonb_object_keys(v -> 'entries' -> 0) k)
-                  = array['display_name','duration_ms','player_id','prize','rank','score','submit_sequence'],
+                  = array['avatar_id','display_name','duration_ms','player_id','prize','rank','score','submit_sequence'],
                   'entry keys');
   perform t.check((select array_agg(k order by k) from jsonb_object_keys(v) k)
                   = array['entries','id','seed','status','tournament_id'], 'pool keys');
@@ -422,15 +422,15 @@ declare v jsonb; c bigint;
 begin
   c := t.coins(t.uid(3));
   perform t.login(t.uid(3));
-  perform t.check(public.purchase_pack_demo('pack_medium') = 1300, 'demo pack = 1300');
+  perform t.check(public.purchase_pack_demo('coins_25k') = 25000, 'demo pack = 25000');
   perform t.expect_error($q$select public.purchase_pack_demo('pack_nope')$q$, 'PACK_NOT_FOUND', 'unknown pack');
   perform t.admin();
-  perform t.check(t.coins(t.uid(3)) = c + 1300, 'pack credited');
+  perform t.check(t.coins(t.uid(3)) = c + 25000, 'pack credited');
   perform t.check(exists (select 1 from public.wallet_transactions where player_id = t.uid(3)
-                          and description = 'Store: Pouch (demo, no charge)'), 'store tx text');
+                          and description = 'Store: 25K Coins (demo, no charge)'), 'store tx text');
   update public.app_settings set value = 'false' where key = 'demo_purchases_enabled';
   perform t.login(t.uid(3));
-  perform t.expect_error($q$select public.purchase_pack_demo('pack_small')$q$, 'PURCHASES_DISABLED', 'demo disabled');
+  perform t.expect_error($q$select public.purchase_pack_demo('coins_10k')$q$, 'PURCHASES_DISABLED', 'demo disabled');
   perform t.admin();
   update public.app_settings set value = 'true' where key = 'demo_purchases_enabled';
 

@@ -1,5 +1,15 @@
 package com.funpixelnest.mgp.ui.screens
 
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import com.funpixelnest.mgp.data.isDemoBackend
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -65,10 +75,7 @@ fun ProfileScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Text("👤", fontSize = 44.sp)
-                Column(Modifier.weight(1f)) {
-                    Text(repository.player.displayName, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                    Text("Guest account", color = MgpColors.TextMuted)
-                }
+                PlayerNameEditor(repository = repository, modifier = Modifier.weight(1f))
             }
         }
         item {
@@ -113,10 +120,18 @@ fun ProfileScreen(
             val tournament = repository.tournament(pool.tournamentId) ?: return@items
             val game = repository.game(tournament.gameId)
             val myRow = Leaderboard.rank(pool, tournament).find { it.entry.playerId == repository.player.id }
-            val statusText = when (pool.status) {
-                PoolStatus.OPEN -> "Filling · ${pool.entries.size}/${tournament.poolSize} joined"
-                PoolStatus.FULL -> "In progress · ${pool.entries.count { it.hasSubmitted }}/${tournament.poolSize} finished"
-                PoolStatus.COMPLETED -> "Finished · Rank #${myRow?.rank ?: "-"}"
+            val statusText = if (tournament.isDuel) {
+                when (pool.status) {
+                    PoolStatus.OPEN -> "1v1 · Finding an opponent"
+                    PoolStatus.FULL -> "1v1 · Waiting for opponent"
+                    PoolStatus.COMPLETED -> if (myRow?.rank == 1) "1v1 · You won" else "1v1 · You lost"
+                }
+            } else {
+                when (pool.status) {
+                    PoolStatus.OPEN -> "Filling · ${pool.entries.size}/${tournament.poolSize} joined"
+                    PoolStatus.FULL -> "In progress · ${pool.entries.count { it.hasSubmitted }}/${tournament.poolSize} finished"
+                    PoolStatus.COMPLETED -> "Finished · Rank #${myRow?.rank ?: "-"}"
+                }
             }
             Row(
                 modifier = Modifier
@@ -171,5 +186,53 @@ private fun StatTile(label: String, value: String, modifier: Modifier = Modifier
     ) {
         Text(value, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = MgpColors.Primary)
         Text(label, color = MgpColors.TextMuted, style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+/** Name with an Edit button; saving goes through the backend so leaderboards show the new name. */
+@Composable
+private fun PlayerNameEditor(repository: PlatformRepository, modifier: Modifier = Modifier) {
+    val scope = rememberCoroutineScope()
+    var editing by remember { mutableStateOf(false) }
+    var draft by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+    var saving by remember { mutableStateOf(false) }
+    var name by remember { mutableStateOf(repository.player.displayName) }
+
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (!editing) {
+            Text(name, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(if (isDemoBackend) "Guest · demo mode" else "Guest account", color = MgpColors.TextMuted)
+                TextButton(onClick = { draft = name; error = null; editing = true }) { Text("Edit name") }
+            }
+        } else {
+            OutlinedTextField(
+                value = draft,
+                onValueChange = { draft = it.take(20) },
+                singleLine = true,
+                label = { Text("Display name") },
+                isError = error != null,
+                supportingText = { error?.let { Text(it) } },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    enabled = !saving,
+                    onClick = {
+                        saving = true
+                        scope.launch {
+                            error = repository.setDisplayName(draft)
+                            if (error == null) {
+                                name = repository.player.displayName
+                                editing = false
+                            }
+                            saving = false
+                        }
+                    },
+                ) { Text(if (saving) "Saving…" else "Save") }
+                TextButton(onClick = { editing = false }) { Text("Cancel") }
+            }
+        }
     }
 }

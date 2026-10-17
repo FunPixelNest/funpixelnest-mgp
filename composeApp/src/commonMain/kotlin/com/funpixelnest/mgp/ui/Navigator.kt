@@ -18,6 +18,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.funpixelnest.mgp.domain.MatchTicket
+import com.funpixelnest.mgp.game.GameResult
 
 /**
  * Bottom-bar tabs, in display order. Games (home) sits in the center.
@@ -36,6 +37,7 @@ sealed interface Screen {
     data class GameDetail(val gameId: String) : Screen
     data class PlayGame(val ticket: MatchTicket) : Screen
     data class PoolLeaderboard(val poolId: String) : Screen
+    data class PracticeResult(val gameId: String, val result: GameResult?) : Screen
 }
 
 /**

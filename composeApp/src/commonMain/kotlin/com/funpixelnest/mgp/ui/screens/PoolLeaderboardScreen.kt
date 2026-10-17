@@ -63,6 +63,9 @@ fun PoolLeaderboardScreen(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         item { StatusHeader(current, tournament, repository) }
+        if (tournament.isDuel && current.status == PoolStatus.COMPLETED) {
+            item { DuelResultBanner(rows = rows, myId = repository.player.id) }
+        }
         items(rows, key = { it.entry.playerId }) { row ->
             LeaderboardRow(row = row, isMe = row.entry.playerId == repository.player.id)
         }
@@ -75,10 +78,19 @@ private fun StatusHeader(pool: Pool, tournament: Tournament, repository: Platfor
     val game = repository.game(tournament.gameId)
     val joined = pool.entries.size
     val submitted = pool.entries.count { it.hasSubmitted }
-    val status = when (pool.status) {
-        PoolStatus.OPEN -> "Waiting for ${tournament.poolSize - joined} more player(s) to join"
-        PoolStatus.FULL -> "Waiting for ${tournament.poolSize - submitted} player(s) to finish"
-        PoolStatus.COMPLETED -> "Final results"
+    val opponent = pool.entries.firstOrNull { it.playerId != repository.player.id }
+    val status = if (tournament.isDuel) {
+        when (pool.status) {
+            PoolStatus.OPEN -> "Finding your opponent… Your score is saved; we'll match you with the next player."
+            PoolStatus.FULL -> "Waiting for ${opponent?.displayName ?: "your opponent"} to finish"
+            PoolStatus.COMPLETED -> "Final result"
+        }
+    } else {
+        when (pool.status) {
+            PoolStatus.OPEN -> "Waiting for ${tournament.poolSize - joined} more player(s) to join"
+            PoolStatus.FULL -> "Waiting for ${tournament.poolSize - submitted} player(s) to finish"
+            PoolStatus.COMPLETED -> "Final results"
+        }
     }
 
     Column(
@@ -94,7 +106,7 @@ private fun StatusHeader(pool: Pool, tournament: Tournament, repository: Platfor
                 Spacer(Modifier.width(10.dp))
             }
             Text(
-                "${game?.name ?: ""} · ${tournament.title}",
+                if (tournament.isDuel) "${game?.name ?: ""} · 1v1 ${tournament.title}" else "${game?.name ?: ""} · ${tournament.title}",
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium,
             )
@@ -109,11 +121,46 @@ private fun StatusHeader(pool: Pool, tournament: Tournament, repository: Platfor
                 color = if (pool.status == PoolStatus.COMPLETED) MgpColors.Win else MgpColors.TextMuted,
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Leaderboard.prizePayouts(tournament).forEachIndexed { index, prize ->
-                PrizeChip(rank = index + 1, prize = prize)
+        if (tournament.isDuel) {
+            Text(
+                "Winner takes 🪙 ${formatCoins(Leaderboard.prizePool(tournament))}",
+                fontWeight = FontWeight.Bold,
+                color = MgpColors.Primary,
+            )
+        } else {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Leaderboard.prizePayouts(tournament).forEachIndexed { index, prize ->
+                    PrizeChip(rank = index + 1, prize = prize)
+                }
             }
         }
+    }
+}
+
+/** Big "You won / You lost" card at the top of a finished duel. */
+@Composable
+private fun DuelResultBanner(rows: List<Leaderboard.Row>, myId: String) {
+    val me = rows.firstOrNull { it.entry.playerId == myId }
+    val winner = rows.firstOrNull { it.rank == 1 }
+    val iWon = me?.rank == 1
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(if (iWon) MgpColors.Win else MgpColors.Secondary, RoundedCornerShape(18.dp))
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            if (iWon) "🏆 You won!" else "${winner?.entry?.displayName ?: "Your opponent"} won",
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.headlineSmall,
+        )
+        Text(
+            if (iWon) "+🪙 ${formatCoins(me?.prize ?: 0L)} added to your balance" else "Close one! Try a rematch.",
+            color = Color.White,
+        )
     }
 }
 

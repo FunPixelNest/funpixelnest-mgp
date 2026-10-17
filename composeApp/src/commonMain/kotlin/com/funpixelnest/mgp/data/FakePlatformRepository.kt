@@ -44,7 +44,12 @@ class FakePlatformRepository(
     private val simulationSpeed: Double = 1.0,
 ) : PlatformRepository {
 
-    override val player = Player(id = "me", displayName = "You")
+    override val status: StateFlow<BackendStatus> = MutableStateFlow(BackendStatus.Ready)
+
+    override suspend fun initialize() = Unit
+
+    private var _player = Player(id = "me", displayName = "You")
+    override val player: Player get() = _player
 
     private val mutex = Mutex()
     private var idCounter = 0L
@@ -87,7 +92,7 @@ class FakePlatformRepository(
 
         val ticket = mutex.withLock {
             if (_wallet.value.coins < tournament.entryFee) return JoinResult.InsufficientCoins
-            addTransaction(-tournament.entryFee, "Entry: ${gameName(tournament)} ${tournament.title}")
+            addTransaction(-tournament.entryFee, "Entry: ${label(tournament)}")
 
             val pool = Pool(
                 id = nextId("pool"),
@@ -149,6 +154,21 @@ class FakePlatformRepository(
 
     // ---------------------------------------------------------------- store
 
+    override suspend fun setDisplayName(name: String): String? {
+        val trimmed = name.trim()
+        if (trimmed.length !in 2..20) return "Name must be 2 to 20 characters."
+        mutex.withLock {
+            _player = _player.copy(displayName = trimmed)
+            // Update my name on existing leaderboards too (same as the server).
+            pools.value.values.forEach { pool ->
+                putPool(pool.copy(entries = pool.entries.map { if (it.playerId == player.id) it.copy(displayName = trimmed) else it }))
+            }
+        }
+        return null
+    }
+
+    override suspend fun registerPushToken(token: String, platform: String) = Unit
+
     override fun storePacks(): List<StorePack> = SampleCatalog.storePacks
 
     override suspend fun purchasePack(packId: String): PurchaseResult = mutex.withLock {
@@ -161,11 +181,12 @@ class FakePlatformRepository(
 
     private fun buildRewards(): RewardsState {
         val mine = pools.value.values.filter { p -> p.entries.any { it.playerId == player.id } }
+        // (isDuel, my row) for every finished pool.
         val myRows = mine
             .filter { it.status == PoolStatus.COMPLETED }
             .mapNotNull { pool ->
                 val t = tournament(pool.tournamentId) ?: return@mapNotNull null
-                Leaderboard.rank(pool, t).find { it.entry.playerId == player.id }
+                Leaderboard.rank(pool, t).find { it.entry.playerId == player.id }?.let { t.isDuel to it }
             }
         val distinctGames = mine.mapNotNull { tournament(it.tournamentId)?.gameId }.distinct().size
 
@@ -179,11 +200,14 @@ class FakePlatformRepository(
             missions = listOf(
                 mission("play_3", "Play 3 tournaments", 3, mine.size, 100),
                 mission("variety_3", "Play 3 different games", 3, distinctGames, 200),
-                mission("top_3", "Finish in the top 3", 1, myRows.count { it.prize > 0 }, 150),
-                mission("win_1", "Win a tournament", 1, myRows.count { it.rank == 1 }, 250),
+                mission("duel_1", "Play a 1v1 duel", 1, mine.count { isDuelPool(it) }, 100),
+                mission("top_3", "Finish in the top 3", 1, myRows.count { it.second.prize > 0 && !it.first }, 150),
+                mission("win_1", "Win a tournament or duel", 1, myRows.count { it.second.rank == 1 }, 250),
             ),
         )
     }
+
+    private fun isDuelPool(pool: Pool) = tournament(pool.tournamentId)?.isDuel == true
 
     private fun refreshRewards() {
         _rewards.value = buildRewards()
@@ -249,7 +273,8 @@ class FakePlatformRepository(
     private fun payOut(pool: Pool, tournament: Tournament) {
         val myRow = Leaderboard.rank(pool, tournament).find { it.entry.playerId == player.id } ?: return
         if (myRow.prize > 0) {
-            addTransaction(myRow.prize, "Prize: #${myRow.rank} in ${gameName(tournament)} ${tournament.title}")
+            val what = if (tournament.isDuel) "won ${label(tournament)}" else "#${myRow.rank} in ${label(tournament)}"
+            addTransaction(myRow.prize, "Prize: $what")
         }
     }
 
@@ -279,6 +304,10 @@ class FakePlatformRepository(
     private fun nextId(prefix: String) = "${prefix}_${++idCounter}"
 
     private fun gameName(tournament: Tournament) = game(tournament.gameId)?.name ?: tournament.gameId
+
+    /** "Solitaire Pro" or "Solitaire 1v1 Quick" (same wording as the server). */
+    private fun label(tournament: Tournament) =
+        if (tournament.isDuel) "${gameName(tournament)} 1v1 ${tournament.title}" else "${gameName(tournament)} ${tournament.title}"
 
     private companion object {
         const val FREE_COINS = 50L

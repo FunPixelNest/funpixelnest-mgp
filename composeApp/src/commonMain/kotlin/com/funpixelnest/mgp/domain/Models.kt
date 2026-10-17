@@ -10,10 +10,13 @@ data class Game(
     val accentColor: Long,
 )
 
+/** How a tournament is played. A duel is simply a 2-player pool where the winner takes the pot. */
+enum class TournamentMode { POOL, DUEL }
+
 /**
  * A tournament template: players join it and get grouped into pools of [poolSize].
  * Everyone in a pool plays the same seed; the pool closes only when all players
- * have submitted (no timeout).
+ * have submitted (no timeout). Async 1v1 duels use the same rules with poolSize = 2.
  */
 data class Tournament(
     val id: String,
@@ -24,7 +27,23 @@ data class Tournament(
     /** Cut kept by the platform before prizes are paid. 0 = everything goes to players. */
     val platformFeePercent: Int = 0,
     val prizeStructure: PrizeStructure = PrizeStructure.STANDARD,
-)
+    val mode: TournamentMode = TournamentMode.POOL,
+) {
+    val isDuel: Boolean get() = mode == TournamentMode.DUEL
+
+    companion object {
+        fun duel(id: String, gameId: String, title: String, entryFee: Long, platformFeePercent: Int) = Tournament(
+            id = id,
+            gameId = gameId,
+            title = title,
+            entryFee = entryFee,
+            poolSize = 2,
+            platformFeePercent = platformFeePercent,
+            prizeStructure = PrizeStructure.WINNER_TAKES_ALL,
+            mode = TournamentMode.DUEL,
+        )
+    }
+}
 
 /**
  * Share of the prize pool per rank (index 0 = 1st place).
@@ -41,6 +60,9 @@ data class PrizeStructure(val sharesPercent: List<Int>) {
     companion object {
         /** 1st = 50%, 2nd = 30%, 3rd = the remaining 20%. */
         val STANDARD = PrizeStructure(listOf(50, 30, 20))
+
+        /** 1v1 duels: the winner gets the whole prize pool. */
+        val WINNER_TAKES_ALL = PrizeStructure(listOf(100))
     }
 }
 
@@ -64,6 +86,9 @@ data class PoolEntry(
     val durationMillis: Long? = null,
     /** Server-assigned submit sequence; earlier wins an exact tie. */
     val submitSequence: Long? = null,
+    /** Final rank and prize, set by the server when the pool completes (null before). */
+    val finalRank: Int? = null,
+    val finalPrize: Long? = null,
 ) {
     val hasSubmitted: Boolean get() = score != null
 }
@@ -84,7 +109,21 @@ data class MatchTicket(
     val tournamentId: String,
     val gameId: String,
     val seed: Long,
-)
+    /** Free practice round: nothing is paid or submitted. */
+    val isPractice: Boolean = false,
+) {
+    companion object {
+        /** A local ticket for a free practice round with a fresh random board. */
+        fun practice(gameId: String, seed: Long) = MatchTicket(
+            ticketId = "practice",
+            poolId = "",
+            tournamentId = "",
+            gameId = gameId,
+            seed = seed,
+            isPractice = true,
+        )
+    }
+}
 
 data class Wallet(
     val coins: Long,

@@ -23,6 +23,12 @@ object Leaderboard {
             .thenBy { it.submitSequence ?: Long.MAX_VALUE }
 
     fun rank(pool: Pool, tournament: Tournament): List<Row> {
+        // Once the server has settled the pool, show its official ranks and prizes.
+        if (pool.status == PoolStatus.COMPLETED && pool.entries.isNotEmpty() && pool.entries.all { it.finalRank != null }) {
+            return pool.entries
+                .sortedBy { it.finalRank }
+                .map { Row(rank = it.finalRank, entry = it, prize = it.finalPrize ?: 0L) }
+        }
         val payouts = prizePayouts(tournament)
         val submitted = pool.entries.filter { it.hasSubmitted }.sortedWith(order)
         val waiting = pool.entries.filterNot { it.hasSubmitted }

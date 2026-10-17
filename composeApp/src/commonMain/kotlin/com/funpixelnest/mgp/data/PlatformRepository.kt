@@ -15,10 +15,18 @@ import kotlinx.coroutines.flow.StateFlow
 /**
  * Everything the app needs from the backend.
  *
- * Today: [FakePlatformRepository] (in-memory, for building the UI).
- * Next: a Nakama-backed implementation — the screens won't change.
+ * - [FakePlatformRepository]: in-memory demo backend (no account needed).
+ * - [SupabasePlatformRepository]: the real backend, used when SUPABASE_URL is configured.
+ * The screens don't know which one they're talking to.
  */
 interface PlatformRepository {
+    /** Loading → Ready (or Error). Screens wait for Ready before reading [player]. */
+    val status: StateFlow<BackendStatus>
+
+    /** Connects and signs the player in (guest account on first launch). Safe to call again to retry. */
+    suspend fun initialize()
+
+    /** The signed-in player. Only valid once [status] is Ready. */
     val player: Player
     val wallet: StateFlow<Wallet>
 
@@ -66,6 +74,20 @@ interface PlatformRepository {
 
     /** Buys a coin pack. Payments aren't connected yet, so the fake backend grants it as a demo. */
     suspend fun purchasePack(packId: String): PurchaseResult
+
+    // ---------------------------------------------------------------- Account & push
+
+    /** Renames the player (2–20 characters). Returns an error message, or null on success. */
+    suspend fun setDisplayName(name: String): String?
+
+    /** Saves this device's push token so match results can be sent when the app is closed. */
+    suspend fun registerPushToken(token: String, platform: String)
+}
+
+sealed interface BackendStatus {
+    data object Loading : BackendStatus
+    data object Ready : BackendStatus
+    data class Error(val message: String) : BackendStatus
 }
 
 sealed interface PurchaseResult {

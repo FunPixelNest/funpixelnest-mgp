@@ -37,7 +37,8 @@ import kotlin.random.Random
 fun PlaceholderGameScreen(
     game: Game,
     ticket: MatchTicket,
-    onFinished: (GameResult) -> Unit,
+    /** Null result = the player quit. */
+    onFinished: (GameResult?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var submitting by remember { mutableStateOf(false) }
@@ -56,7 +57,7 @@ fun PlaceholderGameScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text("Unity game will load here", fontWeight = FontWeight.Bold)
+            Text("This game's build isn't added yet", fontWeight = FontWeight.Bold)
             Text("Launch data sent to Unity:", color = MgpColors.TextMuted)
             Text("gameId = ${ticket.gameId}", color = MgpColors.TextMuted)
             Text("seed = ${ticket.seed}", color = MgpColors.TextMuted)
@@ -75,19 +76,19 @@ fun PlaceholderGameScreen(
             enabled = !submitting,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Finish & submit demo score")
+            Text(if (ticket.isPractice) "Finish with a demo score" else "Finish & submit demo score")
         }
         OutlinedButton(
             onClick = {
                 submitting = true
-                onFinished(GameResult(score = 0, durationMillis = 0))
+                onFinished(null)
             },
             enabled = !submitting,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Quit (counts as score 0)")
+            Text(if (ticket.isPractice) "Quit" else "Quit (counts as score 0)")
         }
-        Text(
+        if (!ticket.isPractice) Text(
             "Your entry is already paid, so quitting still submits a score of 0.",
             color = MgpColors.TextMuted,
             textAlign = TextAlign.Center,

@@ -1,0 +1,23 @@
+{
+  "name": "com.funpixelnest.sdk",
+  "displayName": "FunPixelNest SDK",
+  "version": "0.1.0",
+  "unity": "2021.3",
+  "description": "Lets FunPixelNest games talk to the FunPixelNest platform app: read launch data (game, mode, seed, ticket, player), seed a deterministic RNG so every player in a match gets the identical game, and submit the final score or quit. Supports WebGL (window.FPN bridge) and Android/iOS (Unity as a Library).",
+  "keywords": [
+    "funpixelnest",
+    "platform",
+    "tournament",
+    "skill games"
+  ],
+  "author": {
+    "name": "FunPixelNest"
+  },
+  "samples": [
+    {
+      "displayName": "Quick Start",
+      "description": "Minimal MonoBehaviour: read the seed, shuffle a deck with FpnRandom, start the match, submit the score or quit.",
+      "path": "Samples~/QuickStart"
+    }
+  ]
+}

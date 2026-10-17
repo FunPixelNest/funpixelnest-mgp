@@ -2,7 +2,7 @@
   "devControls": true,
   "games": {
     "block_puzzle": {
-      "path": "block_puzzle/v1/",
+      "path": "block_puzzle/v2/",
       "loaderUrl": "Build/BlockPuzzle.loader.js",
       "dataUrl": "Build/BlockPuzzle.data",
       "frameworkUrl": "Build/BlockPuzzle.framework.js",

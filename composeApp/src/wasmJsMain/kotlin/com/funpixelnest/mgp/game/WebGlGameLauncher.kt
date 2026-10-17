@@ -4,7 +4,6 @@ package com.funpixelnest.mgp.game
 
 import kotlin.coroutines.resume
 import kotlin.js.ExperimentalWasmJsInterop
-import kotlin.js.JsFun
 import kotlinx.coroutines.suspendCancellableCoroutine
 
 /**

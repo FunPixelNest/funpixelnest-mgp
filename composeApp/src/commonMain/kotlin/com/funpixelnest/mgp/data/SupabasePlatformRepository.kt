@@ -15,6 +15,8 @@ import com.funpixelnest.mgp.domain.Wallet
 import com.funpixelnest.mgp.domain.WalletTransaction
 import com.funpixelnest.mgp.game.GameResult
 import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.auth.MemoryCodeVerifierCache
+import io.github.jan.supabase.auth.MemorySessionManager
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.exceptions.HttpRequestException
@@ -60,13 +62,21 @@ import kotlinx.serialization.json.put
 class SupabasePlatformRepository(
     supabaseUrl: String,
     supabaseAnonKey: String,
+    /** Tests: keep the sign-in in memory only (no device storage, a fresh guest each time). */
+    inMemorySession: Boolean = false,
 ) : PlatformRepository {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val json = Json { ignoreUnknownKeys = true; explicitNulls = false }
 
     private val client = createSupabaseClient(supabaseUrl, supabaseAnonKey) {
-        install(Auth)
+        install(Auth) {
+            if (inMemorySession) {
+                sessionManager = MemorySessionManager()
+                codeVerifierCache = MemoryCodeVerifierCache()
+                enableLifecycleCallbacks = false
+            }
+        }
         install(Postgrest)
         install(Realtime)
     }

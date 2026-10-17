@@ -26,6 +26,13 @@ jobs:
       - name: Unit tests (shared logic)
         run: set -o pipefail; ./gradlew --console=plain :composeApp:testDebugUnitTest 2>&1 | tee -a ci.log
 
+      # Opt-in: runs the app's Supabase client against the LIVE project. Add "[live-test]" to a commit message.
+      - name: Live backend test (opt-in)
+        if: contains(github.event.head_commit.message, '[live-test]')
+        env:
+          FPN_LIVE_TEST: "true"
+        run: set -o pipefail; ./gradlew --console=plain :composeApp:testDebugUnitTest --tests '*LiveBackendTest*' --rerun -i 2>&1 | grep -E "LIVE:|PASSED|FAILED|Exception|expected|BUILD" | tee -a ci.log
+
       - name: Android debug APK
         run: set -o pipefail; ./gradlew --console=plain :composeApp:assembleDebug 2>&1 | tee -a ci.log
 

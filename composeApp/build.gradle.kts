@@ -163,4 +163,8 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    testOptions {
+        // JVM unit tests: Android logging calls (used by libraries) return defaults instead of failing.
+        unitTests.isReturnDefaultValues = true
+    }
 }

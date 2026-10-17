@@ -1,0 +1,80 @@
+Starting a Gradle Daemon (subsequent builds will be faster)
+Calculating task graph as no cached configuration is available for tasks: :composeApp:linkDebugFrameworkIosSimulatorArm64
+Type-safe project accessors is an incubating feature.
+
+> Configure project :composeApp
+w: file:///Users/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/build.gradle.kts:102:36: 'runtime: String' is deprecated. Specify dependency directly
+w: file:///Users/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/build.gradle.kts:103:36: 'foundation: String' is deprecated. Specify dependency directly
+w: file:///Users/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/build.gradle.kts:104:36: 'material3: String' is deprecated. Specify dependency directly
+w: file:///Users/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/build.gradle.kts:105:36: 'ui: String' is deprecated. Specify dependency directly
+w: file:///Users/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/build.gradle.kts:106:36: 'components: ComposePlugin.CommonComponentsDependencies' is deprecated. Specify dependency directly
+w: file:///Users/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/build.gradle.kts:106:47: 'resources: String' is deprecated. Specify dependency directly
+w: file:///Users/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/build.gradle.kts:108:36: 'materialIconsExtended: String' is deprecated. This artifact is pinned to version 1.7.3 and will not receive updates. Either use this version explicitly or migrate to Material Symbols (vector resources). See https://kotlinlang.org/docs/multiplatform/whats-new-compose-180.html
+w: ⚠️ Deprecated Gradle Version
+The used Gradle version (Gradle 8.14.3) is deprecated and will not be supported in future Kotlin Gradle Plugin releases.
+The minimum supported Gradle version will become Gradle 8.14.4 in Kotlin 2.5.0.
+
+This warning can be suppressed in 'gradle.properties':
+    kotlin.suppressGradlePluginWarnings=DeprecatedGradleVersionWarning
+Solution: Please update the Gradle version to at least Gradle 8.14.4.
+
+
+> Task :composeApp:kmpPartiallyResolvedDependenciesChecker
+> Task :composeApp:checkIosSimulatorArm64MainComposeLibrariesCompatibility
+> Task :composeApp:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :composeApp:convertXmlValueResourcesForCommonMain NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForAppleMain NO-SOURCE
+> Task :composeApp:convertXmlValueResourcesForAppleMain NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForAppleMain NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForAppleMain NO-SOURCE
+> Task :composeApp:convertXmlValueResourcesForIosMain NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForIosMain NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForIosMain NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForIosMain NO-SOURCE
+> Task :composeApp:convertXmlValueResourcesForIosSimulatorArm64Main NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForIosSimulatorArm64Main NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForIosSimulatorArm64Main NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForIosSimulatorArm64Main NO-SOURCE
+> Task :composeApp:convertXmlValueResourcesForNativeMain NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForNativeMain NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForNativeMain NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForNativeMain NO-SOURCE
+> Task :composeApp:generateBackendConfig
+> Task :composeApp:generateComposeResClass
+> Task :composeApp:generateExpectResourceCollectorsForCommonMain
+> Task :composeApp:copyNonXmlValueResourcesForCommonMain
+> Task :composeApp:prepareComposeResourcesTaskForCommonMain
+> Task :composeApp:generateResourceAccessorsForCommonMain
+> Task :composeApp:generateActualResourceCollectorsForIosSimulatorArm64Main
+
+> Task :composeApp:downloadKotlinNativeDistribution
+Kotlin/Native bundle directory /Users/runner/.konan/kotlin-native-prebuilt-macos-aarch64-2.4.0 is not empty. Native bundle files will be overwritten.
+Downloading native dependencies (LLVM, sysroot etc). This is a one-time action performed only on the first run of the compiler.
+Downloading dependency https://download.jetbrains.com/kotlin/native/resources/llvm/21-aarch64-macos/llvm-21-aarch64-macos-essentials-97.tar.gz to /Users/runner/.konan/dependencies/cache/llvm-21-aarch64-macos-essentials-97.tar.gz
+Done.
+Extracting dependency: /Users/runner/.konan/dependencies/cache/llvm-21-aarch64-macos-essentials-97.tar.gz into /Users/runner/.konan/dependencies
+Downloading dependency https://download.jetbrains.com/kotlin/native/libffi-3.3-1-macos-arm64.tar.gz to /Users/runner/.konan/dependencies/cache/libffi-3.3-1-macos-arm64.tar.gz
+Done.
+Extracting dependency: /Users/runner/.konan/dependencies/cache/libffi-3.3-1-macos-arm64.tar.gz into /Users/runner/.konan/dependencies
+
+> Task :composeApp:compileKotlinIosSimulatorArm64 FAILED
+e: file:///Users/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/src/commonMain/kotlin/com/funpixelnest/mgp/domain/Progression.kt:102:58 Return type mismatch: expected 'Long', actual 'Int'.
+gradle/actions: Writing build results to /Users/runner/work/_temp/.gradle-actions/build-results/__run-1792236905924.json
+
+[Incubating] Problems report is available at: file:///Users/runner/work/funpixelnest-mgp/funpixelnest-mgp/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':composeApp:compileKotlinIosSimulatorArm64'.
+> Compilation finished with errors
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 42s
+11 actionable tasks: 11 executed
+Configuration cache entry stored.

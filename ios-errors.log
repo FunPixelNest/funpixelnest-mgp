@@ -1,0 +1,4 @@
+60:> Task :composeApp:compileKotlinIosSimulatorArm64 FAILED
+61:e: file:///Users/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/src/commonMain/kotlin/com/funpixelnest/mgp/domain/Progression.kt:102:58 Return type mismatch: expected 'Long', actual 'Int'.
+68:* What went wrong:
+78:BUILD FAILED in 42s

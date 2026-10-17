@@ -1,5 +1,7 @@
 package com.funpixelnest.mgp.game
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import com.funpixelnest.mgp.domain.Game
 import com.funpixelnest.mgp.domain.MatchTicket
 import kotlinx.serialization.SerialName
@@ -32,6 +34,7 @@ data class GameLaunchRequest(
         LaunchDataDto.serializer(),
         LaunchDataDto(
             gameId = game.id,
+            gameName = game.name,
             mode = mode.wireName,
             seed = ticket.seed.toString(),
             ticketId = ticket.ticketId,
@@ -84,11 +87,19 @@ interface GameLauncher {
 
     /** Music / sound / vibration changed while the game runs. */
     fun applySettings(settings: GameSettings) {}
+
+    /**
+     * Where the running game is drawn inside the app (Android: a WebView). Platforms that draw the game
+     * themselves on top of the app (web) leave this empty.
+     */
+    @Composable
+    fun GameView(modifier: Modifier) {}
 }
 
 @Serializable
 private data class LaunchDataDto(
     @SerialName("gameId") val gameId: String,
+    @SerialName("gameName") val gameName: String = "",
     @SerialName("mode") val mode: String,
     @SerialName("seed") val seed: String,
     @SerialName("ticketId") val ticketId: String,

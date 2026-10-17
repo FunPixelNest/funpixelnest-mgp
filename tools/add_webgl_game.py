@@ -4,8 +4,8 @@ Add a Unity WebGL build to the FunPixelNest games catalog.
 
     python3 tools/add_webgl_game.py <game_id> <build.zip or build folder> [--games-dir DIR] [--version v1]
 
-- Copies the build into <games-dir>/<game_id>/<version>/ (default games dir: composeApp/src/wasmJsMain/resources/games,
-  which the web app serves at "games/"; for production upload the same folder layout to Cloudflare R2).
+- Copies the build into <games-dir>/<game_id>/<version>/ (default games dir: games-host/, which Cloudflare Pages
+  publishes at https://funpixelnest-games.pages.dev/ on every push; the Android and web apps load games from there).
 - Finds the Unity files in Build/ (loader, data, framework, wasm) and writes/updates <games-dir>/catalog.json.
 - Warns when the build needs special server headers (compressed without "Decompression Fallback").
 
@@ -43,7 +43,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("game_id")
     parser.add_argument("source", type=Path, help="Unity WebGL build .zip or folder")
-    parser.add_argument("--games-dir", type=Path, default=Path("composeApp/src/wasmJsMain/resources/games"))
+    parser.add_argument("--games-dir", type=Path, default=Path("games-host"))
     parser.add_argument("--version", default="v1")
     parser.add_argument("--name", help="Product name shown while loading (default: from the loader file name)")
     args = parser.parse_args()

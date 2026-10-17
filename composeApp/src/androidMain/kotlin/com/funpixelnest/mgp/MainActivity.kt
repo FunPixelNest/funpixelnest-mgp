@@ -24,6 +24,8 @@ import com.funpixelnest.mgp.data.PlatformRepository
 import com.funpixelnest.mgp.data.SupabasePlatformRepository
 import com.funpixelnest.mgp.data.createPlatformRepository
 import io.github.jan.supabase.auth.handleDeeplinks
+import com.funpixelnest.mgp.config.BackendConfig
+import com.funpixelnest.mgp.game.WebViewGameLauncher
 import com.funpixelnest.mgp.push.AndroidPush
 import com.funpixelnest.mgp.ui.Navigator
 import com.funpixelnest.mgp.ui.Screen
@@ -33,6 +35,8 @@ class MainActivity : ComponentActivity() {
 
     /** Pool to open when the app is started from a result notification. */
     private val pendingPoolId = mutableStateOf<String?>(null)
+
+    private val gameLauncher by lazy { WebViewGameLauncher(BackendConfig.GAMES_BASE_URL) }
 
     /** One repository for the activity, so Google/Apple/Facebook sign-in redirects reach it. */
     private val repository: PlatformRepository by lazy { createPlatformRepository() }
@@ -80,8 +84,9 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // TODO(unity): pass gameLauncher = UnityGameLauncher(this) once Unity as a Library is added.
-            App(repository = repository, navigator = navigator)
+            // Games run as Unity WebGL builds hosted on Cloudflare, shown in a WebView.
+            // (Later: Unity as a Library for games that need native performance.)
+            App(repository = repository, navigator = navigator, gameLauncher = gameLauncher)
         }
     }
 

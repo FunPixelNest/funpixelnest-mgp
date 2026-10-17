@@ -415,7 +415,11 @@ private fun MainApp(
                                 )
                             }
                         }
-                        is Screen.GameRunning -> repository.game(current.ticket.gameId)?.let { GameRunningBackdrop(it) }
+                        is Screen.GameRunning -> {
+                            repository.game(current.ticket.gameId)?.let { GameRunningBackdrop(it) }
+                            // Android draws the game here (WebView); on web it opens on top of the app.
+                            gameLauncher?.GameView(Modifier.fillMaxSize())
+                        }
                         is Screen.PoolLeaderboard -> PoolLeaderboardScreen(
                             poolId = current.poolId,
                             repository = repository,

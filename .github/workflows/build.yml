@@ -23,6 +23,9 @@ jobs:
           java-version: "17"
       - uses: gradle/actions/setup-gradle@v4
 
+      - name: Game host script is in sync
+        run: cmp composeApp/src/wasmJsMain/resources/fpn-unity-host.js games-host/fpn-unity-host.js
+
       - name: Unit tests (shared logic)
         run: set -o pipefail; ./gradlew --console=plain :composeApp:testDebugUnitTest 2>&1 | tee -a ci.log
 

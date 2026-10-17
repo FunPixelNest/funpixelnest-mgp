@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -12,7 +13,7 @@ plugins {
 // ---------- Backend configuration ----------
 // Read from environment variables (CI) or local.properties (your machine). Never commit real keys.
 // Empty SUPABASE_URL = the app runs on the built-in demo backend.
-val localProps = java.util.Properties().apply {
+val localProps = Properties().apply {
     val file = rootProject.file("local.properties")
     if (file.exists()) file.inputStream().use { load(it) }
 }

@@ -26,7 +26,7 @@ namespace FunPixelNest
         [DllImport("__Internal")] private static extern void FPN_SubmitScore(double score, double durationMs, string eventLogJson);
         [DllImport("__Internal")] private static extern void FPN_Quit();
         [DllImport("__Internal")] private static extern void FPN_Log(string message);
-        [DllImport("__Internal")] private static extern void FPN_Hud(double score, double secondsLeft, double lives);
+        [DllImport("__Internal")] private static extern void FPN_Hud(double score, double secondsLeft, double lives, double counter);
         [DllImport("__Internal")] private static extern double FPN_GetInset(int bottom);
 
         /// <summary>Returns true when the host is present; outputs the raw launch JSON (may be null).</summary>
@@ -53,9 +53,9 @@ namespace FunPixelNest
             FPN_Log(message ?? string.Empty);
         }
 
-        internal static void SendHud(long score, double secondsLeft, double lives)
+        internal static void SendHud(long score, double secondsLeft, double lives, double counter)
         {
-            FPN_Hud((double)score, secondsLeft, lives);
+            FPN_Hud((double)score, secondsLeft, lives, counter);
         }
 
         internal static float GetInset(bool bottom)
@@ -123,11 +123,11 @@ namespace FunPixelNest
             // Debug.Log already reaches logcat (tag "Unity"); nothing extra to do.
         }
 
-        internal static void SendHud(long score, double secondsLeft, double lives)
+        internal static void SendHud(long score, double secondsLeft, double lives, double counter)
         {
             using (var bridge = new AndroidJavaClass(AndroidBridgeClass))
             {
-                bridge.CallStatic("onHud", score, (int)secondsLeft, (int)lives);
+                bridge.CallStatic("onHud", score, (int)secondsLeft, (int)lives, (int)counter);
             }
         }
 
@@ -167,7 +167,7 @@ namespace FunPixelNest
             // Debug.Log already reaches the Xcode console; nothing extra to do.
         }
 
-        internal static void SendHud(long score, double secondsLeft, double lives) { /* Unity as a Library: not wired yet */ }
+        internal static void SendHud(long score, double secondsLeft, double lives, double counter) { /* Unity as a Library: not wired yet */ }
 
         internal static float GetInset(bool bottom) { return 0f; }
 
@@ -185,7 +185,7 @@ namespace FunPixelNest
 
         internal static void SendLog(string message) { }
 
-        internal static void SendHud(long score, double secondsLeft, double lives) { }
+        internal static void SendHud(long score, double secondsLeft, double lives, double counter) { }
 
         internal static float GetInset(bool bottom) { return 0f; }
 #endif

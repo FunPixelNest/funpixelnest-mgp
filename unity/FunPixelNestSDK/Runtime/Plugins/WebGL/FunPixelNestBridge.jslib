@@ -7,7 +7,7 @@
 //     submitScore: function (score, durationMs, eventLogJson) {},
 //     quit: function () {},
 //     log: function (message) {},  // optional
-//     hud: function (score, secondsLeft, lives) {},  // optional: live values for the app's HUD (< 0 = none)
+//     hud: function (score, secondsLeft, lives, counter) {},  // optional: live HUD values (< 0 = none); counter = e.g. arrows left
 //     insetTop: 0.12, insetBottom: 0.03  // optional: share of the screen height covered by the app's HUD / bars
 //   };
 //
@@ -64,10 +64,10 @@ mergeInto(LibraryManager.library, {
     }
   },
 
-  FPN_Hud: function (score, secondsLeft, lives) {
+  FPN_Hud: function (score, secondsLeft, lives, counter) {
     try {
       if (typeof window !== 'undefined' && window.FPN && typeof window.FPN.hud === 'function') {
-        window.FPN.hud(score, secondsLeft, lives);
+        window.FPN.hud(score, secondsLeft, lives, counter);
       }
     } catch (e) {
       // the HUD must never break the game

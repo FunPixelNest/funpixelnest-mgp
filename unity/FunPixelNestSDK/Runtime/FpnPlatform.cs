@@ -77,6 +77,7 @@ namespace FunPixelNest
             s_hudScore = long.MinValue;
             s_hudSeconds = int.MinValue;
             s_hudLives = int.MinValue;
+            s_hudCounter = int.MinValue;
             OnScoreSubmitted = null;
             OnNewMatch = null;
         }
@@ -327,6 +328,7 @@ namespace FunPixelNest
         private static long s_hudScore = long.MinValue;
         private static int s_hudSeconds = int.MinValue;
         private static int s_hudLives = int.MinValue;
+        private static int s_hudCounter = int.MinValue;
 
         /// <summary>
         /// Sends the live score, remaining time and lives to the app's HUD. Cheap to call every frame: only
@@ -335,17 +337,22 @@ namespace FunPixelNest
         /// <param name="score">Current score.</param>
         /// <param name="secondsLeft">Time left in seconds; negative = this game has no timer (shown disabled).</param>
         /// <param name="lives">Lives left; negative = this game has no lives (shown disabled).</param>
-        public static void UpdateHud(long score, float secondsLeft = -1f, int lives = -1)
+        /// <param name="counter">
+        /// A game's own count shown in the HUD instead of lives, e.g. arrows left in Arrow Duel; negative = none.
+        /// </param>
+        public static void UpdateHud(long score, float secondsLeft = -1f, int lives = -1, int counter = -1)
         {
             int shown = secondsLeft < 0f ? -1 : Mathf.CeilToInt(secondsLeft);
             int livesShown = lives < 0 ? -1 : lives;
-            if (score == s_hudScore && shown == s_hudSeconds && livesShown == s_hudLives) return;
+            int counterShown = counter < 0 ? -1 : counter;
+            if (score == s_hudScore && shown == s_hudSeconds && livesShown == s_hudLives && counterShown == s_hudCounter) return;
             s_hudScore = score;
             s_hudSeconds = shown;
             s_hudLives = livesShown;
+            s_hudCounter = counterShown;
             try
             {
-                if (IsHosted) FpnNativeBridge.SendHud(score, shown, livesShown);
+                if (IsHosted) FpnNativeBridge.SendHud(score, shown, livesShown, counterShown);
             }
             catch (Exception)
             {
@@ -385,6 +392,7 @@ namespace FunPixelNest
             s_hudScore = long.MinValue;
             s_hudSeconds = int.MinValue;
             s_hudLives = int.MinValue;
+            s_hudCounter = int.MinValue;
             Debug.Log(LogPrefix + "New match from the platform: " + LaunchData);
             try
             {

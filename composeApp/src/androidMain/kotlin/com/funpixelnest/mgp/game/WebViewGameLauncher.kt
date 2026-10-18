@@ -130,14 +130,15 @@ class WebViewGameLauncher(gamesBaseUrl: String) : GameLauncher {
             main.post { pauseListener?.invoke() }
         }
 
-        /** "score,secondsLeft,lives" (negative = the game has no timer / lives). */
+        /** "score,secondsLeft,lives,counter" (negative = the game doesn't have it). */
         @JavascriptInterface
         fun onHud(values: String) {
             val parts = values.split(',')
             val score = parts.getOrNull(0)?.toDoubleOrNull() ?: return
             val seconds = parts.getOrNull(1)?.toDoubleOrNull() ?: -1.0
             val lives = parts.getOrNull(2)?.toDoubleOrNull() ?: -1.0
-            hudState.value = GameHud.parse(score, seconds, lives)
+            val counter = parts.getOrNull(3)?.toDoubleOrNull() ?: -1.0
+            hudState.value = GameHud.parse(score, seconds, lives, counter)
         }
 
         @JavascriptInterface

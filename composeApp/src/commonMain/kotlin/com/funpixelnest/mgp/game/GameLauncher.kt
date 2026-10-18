@@ -68,14 +68,17 @@ data class GameHud(
     val score: Long = 0,
     val secondsLeft: Int? = null,
     val lives: Int? = null,
+    /** A game's own count shown instead of lives, e.g. arrows left in Arrow Duel (null = none). */
+    val counter: Int? = null,
     val reported: Boolean = false,
 ) {
     companion object {
-        /** Bridge values: score, secondsLeft (< 0 = no timer), lives (< 0 = no lives). */
-        fun parse(score: Double, secondsLeft: Double, lives: Double = -1.0): GameHud = GameHud(
+        /** Bridge values: score, secondsLeft, lives, counter (< 0 = the game doesn't have it). */
+        fun parse(score: Double, secondsLeft: Double, lives: Double = -1.0, counter: Double = -1.0): GameHud = GameHud(
             score = score.toLong().coerceAtLeast(0),
             secondsLeft = if (secondsLeft.isNaN() || secondsLeft < 0) null else secondsLeft.toInt(),
             lives = if (lives.isNaN() || lives < 0) null else lives.toInt(),
+            counter = if (counter.isNaN() || counter < 0) null else counter.toInt(),
             reported = true,
         )
     }

@@ -26,7 +26,7 @@
  *
  * FPNHost.embedded = true (native apps via play.html, and the web app) shows the game with no bar: no title,
  * Pause or test buttons. The app draws its own HUD instead (pause, score, timer, lives); the game reports live
- * values with FPN.hud(score, secondsLeft, lives) → FPNHost.onHud (negative = the game has no timer / lives).
+ * values with FPN.hud(score, secondsLeft, lives, counter) → FPNHost.onHud (negative = none; counter = e.g. arrows left).
  * Native apps: the game fills the screen and the HUD floats over its top. launch JSON hudTop / hudBottom (CSS px)
  * become FPN.insetTop / FPN.insetBottom (fractions of the screen height) for the game to keep clear.
  * Web app: FPNHost.topInset px places the game below the app's HUD instead.
@@ -192,10 +192,11 @@
         },
         quit: function () { finish(null); },
         log: function (message) { console.log("[FunPixelNest game]", message); },
-        hud: function (score, secondsLeft, lives) {
+        hud: function (score, secondsLeft, lives, counter) {
           if (done || typeof self.onHud !== "function") return;
-          var t = Number(secondsLeft), l = Number(lives);
-          self.onHud(Number(score) || 0, isNaN(t) ? -1 : t, lives === undefined || isNaN(l) ? -1 : l);
+          var t = Number(secondsLeft), l = Number(lives), c = Number(counter);
+          self.onHud(Number(score) || 0, isNaN(t) ? -1 : t, lives === undefined || isNaN(l) ? -1 : l,
+            counter === undefined || isNaN(c) ? -1 : c);
         },
         // Share of the screen height covered by the app's HUD (top) / system bar (bottom).
         insetTop: self.topInset > 0 ? 0 : fraction(launch.hudTop),

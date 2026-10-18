@@ -29,6 +29,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.NorthEast
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.Icon
@@ -64,7 +65,7 @@ private val Label = Color(0xCCFFFFFF)
 private val Heart = Color(0xFFFF4D6D)
 
 /**
- * The app's HUD for every game: pause, lives, score, timer.
+ * The app's HUD for every game: pause, lives (or the game's own counter, e.g. arrows left), score, timer.
  *
  * It floats over the top of the game (no bar of its own), with a soft shade behind the status bar, so the
  * HUD and the game read as one screen. The game keeps this area clear (launch data hudTop / FPN.insetTop)
@@ -98,7 +99,9 @@ fun GameHudOverlay(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 PauseButton(onPause)
-                LivesPill(hud.lives)
+                // A game's own count (e.g. arrows left in Arrow Duel) takes the lives slot.
+                val counter = hud.counter
+                if (counter != null) CounterPill(counter) else LivesPill(hud.lives)
             }
             ScorePill(hud.score, shown = hud.reported, modifier = Modifier.align(Alignment.Center))
             TimerPill(hud.secondsLeft, modifier = Modifier.align(Alignment.CenterEnd))
@@ -123,6 +126,23 @@ private fun PauseButton(onPause: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Icon(Icons.Rounded.Pause, null, tint = Color.White, modifier = Modifier.size(26.dp))
+    }
+}
+
+/** Arrows left (Arrow Duel); any game can send a counter the same way. */
+@Composable
+private fun CounterPill(count: Int) {
+    Row(
+        Modifier
+            .height(36.dp)
+            .glass(RoundedCornerShape(18.dp))
+            .padding(horizontal = 10.dp)
+            .semantics { contentDescription = "Arrows left $count" },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Rounded.NorthEast, null, tint = MgpColors.Gold, modifier = Modifier.size(19.dp))
+        Spacer(Modifier.width(5.dp))
+        Text("$count", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
     }
 }
 

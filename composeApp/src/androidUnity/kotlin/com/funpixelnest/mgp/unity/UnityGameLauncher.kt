@@ -43,7 +43,7 @@ class UnityGameLauncher(private val activity: ComponentActivity) : GameLauncher,
 
     companion object {
         /** Games built into the Unity library. */
-        val GAMES = setOf("block_puzzle")
+        val GAMES = setOf("block_puzzle", "arrows")
 
         private const val RECEIVER = "FunPixelNestPlatform"
         private const val LAUNCH_EXTRA = "fpn_launch_data"
@@ -82,8 +82,8 @@ class UnityGameLauncher(private val activity: ComponentActivity) : GameLauncher,
                 done.complete(null)
             }
 
-            override fun onHud(score: Long, secondsLeft: Int, lives: Int) {
-                hudState.value = GameHud.parse(score.toDouble(), secondsLeft.toDouble(), lives.toDouble())
+            override fun onHud(score: Long, secondsLeft: Int, lives: Int, counter: Int) {
+                hudState.value = GameHud.parse(score.toDouble(), secondsLeft.toDouble(), lives.toDouble(), counter.toDouble())
             }
         }
 

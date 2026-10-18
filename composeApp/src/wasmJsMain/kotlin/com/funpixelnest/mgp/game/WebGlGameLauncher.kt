@@ -23,7 +23,7 @@ class WebGlGameLauncher(gamesBaseUrl: String) : GameLauncher {
 
     init {
         hostInit(gamesBaseUrl, GAME_HUD_HEIGHT.value.toInt())
-        hostSetHudListener { score, seconds, lives -> hudState.value = GameHud.parse(score, seconds, lives) }
+        hostSetHudListener { score, seconds, lives, counter -> hudState.value = GameHud.parse(score, seconds, lives, counter) }
     }
 
     override fun isAvailable(gameId: String): Boolean = hostHas(gameId)
@@ -54,8 +54,8 @@ private external fun hostCall(name: String, arg: String)
 @JsFun("(base, top) => { if (window.FPNHost) { window.FPNHost.init(base); window.FPNHost.embedded = true; window.FPNHost.topInset = top; } }")
 private external fun hostInit(base: String, top: Int)
 
-@JsFun("(listener) => { if (window.FPNHost) window.FPNHost.onHud = (s, t, l) => listener(s, t, l); }")
-private external fun hostSetHudListener(listener: (Double, Double, Double) -> Unit)
+@JsFun("(listener) => { if (window.FPNHost) window.FPNHost.onHud = (s, t, l, c) => listener(s, t, l, c); }")
+private external fun hostSetHudListener(listener: (Double, Double, Double, Double) -> Unit)
 
 @JsFun("(gameId) => !!(window.FPNHost && window.FPNHost.has(gameId))")
 private external fun hostHas(gameId: String): Boolean

@@ -3,7 +3,7 @@ package com.funpixelnest.mgp.unity
 /**
  * Called by the Unity game (FunPixelNest SDK, `FpnNativeBridge` Android) through JNI:
  *   onScore(gameId, ticketId, score, durationMs, eventLogJson) · onQuit(ticketId)
- *   onHud(score, secondsLeft, lives) · getInset(bottom) → share of the screen height to keep clear.
+ *   onHud(score, secondsLeft, lives, counter) · getInset(bottom) → share of the screen height to keep clear.
  * Calls arrive on Unity's thread. The class name is fixed in the SDK (`AndroidBridgeClass`).
  */
 object FpnUnityBridge {
@@ -11,7 +11,7 @@ object FpnUnityBridge {
     interface Listener {
         fun onScore(score: Long, durationMs: Long, eventLogJson: String)
         fun onQuit()
-        fun onHud(score: Long, secondsLeft: Int, lives: Int)
+        fun onHud(score: Long, secondsLeft: Int, lives: Int, counter: Int)
     }
 
     @Volatile
@@ -38,9 +38,15 @@ object FpnUnityBridge {
         listener?.onQuit()
     }
 
+    /** Older game builds (no counter). */
     @JvmStatic
     fun onHud(score: Long, secondsLeft: Int, lives: Int) {
-        listener?.onHud(score, secondsLeft, lives)
+        listener?.onHud(score, secondsLeft, lives, -1)
+    }
+
+    @JvmStatic
+    fun onHud(score: Long, secondsLeft: Int, lives: Int, counter: Int) {
+        listener?.onHud(score, secondsLeft, lives, counter)
     }
 
     @JvmStatic

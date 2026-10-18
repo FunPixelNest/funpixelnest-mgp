@@ -44,6 +44,15 @@ val backendConfigValues = linkedMapOf(
     "FIREBASE_SENDER_ID" to configValue("FIREBASE_SENDER_ID"),
 )
 
+// ---------- Native games (Unity as a Library) ----------
+// composeApp/unity/ holds the game library built on the Mac from a Unity "Export Project"
+// ("Build for FunPixelNest App.command"): unityLibrary-release.aar + unity-classes.jar.
+// Without these files the app builds as before and every game uses its WebGL build.
+val unityAar = file("unity/unityLibrary-release.aar")
+val unityClassesJar = file("unity/unity-classes.jar")
+val hasUnityLibrary = unityAar.exists() && unityClassesJar.exists()
+if (hasUnityLibrary) logger.lifecycle("FunPixelNest: native Unity games ON (composeApp/unity/)")
+
 val generateBackendConfig by tasks.registering {
     val values = backendConfigValues
     val outDir = layout.buildDirectory.dir("generated/backendConfig/kotlin")
@@ -97,6 +106,11 @@ kotlin {
     sourceSets {
         commonMain {
             kotlin.srcDir(generateBackendConfig)
+        }
+        if (hasUnityLibrary) {
+            androidMain {
+                kotlin.srcDir("src/androidUnity/kotlin")
+            }
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -155,6 +169,14 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+        // Unity loads its native libraries from disk.
+        if (hasUnityLibrary) jniLibs.useLegacyPackaging = true
+    }
+    // Unity reads these asset types uncompressed.
+    if (hasUnityLibrary) {
+        androidResources {
+            noCompress += listOf(".unity3d", ".ress", ".resource", ".obb", ".bundle", ".unityexp")
+        }
     }
     buildTypes {
         getByName("release") {
@@ -168,5 +190,11 @@ android {
     testOptions {
         // JVM unit tests: Android logging calls (used by libraries) return defaults instead of failing.
         unitTests.isReturnDefaultValues = true
+    }
+}
+
+dependencies {
+    if (hasUnityLibrary) {
+        add("implementation", files(unityAar, unityClassesJar))
     }
 }

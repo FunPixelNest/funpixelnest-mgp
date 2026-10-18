@@ -79,6 +79,16 @@ namespace FunPixelNest
             DontDestroyOnLoad(go);
         }
 
+        /// <summary>
+        /// The app starts a new match in the running game (Unity as a Library). JSON = launch data.
+        /// Resets the match state, clears any pause, and raises <see cref="FpnPlatform.OnNewMatch"/>.
+        /// </summary>
+        public void OnPlatformLaunch(string launchJson)
+        {
+            FpnSession.SetPaused(false);
+            FpnPlatform.BeginNewMatch(launchJson);
+        }
+
         /// <summary>"1" = pause, "0" = resume.</summary>
         public void OnPlatformPause(string value) => FpnSession.SetPaused(value == "1" || value == "true");
 

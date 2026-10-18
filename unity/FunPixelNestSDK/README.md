@@ -227,3 +227,16 @@ When `FpnPlatform.AppShowsHud` is true:
 3. Every frame: `FpnPlatform.UpdateHud(score, secondsLeft, lives);`
    Pass `-1` for `secondsLeft` or `lives` if the game has no timer or lives; the HUD shows them greyed out.
    Only changes are sent, so calling it every frame is fine.
+
+## Inside the Android app (Unity as a Library)
+
+The app can play games natively instead of WebGL. Unity runs inside the app's own screen, under the app's
+HUD and pause menu, and **stays loaded between matches**:
+
+- The first match's launch data comes from the activity intent (`fpn_launch_data`).
+- Each later match arrives as the `OnPlatformLaunch` message: the SDK resets its state and raises
+  `FpnPlatform.OnNewMatch`. **Reload your game scene there.**
+- Score / quit / HUD values go to `com.funpixelnest.mgp.unity.FpnUnityBridge` in the app.
+- Don't call `Application.Quit()` inside the app (it would close the whole app); use `FpnPlatform.Quit()`.
+
+Only one Unity library fits in an app, so every native game must be a scene in the same Unity project.

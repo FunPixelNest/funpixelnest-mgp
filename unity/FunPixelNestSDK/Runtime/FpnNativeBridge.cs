@@ -108,9 +108,21 @@ namespace FunPixelNest
             // Debug.Log already reaches logcat (tag "Unity"); nothing extra to do.
         }
 
-        internal static void SendHud(long score, double secondsLeft, double lives) { /* Unity as a Library: not wired yet */ }
+        internal static void SendHud(long score, double secondsLeft, double lives)
+        {
+            using (var bridge = new AndroidJavaClass(AndroidBridgeClass))
+            {
+                bridge.CallStatic("onHud", score, (int)secondsLeft, (int)lives);
+            }
+        }
 
-        internal static float GetInset(bool bottom) { return 0f; }
+        internal static float GetInset(bool bottom)
+        {
+            using (var bridge = new AndroidJavaClass(AndroidBridgeClass))
+            {
+                return bridge.CallStatic<float>("getInset", bottom);
+            }
+        }
 
 #elif UNITY_IOS && !UNITY_EDITOR
         // Implemented in Plugins/iOS/FunPixelNestBridge.mm. The .mm returns a strdup()'d (malloc) copy;

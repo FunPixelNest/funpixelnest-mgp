@@ -3,6 +3,8 @@ package com.funpixelnest.mgp
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
+import android.view.KeyEvent
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -25,6 +27,8 @@ import com.funpixelnest.mgp.data.SupabasePlatformRepository
 import com.funpixelnest.mgp.data.createPlatformRepository
 import io.github.jan.supabase.auth.handleDeeplinks
 import com.funpixelnest.mgp.config.BackendConfig
+import com.funpixelnest.mgp.game.ActivityHostedGame
+import com.funpixelnest.mgp.game.HybridGameLauncher
 import com.funpixelnest.mgp.game.WebViewGameLauncher
 import com.funpixelnest.mgp.push.AndroidPush
 import com.funpixelnest.mgp.ui.Navigator
@@ -36,7 +40,16 @@ class MainActivity : ComponentActivity() {
     /** Pool to open when the app is started from a result notification. */
     private val pendingPoolId = mutableStateOf<String?>(null)
 
-    private val gameLauncher by lazy { WebViewGameLauncher(BackendConfig.GAMES_BASE_URL) }
+    /**
+     * Games: native Unity (Unity as a Library, when the app includes composeApp/unity/) for the games built
+     * into it, otherwise Unity WebGL builds from GAMES_BASE_URL in a WebView.
+     */
+    private val gameLauncher by lazy {
+        HybridGameLauncher(
+            native = ActivityHostedGame.createUnityLauncher(this),
+            web = WebViewGameLauncher(BackendConfig.GAMES_BASE_URL),
+        )
+    }
 
     /** One repository for the activity, so Google/Apple/Facebook sign-in redirects reach it. */
     private val repository: PlatformRepository by lazy { createPlatformRepository() }
@@ -84,10 +97,49 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // Games run as Unity WebGL builds hosted on Cloudflare, shown in a WebView.
-            // (Later: Unity as a Library for games that need native performance.)
             App(repository = repository, navigator = navigator, gameLauncher = gameLauncher)
         }
+    }
+
+    // Unity (native games) follows the activity's lifecycle.
+    override fun onResume() {
+        super.onResume()
+        gameLauncher.onActivityResume()
+    }
+
+    override fun onPause() {
+        gameLauncher.onActivityPause()
+        super.onPause()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        gameLauncher.onWindowFocusChanged(hasFocus)
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        gameLauncher.onConfigurationChanged(newConfig)
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onLowMemory() {
+        super.onLowMemory()
+        gameLauncher.onLowMemory()
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        gameLauncher.onTrimMemory(level)
+    }
+
+    /** During a native game Unity has key focus; Back still goes to the app (pause menu). */
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (gameLauncher.handlesBackKey(event)) {
+            if (event.action == KeyEvent.ACTION_UP) onBackPressedDispatcher.onBackPressed()
+            return true
+        }
+        return super.dispatchKeyEvent(event)
     }
 
     override fun onNewIntent(intent: Intent) {

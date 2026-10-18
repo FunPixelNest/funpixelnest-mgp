@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Match result notifications (Android 13+ asks the player). -->
@@ -14,6 +15,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|uiMode|screenSize|smallestScreenSize|fontScale|layoutDirection|density"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,6 +29,23 @@
                 <data android:scheme="funpixelnest" android:host="login" />
             </intent-filter>
         </activity>
+
+        <!--
+            Native games (Unity as a Library, composeApp/unity/). Unity runs inside MainActivity, so its own
+            launcher activity is removed (no second app icon), and it must not switch the app to fullscreen.
+            These entries do nothing when the app is built without the Unity library.
+        -->
+        <activity
+            android:name="com.unity3d.player.UnityPlayerActivity"
+            tools:node="remove" />
+        <meta-data
+            android:name="unity.launch-fullscreen"
+            android:value="False"
+            tools:replace="android:value" />
+        <meta-data
+            android:name="unity.splash-mode"
+            android:value="0"
+            tools:replace="android:value" />
 
         <!-- Push notifications (Firebase Cloud Messaging). Inactive until FIREBASE_* values are configured. -->
         <service

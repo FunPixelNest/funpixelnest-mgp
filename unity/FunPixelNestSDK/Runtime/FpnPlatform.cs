@@ -52,6 +52,13 @@ namespace FunPixelNest
         /// </summary>
         public static event Action<long> OnScoreSubmitted;
 
+        /// <summary>
+        /// Raised (on the main thread) when the app starts a new match in an already running game
+        /// (Unity as a Library keeps Unity loaded between matches). Restart your game scene here;
+        /// <see cref="LaunchData"/> already holds the new match.
+        /// </summary>
+        public static event Action<FpnLaunchData> OnNewMatch;
+
         // Reset statics when entering Play Mode with "Reload Domain" disabled.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
@@ -71,6 +78,7 @@ namespace FunPixelNest
             s_hudSeconds = int.MinValue;
             s_hudLives = int.MinValue;
             OnScoreSubmitted = null;
+            OnNewMatch = null;
         }
 
         // ------------------------------------------------------------------ hosting / launch data
@@ -360,6 +368,33 @@ namespace FunPixelNest
         }
 
         // ------------------------------------------------------------------ internals
+
+        /// <summary>Called by the platform receiver: a new match in the running game (fresh launch data and state).</summary>
+        internal static void BeginNewMatch(string launchJson)
+        {
+            s_initialized = true;
+            s_isHosted = true;
+            s_rawLaunchJson = launchJson;
+            s_launchData = null;
+            s_matchStarted = false;
+            s_matchStartTime = 0;
+            s_scoreSubmitted = false;
+            s_quitSent = false;
+            s_events.Clear();
+            s_eventCapWarned = false;
+            s_hudScore = long.MinValue;
+            s_hudSeconds = int.MinValue;
+            s_hudLives = int.MinValue;
+            Debug.Log(LogPrefix + "New match from the platform: " + LaunchData);
+            try
+            {
+                OnNewMatch?.Invoke(LaunchData);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+        }
 
         private static void EnsureInitialized()
         {

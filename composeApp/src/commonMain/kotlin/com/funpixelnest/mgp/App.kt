@@ -8,6 +8,8 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,6 +51,7 @@ import com.funpixelnest.mgp.domain.RewardGrant
 import com.funpixelnest.mgp.domain.Tournament
 import com.funpixelnest.mgp.game.GameLaunchRequest
 import com.funpixelnest.mgp.game.GameLauncher
+import com.funpixelnest.mgp.game.GAME_HUD_HEIGHT
 import com.funpixelnest.mgp.game.GameHud
 import com.funpixelnest.mgp.game.GameResult
 import com.funpixelnest.mgp.game.LaunchMode
@@ -67,7 +70,8 @@ import com.funpixelnest.mgp.ui.screens.ChallengesScreen
 import com.funpixelnest.mgp.ui.screens.EconomyActions
 import com.funpixelnest.mgp.ui.screens.EndGameScreen
 import com.funpixelnest.mgp.ui.screens.GameDetailScreen
-import com.funpixelnest.mgp.ui.screens.GameHudBar
+import com.funpixelnest.mgp.ui.screens.AllGamesScreen
+import com.funpixelnest.mgp.ui.screens.GameHudOverlay
 import com.funpixelnest.mgp.ui.screens.GameRunningBackdrop
 import com.funpixelnest.mgp.ui.screens.GamesScreen
 import com.funpixelnest.mgp.ui.screens.HelpCenterScreen
@@ -212,6 +216,10 @@ private fun MainApp(
 
     // ---------------------------------------------------------------- matches
 
+    // Area the in-game HUD covers (status bar + HUD row) and the system bar at the bottom; the game keeps it clear.
+    val hudInsetTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + GAME_HUD_HEIGHT
+    val hudInsetBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
     fun modeFor(ticket: MatchTicket): LaunchMode = when {
         ticket.isPractice -> LaunchMode.PRACTICE
         repository.tournament(ticket.tournamentId)?.isDuel == true -> LaunchMode.DUEL
@@ -283,16 +291,12 @@ private fun MainApp(
                 displayName = repository.player.displayName,
                 mode = modeFor(ticket),
                 settings = settings.forGame,
+                hudInsetTopDp = hudInsetTop.value.toInt(),
+                hudInsetBottomDp = hudInsetBottom.value.toInt(),
             )
             val result = launcher.launch(request)
             gameEnded(s, result)
         }
-    }
-
-    fun hudLabel(ticket: MatchTicket): String = when (modeFor(ticket)) {
-        LaunchMode.PRACTICE -> "Practice"
-        LaunchMode.DUEL -> "1v1"
-        LaunchMode.TOURNAMENT -> "Tournament"
     }
 
     fun startPractice(gameId: String) = startMatch(MatchTicket.practice(gameId, Random.nextLong()))
@@ -410,32 +414,36 @@ private fun MainApp(
                                 )
                             }
                         }
+                        is Screen.AllGames -> AllGamesScreen(
+                            games = repository.games(),
+                            initialCategory = current.category,
+                            onGameClick = { navigator.push(Screen.GameDetail(it.id)) },
+                            onBack = { navigator.back() },
+                        )
                         is Screen.PlayGame -> {
                             val game = repository.game(current.ticket.gameId)
                             val s = session
                             if (game != null) {
-                                Column(Modifier.fillMaxSize()) {
-                                    GameHudBar(GameHud(), hudLabel(current.ticket), onPause = { pauseGame() })
+                                Box(Modifier.fillMaxSize()) {
                                     PlaceholderGameScreen(
                                         game = game,
                                         ticket = current.ticket,
                                         onFinished = { result -> if (s != null) gameEnded(s, result) else navigator.back() },
-                                        modifier = Modifier.weight(1f).windowInsetsPadding(WindowInsets.navigationBars),
+                                        modifier = Modifier.padding(top = hudInsetTop).windowInsetsPadding(WindowInsets.navigationBars),
                                     )
+                                    GameHudOverlay(GameHud(), onPause = { pauseGame() })
                                 }
                             }
                         }
                         is Screen.GameRunning -> {
-                            // The app's HUD (same for every game) above the game.
+                            // The game fills the screen; the app's HUD (same for every game) floats over its top.
                             val launcher = gameLauncher
                             val hud = launcher?.hud?.collectAsState()?.value ?: GameHud()
-                            Column(Modifier.fillMaxSize()) {
-                                GameHudBar(hud, hudLabel(current.ticket), onPause = { pauseGame() })
-                                Box(Modifier.weight(1f).fillMaxWidth()) {
-                                    repository.game(current.ticket.gameId)?.let { GameRunningBackdrop(it) }
-                                    // Android draws the game here (WebView); on web it opens over this area.
-                                    launcher?.GameView(Modifier.fillMaxSize())
-                                }
+                            Box(Modifier.fillMaxSize()) {
+                                repository.game(current.ticket.gameId)?.let { GameRunningBackdrop(it) }
+                                // Android draws the game here (WebView); on web it opens over the app below the HUD.
+                                launcher?.GameView(Modifier.fillMaxSize())
+                                GameHudOverlay(hud, onPause = { pauseGame() })
                             }
                         }
                         is Screen.PoolLeaderboard -> PoolLeaderboardScreen(
@@ -499,7 +507,11 @@ private fun MainApp(
                                 onPlayNow = { navigator.selectTab(Tab.Games) },
                                 onViewRewards = { navigator.show(Popup.LeagueRewards) },
                             )
-                            Tab.Games -> GamesScreen(repository.games(), onGameClick = { navigator.push(Screen.GameDetail(it.id)) })
+                            Tab.Games -> GamesScreen(
+                                repository.games(),
+                                onGameClick = { navigator.push(Screen.GameDetail(it.id)) },
+                                onSeeAll = { navigator.push(Screen.AllGames(it)) },
+                            )
                             Tab.Rewards -> RewardsScreen(repository, economy, onViewChallenges = { navigator.selectTab(Tab.Challenges) })
                             Tab.Store -> StoreScreen(repository, economy)
                         }

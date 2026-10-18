@@ -212,3 +212,18 @@ FpnSession.OnSettingsChanged += s => { music.mute = !s.music; sfx.mute = !s.soun
 The starting values are also in the launch data (`music`, `sound`, `vibration`), and in `FpnSession.Settings`
 once the platform sends them. Don't add your own in-game Back/Exit button for paid matches; the platform's pause
 menu is the way out.
+
+## App HUD (pause, score, timer, lives)
+
+Inside the FunPixelNest app the **app draws the HUD for every game**: a pause button, lives, score and time
+left, floating over the top of the game. The pause button and the phone's Back button open the app's pause
+menu (the SDK pauses your game through `FpnSession`).
+
+When `FpnPlatform.AppShowsHud` is true:
+
+1. Hide your own HUD and pause button.
+2. Keep the top `FpnPlatform.AppInsetTop` (share of screen height) free of gameplay and buttons. Your background
+   can run underneath; the HUD is see-through. Keep the bottom `FpnPlatform.AppInsetBottom` clear as well.
+3. Every frame: `FpnPlatform.UpdateHud(score, secondsLeft, lives);`
+   Pass `-1` for `secondsLeft` or `lives` if the game has no timer or lives; the HUD shows them greyed out.
+   Only changes are sent, so calling it every frame is fine.

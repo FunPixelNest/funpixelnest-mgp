@@ -8,21 +8,24 @@ import com.funpixelnest.mgp.domain.Tournament
 object SampleCatalog {
 
     val games: List<Game> = listOf(
-        Game("solitaire", "Solitaire", "Cards", "🃏", 0xFF2E7D32),
+        Game("solitaire", "Solitaire", "Cards & Casino", "🃏", 0xFF2E7D32),
         Game("block_puzzle", "Block Puzzle", "Puzzle", "🧩", 0xFF6A1B9A),
-        Game("bingo", "Bingo Flash", "Classic", "🎱", 0xFFC62828),
+        Game("bingo", "Bingo Flash", "Cards & Casino", "🎱", 0xFFC62828),
         Game("bubble_shooter", "Bubble Shooter", "Arcade", "🫧", 0xFF0277BD),
         Game("mahjong", "Mahjong", "Puzzle", "🀄", 0xFF00695C),
-        Game("blackjack", "Blackjack", "Cards", "♠️", 0xFF37474F),
+        Game("blackjack", "Blackjack", "Cards & Casino", "♠️", 0xFF37474F),
         Game("arrows", "Arrows", "Puzzle", "➡️", 0xFFEF6C00),
-        Game("slots", "Skill Slots", "Arcade", "🎰", 0xFFAD1457),
+        Game("slots", "Skill Slots", "Cards & Casino", "🎰", 0xFFAD1457),
         Game("snake_war", "Snake War", "Arcade", "🐍", 0xFF558B2F),
         // Renamed from "Flappy Bird" (trademarked name).
         Game("flap_dash", "Flap Dash", "Arcade", "🐤", 0xFFF9A825),
-        Game("kitty_hole", "Kitty Hole", "Casual", "🐱", 0xFF5D4037),
+        Game("kitty_hole", "Kitty Hole", "Arcade", "🐱", 0xFF5D4037),
         Game("catdoku", "Catdoku", "Puzzle", "😺", 0xFF4527A0),
         Game("rugby_rumble", "Rugby Rumble", "Sports", "🏉", 0xFF1565C0),
     )
+
+    /** Category order on the Games tab. Games list their category by these names. */
+    val categories: List<String> = listOf("Puzzle", "Cards & Casino", "Arcade", "Sports")
 
     /** Same packs as the server seed (migration 004). Display prices only until billing is added. */
     val storePacks: List<StorePack> = listOf(

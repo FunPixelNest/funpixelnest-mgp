@@ -69,6 +69,7 @@ namespace FunPixelNest
             s_eventCapWarned = false;
             s_hudScore = long.MinValue;
             s_hudSeconds = int.MinValue;
+            s_hudLives = int.MinValue;
             OnScoreSubmitted = null;
         }
 
@@ -279,33 +280,64 @@ namespace FunPixelNest
         // ------------------------------------------------------------------ app HUD
 
         /// <summary>
-        /// True when the app draws the in-game HUD (score, timer, pause button) above the game.
-        /// Hide your own score / timer / pause button when this is true, and report values with
-        /// <see cref="UpdateHud"/>. Same as <see cref="IsHosted"/>.
+        /// True when the app draws the in-game HUD (pause, score, timer, lives) over the game.
+        /// Hide your own HUD and pause button when this is true, keep the top <see cref="AppInsetTop"/> of the
+        /// screen clear, and report values with <see cref="UpdateHud"/>. Same as <see cref="IsHosted"/>.
         /// </summary>
         public static bool AppShowsHud
         {
             get { return IsHosted; }
         }
 
-        private static long s_hudScore = long.MinValue;
-        private static int s_hudSeconds = int.MinValue;
-
         /// <summary>
-        /// Sends the live score and remaining time to the app's HUD. Cheap to call every frame: only
-        /// changes are sent (score, or the whole second shown on the timer).
+        /// Share of the screen height (0..0.5) at the top covered by the app's HUD. Keep gameplay and buttons
+        /// out of it; your background can run underneath (the HUD is see-through). 0 when not hosted.
         /// </summary>
-        /// <param name="score">Current score.</param>
-        /// <param name="secondsLeft">Time left in seconds; negative = this game has no timer.</param>
-        public static void UpdateHud(long score, float secondsLeft = -1f)
+        public static float AppInsetTop
         {
-            int shown = secondsLeft < 0f ? -1 : Mathf.CeilToInt(secondsLeft);
-            if (score == s_hudScore && shown == s_hudSeconds) return;
-            s_hudScore = score;
-            s_hudSeconds = shown;
+            get { return Inset(false); }
+        }
+
+        /// <summary>Share of the screen height (0..0.5) at the bottom covered by the phone's system bar. 0 when not hosted.</summary>
+        public static float AppInsetBottom
+        {
+            get { return Inset(true); }
+        }
+
+        private static float Inset(bool bottom)
+        {
             try
             {
-                if (IsHosted) FpnNativeBridge.SendHud(score, shown);
+                return IsHosted ? Mathf.Clamp(FpnNativeBridge.GetInset(bottom), 0f, 0.5f) : 0f;
+            }
+            catch (Exception)
+            {
+                return 0f;
+            }
+        }
+
+        private static long s_hudScore = long.MinValue;
+        private static int s_hudSeconds = int.MinValue;
+        private static int s_hudLives = int.MinValue;
+
+        /// <summary>
+        /// Sends the live score, remaining time and lives to the app's HUD. Cheap to call every frame: only
+        /// changes are sent (score, lives, or the whole second shown on the timer).
+        /// </summary>
+        /// <param name="score">Current score.</param>
+        /// <param name="secondsLeft">Time left in seconds; negative = this game has no timer (shown disabled).</param>
+        /// <param name="lives">Lives left; negative = this game has no lives (shown disabled).</param>
+        public static void UpdateHud(long score, float secondsLeft = -1f, int lives = -1)
+        {
+            int shown = secondsLeft < 0f ? -1 : Mathf.CeilToInt(secondsLeft);
+            int livesShown = lives < 0 ? -1 : lives;
+            if (score == s_hudScore && shown == s_hudSeconds && livesShown == s_hudLives) return;
+            s_hudScore = score;
+            s_hudSeconds = shown;
+            s_hudLives = livesShown;
+            try
+            {
+                if (IsHosted) FpnNativeBridge.SendHud(score, shown, livesShown);
             }
             catch (Exception)
             {

@@ -1,6 +1,7 @@
 package com.funpixelnest.mgp.game
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
@@ -10,11 +11,14 @@ import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.WindowCompat
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -126,13 +130,14 @@ class WebViewGameLauncher(gamesBaseUrl: String) : GameLauncher {
             main.post { pauseListener?.invoke() }
         }
 
-        /** "score,secondsLeft" (secondsLeft < 0 = no timer). */
+        /** "score,secondsLeft,lives" (negative = the game has no timer / lives). */
         @JavascriptInterface
         fun onHud(values: String) {
             val parts = values.split(',')
             val score = parts.getOrNull(0)?.toDoubleOrNull() ?: return
             val seconds = parts.getOrNull(1)?.toDoubleOrNull() ?: -1.0
-            hudState.value = GameHud.parse(score, seconds)
+            val lives = parts.getOrNull(2)?.toDoubleOrNull() ?: -1.0
+            hudState.value = GameHud.parse(score, seconds, lives)
         }
 
         @JavascriptInterface
@@ -143,6 +148,15 @@ class WebViewGameLauncher(gamesBaseUrl: String) : GameLauncher {
     @Composable
     override fun GameView(modifier: Modifier) {
         val s = session ?: return
+        // Light status bar icons over the game (the app's screens use dark ones).
+        val view = LocalView.current
+        DisposableEffect(view) {
+            val window = (view.context as? Activity)?.window
+            val controller = window?.let { WindowCompat.getInsetsController(it, view) }
+            val before = controller?.isAppearanceLightStatusBars
+            controller?.isAppearanceLightStatusBars = false
+            onDispose { if (before != null) controller.isAppearanceLightStatusBars = before }
+        }
         AndroidView(
             modifier = modifier,
             factory = { context ->

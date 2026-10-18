@@ -46,6 +46,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material.icons.rounded.Casino
+import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.SportsRugby
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -82,17 +88,42 @@ import org.jetbrains.compose.resources.painterResource
 
 // ---------------------------------------------------------------- Games tab
 
-/** Games tab: "Play games, win big" banner and every game, 3 per row. */
+/** Games shown per category on the Games tab (2 rows of 2); "See All" opens the rest. */
+private const val PREVIEW_PER_CATEGORY = 4
+
+/** Category icon (falls back to a game pad). */
+fun categoryIcon(category: String): ImageVector = when (category) {
+    "Puzzle" -> Icons.Rounded.Extension
+    "Cards & Casino" -> Icons.Rounded.Casino
+    "Sports" -> Icons.Rounded.SportsRugby
+    else -> Icons.Rounded.SportsEsports
+}
+
+/** Groups games by [SampleCatalog.categories] order; unknown categories go last. */
+fun gamesByCategory(games: List<Game>): List<Pair<String, List<Game>>> {
+    val order = SampleCatalog.categories
+    return games.groupBy { it.category }
+        .toList()
+        .sortedBy { (c, _) -> order.indexOf(c).let { if (it < 0) Int.MAX_VALUE else it } }
+}
+
+/** Games tab: banner, then games by category, 2 per row. "See All" opens every game. */
 @Composable
-fun GamesScreen(games: List<Game>, onGameClick: (Game) -> Unit, modifier: Modifier = Modifier) {
+fun GamesScreen(
+    games: List<Game>,
+    onGameClick: (Game) -> Unit,
+    onSeeAll: (category: String?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val gridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
+    val sections = remember(games) { gamesByCategory(games) }
     LazyVerticalGrid(
-        columns = GridCells.Fixed(3),
+        columns = GridCells.Fixed(2),
         state = gridState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 14.dp, end = 14.dp, top = 6.dp, bottom = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
@@ -103,10 +134,97 @@ fun GamesScreen(games: List<Game>, onGameClick: (Game) -> Unit, modifier: Modifi
                 Icon(Icons.Rounded.SportsEsports, null, tint = MgpColors.Primary, modifier = Modifier.size(30.dp))
                 Spacer(Modifier.width(8.dp))
                 Text("PLAY GAMES", color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, modifier = Modifier.weight(1f))
-                Text("${games.size} games", color = MgpColors.Primary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                SeeAllButton { onSeeAll(null) }
             }
         }
-        items(games, key = { it.id }) { game -> GameTile(game, onClick = { onGameClick(game) }) }
+        sections.forEach { (category, list) ->
+            item(span = { GridItemSpan(maxLineSpan) }, key = "header_$category") {
+                CategoryHeader(category, list.size, showSeeAll = list.size > PREVIEW_PER_CATEGORY) { onSeeAll(category) }
+            }
+            items(list.take(PREVIEW_PER_CATEGORY), key = { it.id }) { game -> GameTile(game, onClick = { onGameClick(game) }) }
+        }
+    }
+}
+
+/** Every game, filterable by category, scrollable (opened from "See All"). */
+@Composable
+fun AllGamesScreen(
+    games: List<Game>,
+    initialCategory: String?,
+    onGameClick: (Game) -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var selected by remember(initialCategory) { mutableStateOf(initialCategory) }
+    val categories = remember(games) { gamesByCategory(games).map { it.first } }
+    val shown = remember(games, selected) { if (selected == null) gamesByCategory(games).flatMap { it.second } else games.filter { it.category == selected } }
+    Column(modifier.fillMaxSize()) {
+        SimpleTopBar(if (selected == null) "All Games" else selected!!, onBack)
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(bottom = 8.dp),
+        ) {
+            item { CategoryChip("All", null, selected == null) { selected = null } }
+            items(categories) { c -> CategoryChip(c, categoryIcon(c), selected == c) { selected = c } }
+        }
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            contentPadding = PaddingValues(start = 14.dp, end = 14.dp, top = 4.dp, bottom = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(shown, key = { it.id }) { game -> GameTile(game, onClick = { onGameClick(game) }) }
+        }
+    }
+}
+
+@Composable
+private fun SeeAllButton(onClick: () -> Unit) {
+    Row(
+        Modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("See All", color = MgpColors.Primary, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp)
+        Spacer(Modifier.width(4.dp))
+        Icon(Icons.AutoMirrored.Rounded.ArrowForwardIos, null, tint = MgpColors.Primary, modifier = Modifier.size(13.dp))
+    }
+}
+
+@Composable
+private fun CategoryHeader(category: String, count: Int, showSeeAll: Boolean, onSeeAll: () -> Unit) {
+    Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier.size(34.dp).shadow(3.dp, RoundedCornerShape(10.dp)).clip(RoundedCornerShape(10.dp)).background(Color.White),
+            contentAlignment = Alignment.Center,
+        ) { Icon(categoryIcon(category), null, tint = MgpColors.Primary, modifier = Modifier.size(22.dp)) }
+        Spacer(Modifier.width(10.dp))
+        Text(category.uppercase(), color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp)
+        Spacer(Modifier.width(6.dp))
+        Text("($count)", color = MgpColors.TextMuted, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.weight(1f))
+        if (showSeeAll) SeeAllButton(onSeeAll)
+    }
+}
+
+@Composable
+private fun CategoryChip(label: String, icon: ImageVector?, selected: Boolean, onClick: () -> Unit) {
+    Row(
+        Modifier
+            .height(40.dp)
+            .shadow(if (selected) 4.dp else 1.dp, RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(20.dp))
+            .background(if (selected) MgpColors.Primary else Color.White)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val tint = if (selected) Color.White else MgpColors.Primary
+        if (icon != null) {
+            Icon(icon, null, tint = tint, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(6.dp))
+        }
+        Text(label, color = if (selected) Color.White else MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
     }
 }
 
@@ -155,29 +273,38 @@ private fun GameTile(game: Game, onClick: () -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
-            .shadow(6.dp, RoundedCornerShape(20.dp))
-            .clip(RoundedCornerShape(20.dp))
+            .shadow(6.dp, RoundedCornerShape(22.dp))
+            .clip(RoundedCornerShape(22.dp))
             .background(Brush.verticalGradient(listOf(Color(0xFFCDE9FF), Color(0xFF8FC9F7))))
-            .border(1.5.dp, Color.White.copy(alpha = 0.8f), RoundedCornerShape(20.dp))
+            .border(1.5.dp, Color.White.copy(alpha = 0.8f), RoundedCornerShape(22.dp))
             .clickable(onClick = onClick)
-            .padding(6.dp),
+            .padding(7.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Image(
             painterResource(gameIconResource(game.id)),
             contentDescription = game.name,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(15.dp)),
+            // Slightly taller than wide.
+            modifier = Modifier.fillMaxWidth().aspectRatio(0.92f).clip(RoundedCornerShape(16.dp)),
         )
         DisplayText(
             game.name.uppercase(),
-            size = 14.sp,
+            size = 17.sp,
             color = Color.White,
             outline = Color(0xFF173B87),
             textAlign = TextAlign.Center,
             maxLines = 1,
-            modifier = Modifier.padding(top = 5.dp, bottom = 2.dp),
+            modifier = Modifier.padding(top = 7.dp),
         )
+        Row(
+            Modifier.padding(top = 2.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(categoryIcon(game.category), null, tint = Color(0xFF173B87), modifier = Modifier.size(14.dp))
+            Spacer(Modifier.width(4.dp))
+            Text(game.category, color = Color(0xFF173B87), fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1)
+        }
     }
 }
 

@@ -7,7 +7,8 @@
 //     submitScore: function (score, durationMs, eventLogJson) {},
 //     quit: function () {},
 //     log: function (message) {},  // optional
-//     hud: function (score, secondsLeft) {}  // optional: live values for the app's HUD (secondsLeft < 0 = no timer)
+//     hud: function (score, secondsLeft, lives) {},  // optional: live values for the app's HUD (< 0 = none)
+//     insetTop: 0.12, insetBottom: 0.03  // optional: share of the screen height covered by the app's HUD / bars
 //   };
 //
 // Every function is safe when window.FPN (or any member) is missing: it returns 0 / does nothing.
@@ -63,13 +64,24 @@ mergeInto(LibraryManager.library, {
     }
   },
 
-  FPN_Hud: function (score, secondsLeft) {
+  FPN_Hud: function (score, secondsLeft, lives) {
     try {
       if (typeof window !== 'undefined' && window.FPN && typeof window.FPN.hud === 'function') {
-        window.FPN.hud(score, secondsLeft);
+        window.FPN.hud(score, secondsLeft, lives);
       }
     } catch (e) {
       // the HUD must never break the game
+    }
+  },
+
+  // 0 = top (app HUD), 1 = bottom (system bar). Fraction of the screen height, 0 when unknown.
+  FPN_GetInset: function (bottom) {
+    try {
+      if (typeof window === 'undefined' || !window.FPN) return 0;
+      var v = Number(bottom ? window.FPN.insetBottom : window.FPN.insetTop);
+      return isNaN(v) || v < 0 ? 0 : Math.min(v, 0.5);
+    } catch (e) {
+      return 0;
     }
   },
 

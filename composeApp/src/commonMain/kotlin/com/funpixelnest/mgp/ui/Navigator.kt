@@ -28,6 +28,8 @@ enum class Tab(val label: String, val icon: ImageVector) {
 /** Full screens pushed on top of a tab. */
 sealed interface Screen {
     data class GameDetail(val gameId: String) : Screen
+    /** Every game (or one category), scrollable. null = all categories. */
+    data class AllGames(val category: String? = null) : Screen
     /** Stand-in game (until the Unity build for this game/platform is added). */
     data class PlayGame(val ticket: MatchTicket) : Screen
     /** Shown behind a real (Unity) game while it runs. */

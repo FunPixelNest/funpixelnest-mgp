@@ -29,6 +29,9 @@ data class GameLaunchRequest(
     val displayName: String,
     val mode: LaunchMode,
     val settings: GameSettings = GameSettings(),
+    /** Space the app's HUD covers at the top / system bar at the bottom (dp), for the game to keep clear. */
+    val hudInsetTopDp: Int = 0,
+    val hudInsetBottomDp: Int = 0,
 ) {
     /**
      * The launch data the Unity bridge reads (`FpnPlatform.LaunchData`).
@@ -47,6 +50,8 @@ data class GameLaunchRequest(
             music = settings.music,
             sound = settings.sound,
             vibration = settings.vibration,
+            hudTop = hudInsetTopDp,
+            hudBottom = hudInsetBottomDp,
         ),
     )
 }
@@ -56,20 +61,27 @@ data class GameSettings(val music: Boolean = true, val sound: Boolean = true, va
 
 /**
  * Live values for the app's in-game HUD, reported by the game while it runs (Unity: FpnPlatform.UpdateHud).
- * [secondsLeft] is null for games without a timer. [reported] stays false until the game sends anything.
+ * [secondsLeft] is null for games without a timer, [lives] null for games without lives (shown disabled).
+ * [reported] stays false until the game sends anything.
  */
-data class GameHud(val score: Long = 0, val secondsLeft: Int? = null, val reported: Boolean = false) {
+data class GameHud(
+    val score: Long = 0,
+    val secondsLeft: Int? = null,
+    val lives: Int? = null,
+    val reported: Boolean = false,
+) {
     companion object {
-        /** Parses the bridge payload "score,secondsLeft" (secondsLeft < 0 = no timer). */
-        fun parse(score: Double, secondsLeft: Double): GameHud = GameHud(
+        /** Bridge values: score, secondsLeft (< 0 = no timer), lives (< 0 = no lives). */
+        fun parse(score: Double, secondsLeft: Double, lives: Double = -1.0): GameHud = GameHud(
             score = score.toLong().coerceAtLeast(0),
             secondsLeft = if (secondsLeft.isNaN() || secondsLeft < 0) null else secondsLeft.toInt(),
+            lives = if (lives.isNaN() || lives < 0) null else lives.toInt(),
             reported = true,
         )
     }
 }
 
-/** Height of the app's HUD bar above every game (web uses it to place the game below it). */
+/** Height of the app's HUD row over every game, below the status bar. */
 val GAME_HUD_HEIGHT = 64.dp
 
 private val noHud: StateFlow<GameHud> = MutableStateFlow(GameHud()).asStateFlow()
@@ -135,6 +147,8 @@ private data class LaunchDataDto(
     @SerialName("music") val music: Boolean = true,
     @SerialName("sound") val sound: Boolean = true,
     @SerialName("vibration") val vibration: Boolean = true,
+    @SerialName("hudTop") val hudTop: Int = 0,
+    @SerialName("hudBottom") val hudBottom: Int = 0,
 )
 
 /** Settings JSON sent to a running game: {"music":true,"sound":true,"vibration":false}. */

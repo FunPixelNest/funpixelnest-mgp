@@ -25,8 +25,11 @@
  * The bar's Pause button (and the browser Back button, handled by the app) call FPNHost.onPauseRequest.
  *
  * FPNHost.embedded = true (native apps via play.html, and the web app) shows the game with no bar: no title,
- * Pause or test buttons. The app draws its own HUD instead (pause button, score, timer), FPNHost.topInset px
- * tall above the game; the game reports live values with FPN.hud(score, secondsLeft) → FPNHost.onHud.
+ * Pause or test buttons. The app draws its own HUD instead (pause, score, timer, lives); the game reports live
+ * values with FPN.hud(score, secondsLeft, lives) → FPNHost.onHud (negative = the game has no timer / lives).
+ * Native apps: the game fills the screen and the HUD floats over its top. launch JSON hudTop / hudBottom (CSS px)
+ * become FPN.insetTop / FPN.insetBottom (fractions of the screen height) for the game to keep clear.
+ * Web app: FPNHost.topInset px places the game below the app's HUD instead.
  */
 (function () {
   "use strict";
@@ -189,12 +192,21 @@
         },
         quit: function () { finish(null); },
         log: function (message) { console.log("[FunPixelNest game]", message); },
-        hud: function (score, secondsLeft) {
+        hud: function (score, secondsLeft, lives) {
           if (done || typeof self.onHud !== "function") return;
-          var t = Number(secondsLeft);
-          self.onHud(Number(score) || 0, isNaN(t) ? -1 : t);
+          var t = Number(secondsLeft), l = Number(lives);
+          self.onHud(Number(score) || 0, isNaN(t) ? -1 : t, lives === undefined || isNaN(l) ? -1 : l);
         },
+        // Share of the screen height covered by the app's HUD (top) / system bar (bottom).
+        insetTop: self.topInset > 0 ? 0 : fraction(launch.hudTop),
+        insetBottom: self.topInset > 0 ? 0 : fraction(launch.hudBottom),
       };
+
+      function fraction(px) {
+        var h = window.innerHeight || document.documentElement.clientHeight || 0;
+        var v = Number(px) || 0;
+        return h > 0 && v > 0 ? Math.min(0.5, v / h) : 0;
+      }
 
       function showMessage(text, buttons) {
         cover.innerHTML = "";

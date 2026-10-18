@@ -26,7 +26,8 @@ namespace FunPixelNest
         [DllImport("__Internal")] private static extern void FPN_SubmitScore(double score, double durationMs, string eventLogJson);
         [DllImport("__Internal")] private static extern void FPN_Quit();
         [DllImport("__Internal")] private static extern void FPN_Log(string message);
-        [DllImport("__Internal")] private static extern void FPN_Hud(double score, double secondsLeft);
+        [DllImport("__Internal")] private static extern void FPN_Hud(double score, double secondsLeft, double lives);
+        [DllImport("__Internal")] private static extern double FPN_GetInset(int bottom);
 
         /// <summary>Returns true when the host is present; outputs the raw launch JSON (may be null).</summary>
         internal static bool DetectHost(out string launchJson)
@@ -52,9 +53,14 @@ namespace FunPixelNest
             FPN_Log(message ?? string.Empty);
         }
 
-        internal static void SendHud(long score, double secondsLeft)
+        internal static void SendHud(long score, double secondsLeft, double lives)
         {
-            FPN_Hud((double)score, secondsLeft);
+            FPN_Hud((double)score, secondsLeft, lives);
+        }
+
+        internal static float GetInset(bool bottom)
+        {
+            return (float)FPN_GetInset(bottom ? 1 : 0);
         }
 
 #elif UNITY_ANDROID && !UNITY_EDITOR
@@ -102,7 +108,9 @@ namespace FunPixelNest
             // Debug.Log already reaches logcat (tag "Unity"); nothing extra to do.
         }
 
-        internal static void SendHud(long score, double secondsLeft) { /* Unity as a Library: not wired yet */ }
+        internal static void SendHud(long score, double secondsLeft, double lives) { /* Unity as a Library: not wired yet */ }
+
+        internal static float GetInset(bool bottom) { return 0f; }
 
 #elif UNITY_IOS && !UNITY_EDITOR
         // Implemented in Plugins/iOS/FunPixelNestBridge.mm. The .mm returns a strdup()'d (malloc) copy;
@@ -132,7 +140,9 @@ namespace FunPixelNest
             // Debug.Log already reaches the Xcode console; nothing extra to do.
         }
 
-        internal static void SendHud(long score, double secondsLeft) { /* Unity as a Library: not wired yet */ }
+        internal static void SendHud(long score, double secondsLeft, double lives) { /* Unity as a Library: not wired yet */ }
+
+        internal static float GetInset(bool bottom) { return 0f; }
 
 #else
         // Editor, standalone, or any other target: never hosted.
@@ -148,7 +158,9 @@ namespace FunPixelNest
 
         internal static void SendLog(string message) { }
 
-        internal static void SendHud(long score, double secondsLeft) { }
+        internal static void SendHud(long score, double secondsLeft, double lives) { }
+
+        internal static float GetInset(bool bottom) { return 0f; }
 #endif
     }
 }

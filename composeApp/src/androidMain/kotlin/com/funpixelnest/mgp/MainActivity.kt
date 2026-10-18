@@ -61,6 +61,8 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
+        CrashReport.install(applicationContext)
+        if (savedInstanceState == null) CrashReport.showIfAny(this)
         pendingPoolId.value = intent.poolIdExtra()
         handleSignInRedirect(intent)
         val pushEnabled = AndroidPush.init(applicationContext)

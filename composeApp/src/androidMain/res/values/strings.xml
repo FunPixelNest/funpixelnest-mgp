@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">FunPixelNest MGP</string>
+    <!-- Native games: Unity's game view reads this by name (normally from Unity's launcher module). -->
+    <string name="game_view_content_description">Game view</string>
 </resources>

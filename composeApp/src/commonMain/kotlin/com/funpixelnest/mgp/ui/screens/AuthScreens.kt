@@ -64,6 +64,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.funpixelnest.mgp.data.PlatformRepository
@@ -429,11 +430,13 @@ private fun SocialButton(text: String, logo: DrawableResource?, vector: ImageVec
             text.uppercase(),
             color = MgpColors.Navy,
             fontWeight = FontWeight.ExtraBold,
-            fontSize = 15.sp,
+            fontSize = 14.sp,
             textAlign = TextAlign.Center,
             modifier = Modifier.weight(1f),
             maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis,
         )
-        Spacer(Modifier.width(30.dp))
+        Spacer(Modifier.width(10.dp))
     }
 }

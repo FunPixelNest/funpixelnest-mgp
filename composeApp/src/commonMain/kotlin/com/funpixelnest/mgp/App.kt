@@ -8,6 +8,8 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -217,7 +219,7 @@ private fun MainApp(
     // ---------------------------------------------------------------- matches
 
     // Area the in-game HUD covers (status bar + HUD row) and the system bar at the bottom; the game keeps it clear.
-    val hudInsetTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + GAME_HUD_HEIGHT
+    val hudInsetTop = WindowInsets.statusBars.union(WindowInsets.displayCutout).asPaddingValues().calculateTopPadding() + GAME_HUD_HEIGHT
     val hudInsetBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
     fun modeFor(ticket: MatchTicket): LaunchMode = when {

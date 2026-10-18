@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import com.funpixelnest.mgp.game.ActivityHostedGame
 import com.funpixelnest.mgp.game.GameHud
 import com.funpixelnest.mgp.game.GameLaunchRequest
@@ -89,6 +90,7 @@ class UnityGameLauncher(private val activity: ComponentActivity) : GameLauncher,
         val launchJson = request.toLaunchJson()
         // The SDK reads the first match from the activity's intent when Unity starts.
         activity.intent.putExtra(LAUNCH_EXTRA, launchJson)
+        FpnUnityBridge.currentLaunch = launchJson
         if (player == null) {
             player = UnityPlayer(activity, object : IUnityPlayerLifecycleEvents {
                 override fun onUnityPlayerUnloaded() = Unit
@@ -133,10 +135,22 @@ class UnityGameLauncher(private val activity: ComponentActivity) : GameLauncher,
         if (s == null || p == null) return
         DisposableEffect(p) {
             // Light status bar icons over the game; Unity must not rotate the app.
-            val controller = WindowCompat.getInsetsController(activity.window, activity.window.decorView)
+            val window = activity.window
+            val controller = WindowCompat.getInsetsController(window, window.decorView)
             val lightBefore = controller.isAppearanceLightStatusBars
             controller.isAppearanceLightStatusBars = false
+            // Unity may switch to fullscreen / change the notch mode; the app shows its HUD with the status bar.
+            @Suppress("DEPRECATION")
+            val uiBefore = window.decorView.systemUiVisibility
+            val cutoutBefore = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) window.attributes.layoutInDisplayCutoutMode else 0
             onDispose {
+                @Suppress("DEPRECATION")
+                window.decorView.systemUiVisibility = uiBefore
+                window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    window.attributes = window.attributes.apply { layoutInDisplayCutoutMode = cutoutBefore }
+                }
+                controller.show(WindowInsetsCompat.Type.systemBars())
                 (p.parent as? ViewGroup)?.removeView(p)
                 p.pause()
                 controller.isAppearanceLightStatusBars = lightBefore

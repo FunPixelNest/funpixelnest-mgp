@@ -17,6 +17,10 @@ object FpnUnityBridge {
     @Volatile
     var listener: Listener? = null
 
+    /** Launch JSON of the current match (the SDK asks for it when Unity starts). */
+    @Volatile
+    var currentLaunch: String? = null
+
     /** Share (0..0.5) of the screen height covered by the app's HUD (top) / system bar (bottom). */
     @Volatile
     var insetTop: Float = 0f
@@ -41,4 +45,7 @@ object FpnUnityBridge {
 
     @JvmStatic
     fun getInset(bottom: Boolean): Float = if (bottom) insetBottom else insetTop
+
+    @JvmStatic
+    fun getLaunchData(): String? = currentLaunch
 }

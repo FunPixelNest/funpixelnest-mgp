@@ -67,6 +67,21 @@ namespace FunPixelNest
         internal static bool DetectHost(out string launchJson)
         {
             launchJson = null;
+            // Inside the FunPixelNest app (Unity as a Library): ask the app's bridge directly.
+            // In a normal game APK the class doesn't exist and this falls through to the intent.
+            try
+            {
+                using (var bridge = new AndroidJavaClass(AndroidBridgeClass))
+                {
+                    launchJson = bridge.CallStatic<string>("getLaunchData");
+                }
+            }
+            catch (Exception)
+            {
+                launchJson = null;
+            }
+            if (!string.IsNullOrEmpty(launchJson)) return true;
+
             using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
             using (var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
             {

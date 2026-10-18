@@ -17,7 +17,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -79,7 +83,11 @@ fun GameHudOverlay(
     ) {
         Box(
             Modifier
-                .windowInsetsPadding(WindowInsets.statusBars)
+                // Status bar and notch/cutout: the notch stays even when a game hides the status bar.
+                .windowInsetsPadding(
+                    WindowInsets.statusBars.union(WindowInsets.displayCutout)
+                        .only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
+                )
                 .fillMaxWidth()
                 .height(GAME_HUD_HEIGHT)
                 .padding(horizontal = 12.dp),

@@ -195,6 +195,8 @@ android {
 
 dependencies {
     if (hasUnityLibrary) {
-        add("implementation", files(unityAar, unityClassesJar))
+        // The AAR already carries unity-classes.jar (libs/) for the app; the separate copy is for compiling only.
+        add("implementation", files(unityAar))
+        add("compileOnly", files(unityClassesJar))
     }
 }

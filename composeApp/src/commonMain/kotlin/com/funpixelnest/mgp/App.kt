@@ -445,7 +445,11 @@ private fun MainApp(
                                 repository.game(current.ticket.gameId)?.let { GameRunningBackdrop(it) }
                                 // Android draws the game here (WebView); on web it opens over the app below the HUD.
                                 launcher?.GameView(Modifier.fillMaxSize())
-                                GameHudOverlay(hud, onPause = { pauseGame() })
+                                // Only once the game is actually playing (it has sent its first HUD values),
+                                // not while Unity / the WebGL build is still loading.
+                                androidx.compose.animation.AnimatedVisibility(visible = hud.reported, enter = fadeIn(), exit = fadeOut()) {
+                                    GameHudOverlay(hud, onPause = { pauseGame() })
+                                }
                             }
                         }
                         is Screen.PoolLeaderboard -> PoolLeaderboardScreen(

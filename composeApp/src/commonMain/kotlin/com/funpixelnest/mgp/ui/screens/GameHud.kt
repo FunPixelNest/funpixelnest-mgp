@@ -28,10 +28,12 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Casino
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.NorthEast
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.ViewHeadline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,6 +47,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -76,6 +79,7 @@ fun GameHudOverlay(
     hud: GameHud,
     onPause: () -> Unit,
     modifier: Modifier = Modifier,
+    gameId: String? = null,
 ) {
     Box(
         modifier
@@ -101,7 +105,7 @@ fun GameHudOverlay(
                 PauseButton(onPause)
                 // A game's own count (e.g. arrows left in Arrow Duel) takes the lives slot.
                 val counter = hud.counter
-                if (counter != null) CounterPill(counter) else LivesPill(hud.lives)
+                if (counter != null) CounterPill(counter, counterKind(gameId)) else LivesPill(hud.lives)
             }
             ScorePill(hud.score, shown = hud.reported, modifier = Modifier.align(Alignment.Center))
             TimerPill(hud.secondsLeft, modifier = Modifier.align(Alignment.CenterEnd))
@@ -129,18 +133,27 @@ private fun PauseButton(onPause: () -> Unit) {
     }
 }
 
-/** Arrows left (Arrow Duel); any game can send a counter the same way. */
+/** What a game's counter counts, shown with its own icon (screen readers say "<label> <count>"). */
+private class CounterKind(val icon: ImageVector, val label: String)
+
+private fun counterKind(gameId: String?): CounterKind = when (gameId) {
+    "slots" -> CounterKind(Icons.Rounded.Casino, "Spins left")
+    "bubble_shooter" -> CounterKind(Icons.Rounded.ViewHeadline, "Rows left")
+    else -> CounterKind(Icons.Rounded.NorthEast, "Arrows left")
+}
+
+/** A game's own count in place of lives: arrows left (Arrows), spins left (Solitaire Slots), rows left (Bubble Shooter). */
 @Composable
-private fun CounterPill(count: Int) {
+private fun CounterPill(count: Int, kind: CounterKind) {
     Row(
         Modifier
             .height(36.dp)
             .glass(RoundedCornerShape(18.dp))
             .padding(horizontal = 10.dp)
-            .semantics { contentDescription = "Arrows left $count" },
+            .semantics { contentDescription = "${kind.label} $count" },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Rounded.NorthEast, null, tint = MgpColors.Gold, modifier = Modifier.size(19.dp))
+        Icon(kind.icon, null, tint = MgpColors.Gold, modifier = Modifier.size(19.dp))
         Spacer(Modifier.width(5.dp))
         Text("$count", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
     }

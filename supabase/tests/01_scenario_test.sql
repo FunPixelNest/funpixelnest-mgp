@@ -78,8 +78,8 @@ begin
   perform t.expect_error($q$select public.join_tournament('solitaire_starter')$q$,
                          'permission denied for function join_tournament', 'anon cannot call RPC');
   -- ...but can read the catalog
-  perform t.check((select count(*) from public.games) = 13, 'anon reads 13 games');
-  perform t.check((select count(*) from public.tournaments) = 65, 'anon reads 65 tournaments');
+  perform t.check((select count(*) from public.games) = 14, 'anon reads 14 games');
+  perform t.check((select count(*) from public.tournaments) = 70, 'anon reads 70 tournaments');
   perform t.check((select count(*) from public.store_packs) = 5, 'anon reads 5 packs (progression migration)');
   perform t.check((select count(*) from public.tournaments where featured) = 4, '4 featured tournaments');
 

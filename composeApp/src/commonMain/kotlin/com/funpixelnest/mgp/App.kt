@@ -448,7 +448,7 @@ private fun MainApp(
                                 // Only once the game is actually playing (it has sent its first HUD values),
                                 // not while Unity / the WebGL build is still loading.
                                 androidx.compose.animation.AnimatedVisibility(visible = hud.reported, enter = fadeIn(), exit = fadeOut()) {
-                                    GameHudOverlay(hud, onPause = { pauseGame() })
+                                    GameHudOverlay(hud, onPause = { pauseGame() }, gameId = current.ticket.gameId)
                                 }
                             }
                         }

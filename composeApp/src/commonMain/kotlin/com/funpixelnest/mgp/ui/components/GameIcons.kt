@@ -9,14 +9,16 @@ import com.funpixelnest.mgp.resources.game_bubble_shooter
 import com.funpixelnest.mgp.resources.game_catdoku
 import com.funpixelnest.mgp.resources.game_kitty_hole
 import com.funpixelnest.mgp.resources.game_mahjong
+import com.funpixelnest.mgp.resources.game_queen_sudoku
 import com.funpixelnest.mgp.resources.game_rugby_rumble
+import com.funpixelnest.mgp.resources.game_slots
 import com.funpixelnest.mgp.resources.game_snake_war
 import com.funpixelnest.mgp.resources.logo_funpixelnest
 import org.jetbrains.compose.resources.DrawableResource
 
 /**
  * Game id → bundled icon image (files in composeApp/src/commonMain/composeResources/drawable).
- * Games without their own icon yet (Solitaire, Skill Slots, Flap Dash) show the FunPixelNest logo.
+ * Games without their own icon yet (Solitaire, Flap Dash) show the FunPixelNest logo.
  */
 fun gameIconResource(gameId: String): DrawableResource = gameIcons[gameId] ?: Res.drawable.logo_funpixelnest
 
@@ -32,5 +34,7 @@ private val gameIcons: Map<String, DrawableResource> by lazy {
         "bingo" to Res.drawable.game_bingo,
         "catdoku" to Res.drawable.game_catdoku,
         "blackjack" to Res.drawable.game_blackjack,
+        "slots" to Res.drawable.game_slots,
+        "queen_sudoku" to Res.drawable.game_queen_sudoku,
     )
 }

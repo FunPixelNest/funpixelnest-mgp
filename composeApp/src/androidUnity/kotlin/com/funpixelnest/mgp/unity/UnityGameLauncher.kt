@@ -43,7 +43,7 @@ class UnityGameLauncher(private val activity: ComponentActivity) : GameLauncher,
 
     companion object {
         /** Games built into the Unity library. */
-        val GAMES = setOf("block_puzzle", "arrows")
+        val GAMES = setOf("block_puzzle", "arrows", "blackjack")
 
         private const val RECEIVER = "FunPixelNestPlatform"
         private const val LAUNCH_EXTRA = "fpn_launch_data"

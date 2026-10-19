@@ -43,7 +43,7 @@ object SampleCatalog {
         "bingo" -> "Tap called numbers on your cards. Complete lines, columns or the full card for a BINGO. Quick daubs earn bonus points."
         "bubble_shooter" -> "Aim and shoot bubbles. Match 3 or more of the same color to pop them. Drop big groups for extra points."
         "mahjong" -> "Match pairs of free tiles (not covered and open on one side). Clear the board as fast as you can."
-        "blackjack" -> "Get closer to 21 than the dealer without going over. Hit, stand, double or split to grow your chips."
+        "blackjack" -> "Tap a column to place the dealt card and make 21 in each column. Going over 21 costs a life. Park a card in Hold, use Undo, and clear the deck before time runs out."
         "arrows" -> "Tap arrows to slide them off the board in the direction they point. Don't let them crash into each other."
         "slots" -> "Stop each reel at the right moment to line up symbols. Timing, not luck, decides your score."
         "snake_war" -> "Steer your snake, eat to grow and avoid running into others. The biggest snake scores the most."

@@ -1,8 +1,22 @@
 package com.funpixelnest.mgp
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -74,6 +88,7 @@ import com.funpixelnest.mgp.ui.screens.EndGameScreen
 import com.funpixelnest.mgp.ui.screens.GameDetailScreen
 import com.funpixelnest.mgp.ui.screens.AllGamesScreen
 import com.funpixelnest.mgp.ui.screens.GameHudOverlay
+import com.funpixelnest.mgp.ui.screens.GameOverScreen
 import com.funpixelnest.mgp.ui.screens.GameRunningBackdrop
 import com.funpixelnest.mgp.ui.screens.GamesScreen
 import com.funpixelnest.mgp.ui.screens.HelpCenterScreen
@@ -177,6 +192,8 @@ private fun MainApp(
     val clipboard = LocalClipboardManager.current
 
     var joining by remember { mutableStateOf<Game?>(null) }
+    var submitting by remember { mutableStateOf(false) }
+    var submitError by remember { mutableStateOf<String?>(null) }
     var session by remember { mutableStateOf<GameSession?>(null) }
     var toast by remember { mutableStateOf<String?>(null) }
 
@@ -228,16 +245,32 @@ private fun MainApp(
         else -> LaunchMode.TOURNAMENT
     }
 
-    /** After a match: practice → result screen; paid match → submit score, then the leaderboard. */
+    /** After a match: practice → result screen; paid match → Game Over score board (Submit → leaderboard). */
     fun finishMatch(ticket: MatchTicket, result: GameResult?) {
         if (ticket.isPractice) {
             navigator.push(Screen.PracticeResult(ticket.gameId, result))
             return
         }
+        submitError = null
+        navigator.push(Screen.GameOver(ticket, result))
+    }
+
+    /** Game Over → Submit Score: send the score, then show the pool's leaderboard. */
+    fun submitGameOver(screen: Screen.GameOver) {
+        if (submitting) return
+        submitting = true
+        submitError = null
         scope.launch {
             // A player who quits a paid match still used the entry, so it counts as score 0.
-            runCatching { repository.submitScore(ticket, result ?: GameResult(score = 0, durationMillis = 0)) }
-            navigator.push(Screen.PoolLeaderboard(ticket.poolId))
+            val ok = runCatching {
+                repository.submitScore(screen.ticket, screen.result ?: GameResult(score = 0, durationMillis = 0))
+            }.isSuccess
+            submitting = false
+            if (ok) {
+                navigator.replace(Screen.PoolLeaderboard(screen.ticket.poolId))
+            } else {
+                submitError = "Couldn't send your score. Check your connection and tap Submit again."
+            }
         }
     }
 
@@ -323,6 +356,8 @@ private fun MainApp(
 
     // Back during a match opens the pause menu; Back while paused resumes.
     navigator.gameBackHandler = handler@{
+        // The score must be sent: Back on the Game Over screen submits too.
+        (navigator.current as? Screen.GameOver)?.let { submitGameOver(it); return@handler true }
         val s = session ?: return@handler false
         when {
             s.confirmEnd -> s.confirmEnd = false
@@ -384,7 +419,11 @@ private fun MainApp(
 
     SkyBackground {
         Column(Modifier.fillMaxSize()) {
-            if (showChrome) {
+            AnimatedVisibility(
+                showChrome,
+                enter = expandVertically(tween(PAGE_MS)) + fadeIn(tween(PAGE_MS)),
+                exit = shrinkVertically(tween(PAGE_MS)) + fadeOut(tween(PAGE_MS)),
+            ) {
                 PlayerHeader(
                     name = repository.player.displayName,
                     avatarId = profile.avatarId,
@@ -398,8 +437,15 @@ private fun MainApp(
                 )
             }
             val content = Modifier.weight(1f).fillMaxWidth()
-            Box(content) {
-                val joiningGame = joining
+            val page = Page(current, navigator.tab, joining, navigator.depth)
+            AnimatedContent(
+                targetState = page,
+                modifier = content,
+                transitionSpec = { pageTransition(initialState, targetState) },
+                label = "page",
+            ) { shown ->
+                val current = shown.screen
+                val joiningGame = shown.joining
                 if (joiningGame != null) {
                     JoiningScreen(joiningGame)
                 } else {
@@ -411,7 +457,6 @@ private fun MainApp(
                                     game = game,
                                     tournaments = repository.tournamentsFor(game.id),
                                     onPlay = { play(it) },
-                                    onPractice = { startPractice(game.id) },
                                     onInfo = { navigator.show(Popup.HowToPlay(game.id)) },
                                 )
                             }
@@ -450,6 +495,18 @@ private fun MainApp(
                                 androidx.compose.animation.AnimatedVisibility(visible = hud.reported, enter = fadeIn(), exit = fadeOut()) {
                                     GameHudOverlay(hud, onPause = { pauseGame() }, gameId = current.ticket.gameId)
                                 }
+                            }
+                        }
+                        is Screen.GameOver -> {
+                            val game = repository.game(current.ticket.gameId)
+                            if (game != null) {
+                                GameOverScreen(
+                                    game = game,
+                                    result = current.result,
+                                    submitting = submitting,
+                                    error = submitError,
+                                    onSubmit = { submitGameOver(current) },
+                                )
                             }
                         }
                         is Screen.PoolLeaderboard -> PoolLeaderboardScreen(
@@ -496,7 +553,7 @@ private fun MainApp(
                         )
                         Screen.ReferEarn -> ReferEarnScreen(onBack = { navigator.back() }, playerId = repository.player.id, onCopy = { t, m -> copy(t, m) })
                         is Screen.Legal -> LegalScreen(current.privacy) { navigator.back() }
-                        null -> when (navigator.tab) {
+                        null -> when (shown.tab) {
                             Tab.Challenges -> ChallengesScreen(
                                 repository = repository,
                                 onClaim = economy.claimChallenge,
@@ -524,7 +581,11 @@ private fun MainApp(
                     }
                 }
             }
-            if (showChrome) {
+            AnimatedVisibility(
+                showChrome,
+                enter = expandVertically(tween(PAGE_MS), expandFrom = Alignment.Top) + fadeIn(tween(PAGE_MS)),
+                exit = shrinkVertically(tween(PAGE_MS), shrinkTowards = Alignment.Top) + fadeOut(tween(PAGE_MS)),
+            ) {
                 MgpBottomBar(
                     selected = navigator.tab,
                     challengeBadge = challenges.claimableCount,
@@ -610,4 +671,44 @@ private fun MainApp(
             )
         }
     }
+}
+
+// ---------------------------------------------------------------- page transitions
+
+private const val PAGE_MS = 320
+
+/** What the content area shows: the pushed screen (or the tab root), the tab, the joining screen, stack depth. */
+private data class Page(val screen: Screen?, val tab: Tab, val joining: Game?, val depth: Int)
+
+private fun Screen?.isGame() = this is Screen.PlayGame || this is Screen.GameRunning
+
+/**
+ * Tween-style page changes: a pushed screen slides in from the right over the old one, Back slides it out
+ * to the right, tabs glide sideways in tab order, and the joining / Game Over screens zoom in.
+ * The running game itself appears and disappears without animation (Unity draws its own view).
+ */
+private fun AnimatedContentTransitionScope<Page>.pageTransition(from: Page, to: Page): ContentTransform {
+    val ease = FastOutSlowInEasing
+    fun <T> t() = tween<T>(PAGE_MS, easing = ease)
+    return when {
+        from.screen.isGame() || to.screen.isGame() -> {
+            val enter = if (to.screen is Screen.GameOver) fadeIn(t()) + scaleIn(t(), initialScale = 0.85f) else EnterTransition.None
+            enter togetherWith ExitTransition.None
+        }
+        to.joining != null || from.joining != null ->
+            (fadeIn(t()) + scaleIn(t(), initialScale = 0.92f)) togetherWith (fadeOut(t()) + scaleOut(t(), targetScale = 1.04f))
+        to.depth > from.depth ->
+            (slideInHorizontally(t()) { it } + fadeIn(t())) togetherWith
+                (slideOutHorizontally(t()) { -it / 4 } + fadeOut(t()))
+        to.depth < from.depth ->
+            (slideInHorizontally(t()) { -it / 4 } + fadeIn(t())) togetherWith
+                (slideOutHorizontally(t()) { it } + fadeOut(t()))
+        to.tab != from.tab -> {
+            val dir = if (to.tab.ordinal > from.tab.ordinal) 1 else -1
+            (slideInHorizontally(t()) { dir * it / 3 } + fadeIn(t())) togetherWith
+                (slideOutHorizontally(t()) { -dir * it / 3 } + fadeOut(t()))
+        }
+        // Same depth, different screen (e.g. Game Over → leaderboard): cross-fade with a small zoom.
+        else -> (fadeIn(t()) + scaleIn(t(), initialScale = 0.94f)) togetherWith fadeOut(t())
+    }.also { if (to.depth > from.depth) it.targetContentZIndex = 1f else if (to.depth < from.depth) it.targetContentZIndex = -1f }
 }

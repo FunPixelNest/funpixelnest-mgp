@@ -34,6 +34,8 @@ sealed interface Screen {
     data class PlayGame(val ticket: MatchTicket) : Screen
     /** Shown behind a real (Unity) game while it runs. */
     data class GameRunning(val ticket: MatchTicket) : Screen
+    /** After a paid match: the game's score board with Submit Score (then the leaderboard). null = left early. */
+    data class GameOver(val ticket: MatchTicket, val result: GameResult?) : Screen
     data class PoolLeaderboard(val poolId: String) : Screen
     data class PracticeResult(val gameId: String, val result: GameResult?) : Screen
     data object Profile : Screen
@@ -77,6 +79,9 @@ class Navigator {
     var gameBackHandler: (() -> Boolean)? = null
 
     val current: Screen? get() = stack.lastOrNull()
+
+    /** Number of pushed screens (0 = a tab's root); page animations slide forward / back by it. */
+    val depth: Int get() = stack.size
     val popup: Popup? get() = popups.lastOrNull()
     val canGoBack: Boolean get() = stack.isNotEmpty()
 

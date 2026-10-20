@@ -97,6 +97,22 @@ data class GameResult(
     val eventLog: List<String> = emptyList(),
 )
 
+/** One row of a game's score board on the Game Over screen, e.g. "Time Bonus" 1,250. */
+data class ScoreLine(val label: String, val value: Long)
+
+/**
+ * The game's score rows (FunPixelNest SDK FpnPlatform.AddScoreLine), sent inside the event log as
+ * "score:<label>=<value>". Empty when the game sends none (the Game Over screen then shows one Score row).
+ */
+fun GameResult.scoreLines(): List<ScoreLine> = eventLog.mapNotNull { e ->
+    if (!e.startsWith("score:")) return@mapNotNull null
+    val body = e.removePrefix("score:")
+    val eq = body.lastIndexOf('=')
+    if (eq <= 0) return@mapNotNull null
+    val value = body.substring(eq + 1).trim().toLongOrNull() ?: return@mapNotNull null
+    ScoreLine(body.substring(0, eq).trim(), value)
+}.take(6)
+
 /**
  * The single seam between the platform app and the games.
  *

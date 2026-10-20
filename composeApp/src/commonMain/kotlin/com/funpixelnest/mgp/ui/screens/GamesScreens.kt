@@ -321,17 +321,16 @@ private val tierStyles = listOf(
     TierStyle("Mega", Color(0xFFE0186D), ButtonColor.Pink, Color(0xFFFFEBF3)),
 )
 
-/** A game's page: header, banner, free practice and every tournament / 1v1 duel as tier cards. */
+/** A game's page: header, banner and the game's pool tournaments as tier cards (no practice, no 1v1 duels). */
 @Composable
 fun GameDetailScreen(
     game: Game,
     tournaments: List<Tournament>,
     onPlay: (Tournament) -> Unit,
-    onPractice: () -> Unit,
     onInfo: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val sorted = remember(tournaments) { tournaments.sortedWith(compareBy({ it.entryFee }, { it.isDuel.not() })) }
+    val sorted = remember(tournaments) { tournaments.filterNot { it.isDuel }.sortedBy { it.entryFee } }
     LazyColumn(
         modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
@@ -354,7 +353,6 @@ fun GameDetailScreen(
             }
         }
         item { CompeteBanner() }
-        item { PracticeCard(onPractice) }
         items(sorted.size) { index ->
             TournamentCard(sorted[index], tierStyles[index.coerceAtMost(tierStyles.lastIndex)], index, onPlay = { onPlay(sorted[index]) })
         }
@@ -405,20 +403,6 @@ private fun CompeteBanner() {
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(top = 6.dp),
             )
-        }
-    }
-}
-
-@Composable
-private fun PracticeCard(onPractice: () -> Unit) {
-    Panel(padding = 14.dp) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("PRACTICE", color = MgpColors.Primary, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp)
-                Text("Free warm-up with a random board. No coins, no leaderboard.", color = MgpColors.TextMuted, fontSize = 13.sp)
-            }
-            Spacer(Modifier.width(10.dp))
-            GlossyButton("Free", onClick = onPractice, color = ButtonColor.Blue, height = 46.dp, fontSize = 17.sp, modifier = Modifier.width(110.dp))
         }
     }
 }

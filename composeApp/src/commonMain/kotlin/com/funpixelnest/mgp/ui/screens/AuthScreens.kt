@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -29,21 +28,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.PhoneIphone
-import androidx.compose.material.icons.rounded.Sms
-import androidx.compose.material.icons.rounded.Visibility
-import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -60,9 +48,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -147,22 +132,13 @@ fun SplashScreen(message: String?, onRetry: (() -> Unit)?) {
     }
 }
 
-private enum class AuthMode { SignUp, SignIn, Phone }
-
 /**
- * Create account / sign in: username + password, Google, Apple, Facebook, mobile number,
- * and "Play as guest" at the bottom. Options that aren't set up yet explain that when tapped.
+ * Sign in: Google, Facebook, and "Play as guest" at the bottom.
+ * An option that isn't set up yet in Supabase explains that when tapped.
  */
 @Composable
 fun LoginScreen(repository: PlatformRepository) {
     val scope = rememberCoroutineScope()
-    var mode by remember { mutableStateOf(AuthMode.SignUp) }
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var showPassword by remember { mutableStateOf(false) }
-    var phone by remember { mutableStateOf("+91 ") }
-    var code by remember { mutableStateOf("") }
-    var codeSent by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
@@ -188,149 +164,28 @@ fun LoginScreen(repository: PlatformRepository) {
             Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing)
-                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
         ) {
-            ArtImage(Art.logo, 190.dp, description = "FunPixelNest")
-            Spacer(Modifier.height(10.dp))
+            ArtImage(Art.logo, 220.dp, description = "FunPixelNest")
+            Spacer(Modifier.height(14.dp))
             Panel(Modifier.widthIn(max = 460.dp).fillMaxWidth(), padding = 20.dp, corner = 28.dp) {
-                val title = when (mode) {
-                    AuthMode.SignUp -> "CREATE ACCOUNT"
-                    AuthMode.SignIn -> "SIGN IN"
-                    AuthMode.Phone -> "MOBILE NUMBER"
-                }
-                DisplayText(title, size = 26.sp, modifier = Modifier.align(Alignment.CenterHorizontally), maxLines = 1)
+                DisplayText("SIGN IN", size = 26.sp, modifier = Modifier.align(Alignment.CenterHorizontally), maxLines = 1)
                 Text(
-                    when (mode) {
-                        AuthMode.SignUp -> "Join Fun Pixel Nest and start your gaming adventure!"
-                        AuthMode.SignIn -> "Welcome back! Sign in to keep your coins and progress."
-                        AuthMode.Phone -> if (codeSent) "Enter the 6-digit code we sent by SMS." else "We'll send you a one-time code by SMS."
-                    },
+                    "Sign in to keep your coins and progress on every device.",
                     color = MgpColors.TextMuted,
                     fontSize = 13.sp,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 14.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 16.dp),
                 )
-
-                if (mode == AuthMode.Phone) {
-                    AuthField(phone, { phone = it }, "Mobile number (+91…)", Icons.Rounded.PhoneIphone, KeyboardType.Phone, enabled = !codeSent)
-                    if (codeSent) {
-                        Spacer(Modifier.height(10.dp))
-                        AuthField(code, { code = it.filter(Char::isDigit).take(6) }, "6-digit code", Icons.Rounded.Sms, KeyboardType.NumberPassword)
-                    }
-                    Spacer(Modifier.height(14.dp))
-                    GlossyButton(
-                        if (codeSent) "Verify & play" else "Send code",
-                        onClick = {
-                            submit {
-                                if (!codeSent) {
-                                    repository.sendPhoneCode(phone).also { if (it == null) codeSent = true }
-                                } else {
-                                    repository.verifyPhoneCode(phone, code)
-                                }
-                            }
-                        },
-                        enabled = !busy,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    Text(
-                        "Back to other options",
-                        color = MgpColors.Primary,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.align(Alignment.CenterHorizontally).clickable {
-                            mode = AuthMode.SignUp
-                            codeSent = false
-                            code = ""
-                            error = null
-                        }.padding(6.dp),
-                    )
-                } else {
-                    AuthField(username, { username = it.take(20) }, "Username", Icons.Rounded.Person, KeyboardType.Text)
-                    Spacer(Modifier.height(10.dp))
-                    AuthField(
-                        password,
-                        { password = it },
-                        "Password",
-                        Icons.Rounded.Lock,
-                        KeyboardType.Password,
-                        visual = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                        trailing = {
-                            IconButton(onClick = { showPassword = !showPassword }) {
-                                Icon(
-                                    if (showPassword) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
-                                    if (showPassword) "Hide password" else "Show password",
-                                    tint = MgpColors.Primary,
-                                )
-                            }
-                        },
-                    )
-                    Spacer(Modifier.height(14.dp))
-                    GlossyButton(
-                        if (mode == AuthMode.SignUp) "Create account" else "Sign in",
-                        onClick = {
-                            if (!available(LoginMethod.USERNAME)) {
-                                notSetUp(LoginMethod.USERNAME)
-                            } else {
-                                submit {
-                                    if (mode == AuthMode.SignUp) repository.signUp(username, password)
-                                    else repository.signIn(username, password)
-                                }
-                            }
-                        },
-                        enabled = !busy,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Row(Modifier.fillMaxWidth().padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        HorizontalDivider(Modifier.weight(1f), color = MgpColors.Border)
-                        Text("OR", color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(horizontal = 14.dp))
-                        HorizontalDivider(Modifier.weight(1f), color = MgpColors.Border)
-                    }
-                    SocialButton("Continue with Google", Art.google) {
-                        if (available(LoginMethod.GOOGLE)) submit { repository.signInWithProvider(LoginMethod.GOOGLE) } else notSetUp(LoginMethod.GOOGLE)
-                    }
-                    Spacer(Modifier.height(10.dp))
-                    SocialButton("Continue with Apple", Art.apple) {
-                        if (available(LoginMethod.APPLE)) submit { repository.signInWithProvider(LoginMethod.APPLE) } else notSetUp(LoginMethod.APPLE)
-                    }
-                    Spacer(Modifier.height(10.dp))
-                    SocialButton("Continue with Facebook", Art.facebook) {
-                        if (available(LoginMethod.FACEBOOK)) submit { repository.signInWithProvider(LoginMethod.FACEBOOK) } else notSetUp(LoginMethod.FACEBOOK)
-                    }
-                    Spacer(Modifier.height(10.dp))
-                    SocialButton("Continue with mobile", null, Icons.Rounded.PhoneIphone) {
-                        if (available(LoginMethod.PHONE)) {
-                            error = null
-                            mode = AuthMode.Phone
-                        } else {
-                            notSetUp(LoginMethod.PHONE)
-                        }
-                    }
-                    Row(
-                        Modifier.fillMaxWidth().padding(top = 16.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            if (mode == AuthMode.SignUp) "Already have an account?" else "New here?",
-                            color = MgpColors.TextMuted,
-                            fontSize = 15.sp,
-                        )
-                        Text(
-                            if (mode == AuthMode.SignUp) "Sign In" else "Create account",
-                            color = MgpColors.Primary,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 15.sp,
-                            modifier = Modifier
-                                .clickable {
-                                    mode = if (mode == AuthMode.SignUp) AuthMode.SignIn else AuthMode.SignUp
-                                    error = null
-                                }
-                                .padding(8.dp),
-                        )
-                    }
+                SocialButton("Continue with Google", Art.google) {
+                    if (available(LoginMethod.GOOGLE)) submit { repository.signInWithProvider(LoginMethod.GOOGLE) } else notSetUp(LoginMethod.GOOGLE)
+                }
+                Spacer(Modifier.height(12.dp))
+                SocialButton("Continue with Facebook", Art.facebook) {
+                    if (available(LoginMethod.FACEBOOK)) submit { repository.signInWithProvider(LoginMethod.FACEBOOK) } else notSetUp(LoginMethod.FACEBOOK)
                 }
 
                 if (error != null) {
@@ -340,7 +195,7 @@ fun LoginScreen(repository: PlatformRepository) {
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
                     )
                 }
                 if (busy) {
@@ -359,7 +214,7 @@ fun LoginScreen(repository: PlatformRepository) {
                 modifier = Modifier.widthIn(max = 460.dp).fillMaxWidth(),
             )
             Text(
-                "Guest progress stays on this device. Create an account to keep it safe.",
+                "Guest progress stays on this device. Sign in with Google or Facebook to keep it safe.",
                 color = MgpColors.TextMuted,
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center,
@@ -367,46 +222,6 @@ fun LoginScreen(repository: PlatformRepository) {
             )
         }
     }
-}
-
-@Composable
-private fun AuthField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    icon: ImageVector,
-    keyboardType: KeyboardType,
-    enabled: Boolean = true,
-    visual: VisualTransformation = VisualTransformation.None,
-    trailing: (@Composable () -> Unit)? = null,
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        enabled = enabled,
-        singleLine = true,
-        placeholder = { Text(placeholder, color = Color(0xFF7D8BAA), fontSize = 17.sp) },
-        leadingIcon = {
-            Box(
-                Modifier.padding(start = 8.dp, end = 4.dp).size(40.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFFE3EEFF)),
-                contentAlignment = Alignment.Center,
-            ) { Icon(icon, null, tint = MgpColors.Primary) }
-        },
-        trailingIcon = trailing,
-        visualTransformation = visual,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        shape = RoundedCornerShape(18.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            disabledContainerColor = Color(0xFFF2F6FC),
-            focusedBorderColor = MgpColors.Primary,
-            unfocusedBorderColor = MgpColors.Border,
-            focusedTextColor = MgpColors.Navy,
-            unfocusedTextColor = MgpColors.Navy,
-        ),
-        modifier = Modifier.fillMaxWidth().height(62.dp),
-    )
 }
 
 @Composable

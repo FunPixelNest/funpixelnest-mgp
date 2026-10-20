@@ -44,6 +44,7 @@ namespace FunPixelNest
         private static bool s_quitSent;
 
         private static readonly List<string> s_events = new List<string>();
+        private static readonly List<string> s_scoreLines = new List<string>();
         private static bool s_eventCapWarned;
 
         /// <summary>
@@ -73,6 +74,7 @@ namespace FunPixelNest
             s_scoreSubmitted = false;
             s_quitSent = false;
             s_events.Clear();
+            s_scoreLines.Clear();
             s_eventCapWarned = false;
             s_hudScore = long.MinValue;
             s_hudSeconds = int.MinValue;
@@ -201,6 +203,19 @@ namespace FunPixelNest
                 return;
             }
             s_events.Add(e ?? string.Empty);
+        }
+
+        /// <summary>
+        /// Adds a row to the app's Game Over score board, e.g. AddScoreLine("Base Score", 2450),
+        /// AddScoreLine("Time Bonus", 1250). Call before SubmitScore; the app adds the Total row itself.
+        /// Rows are shown in the order added (at most 6). Ignored after the score has been submitted.
+        /// </summary>
+        public static void AddScoreLine(string label, long value)
+        {
+            if (s_scoreSubmitted || s_quitSent || string.IsNullOrEmpty(label) || s_scoreLines.Count >= 6) return;
+            string clean = label.Replace("=", " ").Replace("\n", " ").Replace("\r", " ").Trim();
+            if (clean.Length > 28) clean = clean.Substring(0, 28);
+            s_scoreLines.Add("score:" + clean + "=" + value.ToString(System.Globalization.CultureInfo.InvariantCulture));
         }
 
         /// <summary>True once a score has been submitted for this session.</summary>
@@ -388,6 +403,7 @@ namespace FunPixelNest
             s_scoreSubmitted = false;
             s_quitSent = false;
             s_events.Clear();
+            s_scoreLines.Clear();
             s_eventCapWarned = false;
             s_hudScore = long.MinValue;
             s_hudSeconds = int.MinValue;
@@ -440,7 +456,20 @@ namespace FunPixelNest
 
                 if (!s_matchStarted) StartMatch();
                 if (durationMs < 0) durationMs = ElapsedMs();
-                if (eventLogJson == null) eventLogJson = ToJsonArray(s_events);
+                if (eventLogJson == null)
+                {
+                    var all = new List<string>(s_scoreLines.Count + s_events.Count);
+                    all.AddRange(s_scoreLines);
+                    all.AddRange(s_events);
+                    eventLogJson = ToJsonArray(all);
+                }
+                else if (s_scoreLines.Count > 0 && eventLogJson.StartsWith("["))
+                {
+                    string lines = ToJsonArray(s_scoreLines);
+                    string inner = lines.Substring(1, lines.Length - 2);
+                    string rest = eventLogJson.Substring(1).TrimStart();
+                    eventLogJson = "[" + inner + (rest.StartsWith("]") ? "" : ",") + rest;
+                }
 
                 if (score < 0) Debug.LogWarning(LogPrefix + "Negative score submitted: " + score);
                 if (score > MaxExactScore || score < -MaxExactScore)

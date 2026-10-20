@@ -101,6 +101,7 @@ object Art {
     val leagueShield get() = Res.drawable.art_league_shield
     val cart get() = Res.drawable.art_cart
     val trophy get() = Res.drawable.art_trophy
+    val cup get() = Res.drawable.ch_cup
     val trophyConfetti get() = Res.drawable.art_trophy_confetti
     val coin get() = Res.drawable.ic_coin
     val gem get() = Res.drawable.ic_gem

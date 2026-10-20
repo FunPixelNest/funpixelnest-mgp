@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp
 
+import com.funpixelnest.mgp.data.LivePlayers
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.pager.HorizontalPager
@@ -145,6 +146,8 @@ fun App(
     remember { AppSettings.loadTheme() }
     MgpTheme {
         val status by repository.status.collectAsState()
+        // Live player counts on the game cards (random placeholder numbers until there are real players).
+        LaunchedEffect(repository) { LivePlayers.simulate(repository.games().map { it.id }) }
         val scope = rememberCoroutineScope()
         LaunchedEffect(repository) { repository.initialize() }
 

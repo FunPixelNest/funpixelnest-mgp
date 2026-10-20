@@ -1,5 +1,9 @@
 package com.funpixelnest.mgp.ui.screens
 
+import com.funpixelnest.mgp.data.LivePlayers
+import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -213,13 +217,16 @@ private fun GameTile(game: Game, onClick: () -> Unit) {
             .padding(7.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Image(
-            painterResource(gameIconResource(game.id)),
-            contentDescription = game.name,
-            contentScale = ContentScale.Crop,
-            // Slightly taller than wide.
-            modifier = Modifier.fillMaxWidth().aspectRatio(0.92f).clip(RoundedCornerShape(16.dp)),
-        )
+        Box {
+            Image(
+                painterResource(gameIconResource(game.id)),
+                contentDescription = game.name,
+                contentScale = ContentScale.Crop,
+                // Slightly taller than wide.
+                modifier = Modifier.fillMaxWidth().aspectRatio(0.92f).clip(RoundedCornerShape(16.dp)),
+            )
+            LivePlayersBadge(game.id, Modifier.align(Alignment.TopStart).padding(6.dp))
+        }
         DisplayText(
             game.name.uppercase(),
             size = 17.sp,
@@ -237,6 +244,42 @@ private fun GameTile(game: Game, onClick: () -> Unit) {
             Spacer(Modifier.width(4.dp))
             Text(game.category, color = Color(0xFF173B87), fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1)
         }
+    }
+}
+
+/** "● 1,234 playing" pill: a pulsing green dot and the live player count, which counts smoothly to new values. */
+@Composable
+fun LivePlayersBadge(gameId: String, modifier: Modifier = Modifier, compact: Boolean = true) {
+    val counts by LivePlayers.counts.collectAsState()
+    val target = counts[gameId] ?: return
+    val shown by animateIntAsState(target, tween(900), label = "live")
+    Row(
+        modifier
+            .clip(RoundedCornerShape(50))
+            .background(Color(0xB3081A44))
+            .padding(horizontal = if (compact) 7.dp else 10.dp, vertical = if (compact) 3.dp else 5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        LiveDot(if (compact) 7.dp else 9.dp)
+        Spacer(Modifier.width(5.dp))
+        Text(
+            formatCoins(shown.toLong()) + if (compact) " playing" else " players online",
+            color = Color.White,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = if (compact) 11.sp else 13.sp,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun LiveDot(size: Dp) {
+    val pulse = rememberInfiniteTransition(label = "dot")
+    val ring by pulse.animateFloat(1f, 2.2f, infiniteRepeatable(tween(1_200), RepeatMode.Restart), label = "ring")
+    val fade by pulse.animateFloat(0.6f, 0f, infiniteRepeatable(tween(1_200), RepeatMode.Restart), label = "fade")
+    Box(Modifier.size(size), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(size).scale(ring).clip(CircleShape).background(Color(0xFF4CE05A).copy(alpha = fade)))
+        Box(Modifier.size(size).clip(CircleShape).background(Color(0xFF4CE05A)))
     }
 }
 
@@ -277,6 +320,7 @@ fun GameDetailScreen(
                 Column(Modifier.weight(1f)) {
                     DisplayText(game.name.uppercase(), size = 26.sp, maxLines = 2)
                     Text("Play tournaments and win big rewards!", color = MgpColors.Navy, fontSize = 14.sp)
+                    LivePlayersBadge(game.id, Modifier.padding(top = 6.dp), compact = false)
                 }
                 Box(
                     Modifier.size(40.dp).clip(RoundedCornerShape(20.dp)).background(MgpColors.Primary).clickable(onClick = onInfo),

@@ -210,7 +210,22 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            // Smaller app: R8 removes unused code and resources (rules in proguard-rules.pro).
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // Until the Play Store upload key is set up, release test builds are signed with the debug key.
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+    // One APK per phone CPU type (a phone only downloads the Unity engine it can run) plus one universal APK.
+    // Play Store uploads use an app bundle (bundleRelease), which Google Play splits the same way.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a")
+            isUniversalApk = true
         }
     }
     compileOptions {

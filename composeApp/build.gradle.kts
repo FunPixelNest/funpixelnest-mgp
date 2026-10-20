@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
+import java.security.MessageDigest
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -50,6 +51,35 @@ val backendConfigValues = linkedMapOf(
 // Without these files the app builds as before and every game uses its WebGL build.
 val unityAar = file("unity/unityLibrary-release.aar")
 val unityClassesJar = file("unity/unity-classes.jar")
+
+// The AAR is larger than GitHub allows for one file, so git stores it in pieces (unity/parts/*.partNN, each
+// < 50 MB, plus a .sha256). The pieces are joined here into unity/unityLibrary-release.aar (not in git) when
+// it is missing or older than the pieces. Use tools/split-unity-library.sh to replace the library.
+run {
+    val parts = file("unity/parts").listFiles { f -> f.name.startsWith("unityLibrary-release.aar.part") }
+        ?.sortedBy { it.name }.orEmpty()
+    val sumFile = file("unity/parts/unityLibrary-release.aar.sha256")
+    if (parts.isNotEmpty()) {
+        val expected = if (sumFile.exists()) sumFile.readText().trim().substringBefore(" ") else null
+        fun sha256(f: File): String {
+            val md = MessageDigest.getInstance("SHA-256")
+            f.inputStream().use { input ->
+                val buf = ByteArray(1 shl 20)
+                while (true) { val n = input.read(buf); if (n < 0) break; md.update(buf, 0, n) }
+            }
+            return md.digest().joinToString("") { b -> "%02x".format(b) }
+        }
+        val upToDate = unityAar.exists() && (expected == null || sha256(unityAar) == expected)
+        if (!upToDate) {
+            unityAar.outputStream().use { out -> parts.forEach { p -> p.inputStream().use { it.copyTo(out) } } }
+            if (expected != null && sha256(unityAar) != expected) {
+                unityAar.delete()
+                throw GradleException("Unity library pieces in composeApp/unity/parts don't match the .sha256 file")
+            }
+            logger.lifecycle("FunPixelNest: joined ${parts.size} pieces into composeApp/unity/unityLibrary-release.aar")
+        }
+    }
+}
 val hasUnityLibrary = unityAar.exists() && unityClassesJar.exists()
 if (hasUnityLibrary) logger.lifecycle("FunPixelNest: native Unity games ON (composeApp/unity/)")
 

@@ -30,3 +30,6 @@ UnityFramework/
 
 # OS
 .DS_Store
+
+# Unity library: git keeps it in pieces (composeApp/unity/parts); the build joins them into this file.
+composeApp/unity/unityLibrary-release.aar

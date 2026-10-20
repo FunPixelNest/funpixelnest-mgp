@@ -45,6 +45,7 @@ class UnityGameLauncher(private val activity: ComponentActivity) : GameLauncher,
         /** Games built into the Unity library. */
         val GAMES = setOf(
             "block_puzzle", "arrows", "blackjack", "kitty_hole", "queen_sudoku", "slots", "bubble_shooter", "mahjong",
+            "flap_dash", "snake_war",
         )
 
         private const val RECEIVER = "FunPixelNestPlatform"

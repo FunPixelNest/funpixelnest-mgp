@@ -1,5 +1,14 @@
 package com.funpixelnest.mgp.ui.screens
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -93,23 +102,52 @@ class PopupActions(
     val openStore: () -> Unit,
 )
 
-/** Draws the top pop-up (if any) over the whole app. */
+/**
+ * Draws the top pop-up (if any) over the whole app. The dim backdrop fades in; the card pops in with a
+ * little bounce and shrinks away when closed (also when one pop-up replaces another).
+ */
 @Composable
 fun PopupHost(popup: Popup?, repository: PlatformRepository, actions: PopupActions) {
-    if (popup == null) return
-    val close = { actions.dismiss(popup) }
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(Color(0x99081A44))
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
-                if (popup !is Popup.Welcome) close()
+    Box(Modifier.fillMaxSize()) {
+        AnimatedVisibility(popup != null, enter = fadeIn(tween(220)), exit = fadeOut(tween(220))) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Color(0x99081A44))
+                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+                        if (popup != null && popup !is Popup.Welcome) actions.dismiss(popup)
+                    },
+            )
+        }
+        AnimatedContent(
+            targetState = popup,
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+            transitionSpec = {
+                (fadeIn(tween(180)) + scaleIn(spring(dampingRatio = 0.55f, stiffness = 380f), initialScale = 0.6f) +
+                    slideInVertically(spring(dampingRatio = 0.7f, stiffness = 380f)) { it / 6 }) togetherWith
+                    (fadeOut(tween(160)) + scaleOut(tween(160), targetScale = 0.85f))
+            },
+            label = "popup",
+        ) { shown ->
+            if (shown != null) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.safeDrawing)
+                        .imePadding()
+                        .padding(18.dp),
+                    contentAlignment = Alignment.Center,
+                ) { PopupContent(shown, repository, actions) }
             }
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .imePadding()
-            .padding(18.dp),
-        contentAlignment = Alignment.Center,
-    ) {
+        }
+    }
+}
+
+@Composable
+private fun PopupContent(popup: Popup, repository: PlatformRepository, actions: PopupActions) {
+    val close = { actions.dismiss(popup) }
+    run {
         when (popup) {
             Popup.Welcome -> WelcomePopup(repository, onClaim = {
                 actions.ackWelcome()

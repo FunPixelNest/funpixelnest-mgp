@@ -259,7 +259,6 @@ fun RewardsScreen(repository: PlatformRepository, actions: EconomyActions, onVie
     val bonus by repository.dailyBonus.collectAsState()
     val shop by repository.shop.collectAsState()
     val challenges by repository.challenges.collectAsState()
-    val wallet by repository.wallet.collectAsState()
     LazyColumn(
         modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
@@ -268,28 +267,12 @@ fun RewardsScreen(repository: PlatformRepository, actions: EconomyActions, onVie
         item { ScreenHeader(Art.giftSmall, "Rewards", "Play, complete challenges and earn exciting rewards!") }
         item {
             Panel(padding = 12.dp) {
-                SectionHeader("Daily rewards", icon = Art.medal(1, small = true), trailing = { ResetTimer("Resets in:", bonus.resetsInMillis, icon = Icons.Rounded.Schedule) })
-                Spacer(Modifier.height(10.dp))
-                DailyBonusRow(bonus, onClaim = actions.claimDaily)
-            }
-        }
-        item {
-            Panel(padding = 12.dp) {
                 SectionHeader("Challenge rewards", icon = Art.target, trailing = {
                     Text("View all", color = MgpColors.Primary, fontWeight = FontWeight.Bold, fontSize = 13.sp, modifier = Modifier.clickable(onClick = onViewChallenges))
                 })
                 Spacer(Modifier.height(10.dp))
                 Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     challenges.of(ChallengeCategory.MILESTONE).forEach { c -> MilestoneCard(c, Modifier.weight(1f)) { actions.claimChallenge(c) } }
-                }
-            }
-        }
-        item {
-            Panel(padding = 12.dp) {
-                SectionHeader("Chest rewards", icon = Art.chest("gold"), trailing = { CoinAmount(wallet.gems, gems = true, fontSize = 14.sp, iconSize = 18.dp) })
-                Spacer(Modifier.height(10.dp))
-                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    shop.chests.forEach { chest -> ChestCard(chest, Modifier.weight(1f)) { actions.openChest(chest.id) } }
                 }
             }
         }

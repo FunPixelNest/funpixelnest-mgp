@@ -1,7 +1,5 @@
 package com.funpixelnest.mgp.ui.screens
 
-import androidx.compose.material.icons.rounded.ShoppingCart
-import com.funpixelnest.mgp.domain.StorePack
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -108,15 +106,12 @@ fun gamesByCategory(games: List<Game>): List<Pair<String, List<Game>>> {
         .sortedBy { (c, _) -> order.indexOf(c).let { if (it < 0) Int.MAX_VALUE else it } }
 }
 
-/** Games tab: 3 coin packs from the Store, then every game, 2 per row. "See All" opens the games by category. */
+/** Games tab: every game, 2 per row. "See All" opens the games by category. */
 @Composable
 fun GamesScreen(
     games: List<Game>,
-    packs: List<StorePack>,
     onGameClick: (Game) -> Unit,
     onSeeAll: (category: String?) -> Unit,
-    onBuyPack: (StorePack) -> Unit,
-    onOpenStore: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyVerticalGrid(
@@ -126,11 +121,6 @@ fun GamesScreen(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        if (packs.isNotEmpty()) {
-            item(span = { GridItemSpan(maxLineSpan) }, key = "packs") {
-                StorePacksRow(packs.take(3), onBuyPack, onOpenStore)
-            }
-        }
         item(span = { GridItemSpan(maxLineSpan) }, key = "play_header") {
             Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.SportsEsports, null, tint = MgpColors.Primary, modifier = Modifier.size(30.dp))
@@ -140,32 +130,6 @@ fun GamesScreen(
             }
         }
         items(games, key = { it.id }) { game -> GameTile(game, onClick = { onGameClick(game) }) }
-    }
-}
-
-/** "COIN PACKS" header with a Store link and three packs side by side. */
-@Composable
-private fun StorePacksRow(packs: List<StorePack>, onBuy: (StorePack) -> Unit, onOpenStore: () -> Unit) {
-    Column {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.ShoppingCart, null, tint = MgpColors.Primary, modifier = Modifier.size(28.dp))
-            Spacer(Modifier.width(8.dp))
-            Text("COIN PACKS", color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, modifier = Modifier.weight(1f))
-            SeeAllButton(label = "Store", onClick = onOpenStore)
-        }
-        Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            packs.forEachIndexed { index, pack ->
-                PackCard(
-                    pack,
-                    index,
-                    onBuy = { onBuy(pack) },
-                    modifier = Modifier.weight(1f),
-                    height = 176.dp,
-                    artSize = 64.dp,
-                )
-            }
-        }
     }
 }
 

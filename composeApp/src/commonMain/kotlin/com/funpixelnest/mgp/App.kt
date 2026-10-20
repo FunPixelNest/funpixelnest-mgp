@@ -1,5 +1,8 @@
 package com.funpixelnest.mgp
 
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
@@ -416,6 +419,21 @@ private fun MainApp(
 
     val current = navigator.current
     val onTabRoot = current == null
+
+    // Tabs: swiping the pager selects the tab, and tapping a tab (or code) scrolls the pager to it.
+    val tabPager = rememberPagerState(initialPage = navigator.tab.ordinal) { Tab.entries.size }
+    LaunchedEffect(navigator.tab) {
+        val target = navigator.tab.ordinal
+        if (tabPager.currentPage == target || tabPager.isScrollInProgress) return@LaunchedEffect
+        // Not on screen (a pushed screen covers the tabs): jump; otherwise glide to the tab.
+        if (tabPager.layoutInfo.visiblePagesInfo.isEmpty()) tabPager.scrollToPage(target) else tabPager.animateScrollToPage(target)
+    }
+    LaunchedEffect(tabPager) {
+        snapshotFlow { tabPager.settledPage }.collect { index ->
+            val tab = Tab.entries[index]
+            if (navigator.current == null && navigator.tab != tab) navigator.selectTab(tab)
+        }
+    }
     val showChrome = joining != null || onTabRoot || current is Screen.GameDetail
 
     SkyBackground {
@@ -438,7 +456,8 @@ private fun MainApp(
                 )
             }
             val content = Modifier.weight(1f).fillMaxWidth()
-            val page = Page(current, navigator.tab, joining, navigator.depth)
+            // The tab roots live in one pager (swipe left / right between tabs), so the page key ignores the tab.
+            val page = Page(current, if (current == null) Tab.Games else navigator.tab, joining, navigator.depth)
             AnimatedContent(
                 targetState = page,
                 modifier = content,
@@ -554,33 +573,36 @@ private fun MainApp(
                         )
                         Screen.ReferEarn -> ReferEarnScreen(onBack = { navigator.back() }, playerId = repository.player.id, onCopy = { t, m -> copy(t, m) })
                         is Screen.Legal -> LegalScreen(current.privacy) { navigator.back() }
-                        null -> when (shown.tab) {
-                            Tab.Challenges -> ChallengesScreen(
-                                repository = repository,
-                                onClaim = economy.claimChallenge,
-                                onGo = { c ->
-                                    when {
-                                        c.gameId != null -> navigator.push(Screen.GameDetail(c.gameId))
-                                        c.category == ChallengeCategory.LEAGUE -> navigator.selectTab(Tab.Leagues)
-                                        else -> navigator.selectTab(Tab.Games)
-                                    }
-                                },
-                            )
-                            Tab.Leagues -> LeaguesScreen(
-                                repository = repository,
-                                onPlayNow = { navigator.selectTab(Tab.Games) },
-                                onViewRewards = { navigator.show(Popup.LeagueRewards) },
-                            )
-                            Tab.Games -> GamesScreen(
-                                repository.games(),
-                                packs = repository.storePacks(),
-                                onGameClick = { navigator.push(Screen.GameDetail(it.id)) },
-                                onSeeAll = { navigator.push(Screen.AllGames(it)) },
-                                onBuyPack = { economy.buyPack(it) },
-                                onOpenStore = { navigator.selectTab(Tab.Store) },
-                            )
-                            Tab.Rewards -> RewardsScreen(repository, economy, onViewChallenges = { navigator.selectTab(Tab.Challenges) })
-                            Tab.Store -> StoreScreen(repository, economy)
+                        null -> HorizontalPager(
+                            state = tabPager,
+                            modifier = Modifier.fillMaxSize(),
+                            key = { Tab.entries[it] },
+                        ) { index ->
+                            when (Tab.entries[index]) {
+                                Tab.Challenges -> ChallengesScreen(
+                                    repository = repository,
+                                    onClaim = economy.claimChallenge,
+                                    onGo = { c ->
+                                        when {
+                                            c.gameId != null -> navigator.push(Screen.GameDetail(c.gameId))
+                                            c.category == ChallengeCategory.LEAGUE -> navigator.selectTab(Tab.Leagues)
+                                            else -> navigator.selectTab(Tab.Games)
+                                        }
+                                    },
+                                )
+                                Tab.Leagues -> LeaguesScreen(
+                                    repository = repository,
+                                    onPlayNow = { navigator.selectTab(Tab.Games) },
+                                    onViewRewards = { navigator.show(Popup.LeagueRewards) },
+                                )
+                                Tab.Games -> GamesScreen(
+                                    repository.games(),
+                                    onGameClick = { navigator.push(Screen.GameDetail(it.id)) },
+                                    onSeeAll = { navigator.push(Screen.AllGames(it)) },
+                                )
+                                Tab.Rewards -> RewardsScreen(repository, economy, onViewChallenges = { navigator.selectTab(Tab.Challenges) })
+                                Tab.Store -> StoreScreen(repository, economy)
+                            }
                         }
                     }
                 }
@@ -591,7 +613,7 @@ private fun MainApp(
                 exit = shrinkVertically(tween(PAGE_MS), shrinkTowards = Alignment.Top) + fadeOut(tween(PAGE_MS)),
             ) {
                 MgpBottomBar(
-                    selected = navigator.tab,
+                    selected = if (onTabRoot) Tab.entries[tabPager.targetPage] else navigator.tab,
                     challengeBadge = challenges.claimableCount,
                     onSelect = { navigator.selectTab(it) },
                 )

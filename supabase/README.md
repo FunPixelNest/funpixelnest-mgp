@@ -8,6 +8,7 @@ This folder holds the whole server side of the app:
 | `migrations/20261017000002_seed.sql` | The catalog: 13 games, 65 tournaments, 4 store packs, settings |
 | `migrations/20261017000003_push.sql` | When a notification row is added, the database calls the push function |
 | `migrations/20261020000001_new_native_games.sql` | Adds Queen Sudoku (+ its 5 tournaments) and renames Skill Slots to Solitaire Slots |
+| `migrations/20261020000002_more_pool_tournaments.sql` | Adds Rookie (10 coins) and Champion (250 coins) pools to every game (5 pool tournaments per game) |
 | `functions/send-push/index.ts` | Edge Function that sends a notification to the player's phones through Firebase |
 | `tests/` | Tests you run on your own computer (see `tests/README.md`). **Never run these on the real project** |
 
@@ -35,7 +36,7 @@ You can safely run them again later. They only add what is missing and update th
 1. In the dashboard, open **SQL Editor** → **New query**.
 2. Open `migrations/20261017000001_core.sql` on your computer, copy **all** of it, paste it in and click **Run**.
    You should see "Success. No rows returned".
-3. Do the same with `20261017000002_seed.sql`, then `20261017000003_push.sql`, then `20261017000004_progression.sql`, then `20261020000001_new_native_games.sql`.
+3. Do the same with `20261017000002_seed.sql`, then `20261017000003_push.sql`, then `20261017000004_progression.sql`, then `20261020000001_new_native_games.sql`, then `20261020000002_more_pool_tournaments.sql`.
 4. To check it worked, open **Table Editor**. You should see `games` (13 rows) and `tournaments` (65 rows).
 
 ### Option B: with the Supabase CLI

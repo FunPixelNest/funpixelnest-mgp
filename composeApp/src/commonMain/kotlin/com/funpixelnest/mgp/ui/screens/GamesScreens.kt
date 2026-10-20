@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -334,7 +335,7 @@ fun GameDetailScreen(
     LazyColumn(
         modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -411,75 +412,58 @@ private fun CompeteBanner() {
 private fun TournamentCard(tournament: Tournament, style: TierStyle, index: Int, onPlay: () -> Unit) {
     val prizePool = Leaderboard.prizePool(tournament)
     val firstPrize = Leaderboard.prizePayouts(tournament).first()
-    val title = if (tournament.isDuel) "1v1 ${tournament.title}" else tournament.title
+    val shape = RoundedCornerShape(20.dp)
+    // Compact card (~112 dp): art | name, prize pool, pool facts | win up to, Play, entry fee.
     Row(
         Modifier
             .fillMaxWidth()
-            .heightIn(min = 190.dp)
-            .shadow(8.dp, RoundedCornerShape(22.dp), ambientColor = Color(0x331E6CF2), spotColor = Color(0x331E6CF2))
-            .clip(RoundedCornerShape(22.dp))
-            .background(Color.White)
-            .border(1.dp, Color.White, RoundedCornerShape(22.dp)),
+            .height(112.dp)
+            .shadow(6.dp, shape, ambientColor = Color(0x331E6CF2), spotColor = Color(0x331E6CF2))
+            .clip(shape)
+            .background(Brush.horizontalGradient(listOf(style.tint, Color.White, Color.White)))
+            .border(1.dp, Color.White, shape),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Left: tier + prize pool + art
-        Box(Modifier.weight(1.05f).heightIn(min = 190.dp).background(Brush.horizontalGradient(listOf(style.tint, Color.White)))) {
-            Column(Modifier.padding(start = 14.dp, top = 14.dp, end = 6.dp, bottom = 8.dp)) {
-                Text(title.uppercase(), color = style.color, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, maxLines = 2)
-                LabelText("Prize pool", color = MgpColors.Navy, size = 11.sp, modifier = Modifier.padding(top = 2.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    DisplayText(formatCoins(prizePool), size = 30.sp, maxLines = 1)
-                    Spacer(Modifier.width(4.dp))
-                    CoinIcon(26.dp)
-                }
-                ArtImage(Art.pack(index), 80.dp, Modifier.padding(top = 4.dp))
-            }
-        }
-        // Middle: facts
-        Column(Modifier.weight(1f).padding(vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Fact(Icons.Rounded.Groups, "Players", if (tournament.isDuel) "1 vs 1" else "${tournament.poolSize} per pool")
-            Fact(Icons.Rounded.EmojiEvents, "Prizes", if (tournament.isDuel) "Winner takes all" else "Top 3 win")
-            Fact(Icons.Rounded.ConfirmationNumber, "Entry fee", null) {
-                CoinAmount(tournament.entryFee, iconSize = 18.dp, fontSize = 17.sp, iconFirst = false)
-            }
-        }
-        // Right: badge + play + win up to
-        Column(
-            Modifier.weight(1f).padding(top = 12.dp, bottom = 12.dp, end = 10.dp, start = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                if (tournament.isDuel) "1V1 DUEL" else "${tournament.poolSize}-PLAYER POOL",
-                color = Color.White,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.ExtraBold,
-                maxLines = 1,
-                modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(style.color).padding(horizontal = 8.dp, vertical = 3.dp),
-            )
-            Spacer(Modifier.height(2.dp))
-            GlossyButton("Play", onClick = onPlay, color = style.button, height = 50.dp, fontSize = 22.sp, modifier = Modifier.fillMaxWidth())
-            LabelText("Win up to", color = MgpColors.Navy, size = 11.sp)
-            Row(
-                Modifier.clip(RoundedCornerShape(14.dp)).background(style.tint).padding(horizontal = 12.dp, vertical = 5.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(formatCoins(firstPrize), color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp)
+        // Tier colour strip + art
+        Box(Modifier.width(6.dp).fillMaxHeight().background(style.color))
+        ArtImage(Art.pack(index), 62.dp, Modifier.padding(start = 6.dp))
+        // Name, prize pool, facts
+        Column(Modifier.weight(1f).padding(start = 8.dp, end = 4.dp), verticalArrangement = Arrangement.Center) {
+            Text(tournament.title.uppercase(), color = style.color, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, maxLines = 1)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                DisplayText(formatCoins(prizePool), size = 24.sp, maxLines = 1)
                 Spacer(Modifier.width(4.dp))
-                CoinIcon(18.dp)
+                CoinIcon(20.dp)
+            }
+            LabelText("Prize pool", color = MgpColors.Navy, size = 10.sp)
+            Row(Modifier.padding(top = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.Groups, "Players per pool", tint = MgpColors.PrimaryDark, modifier = Modifier.size(15.dp))
+                Spacer(Modifier.width(3.dp))
+                Text("${tournament.poolSize}", color = MgpColors.Navy, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1)
+                Spacer(Modifier.width(8.dp))
+                Icon(Icons.Rounded.EmojiEvents, "Winners", tint = MgpColors.PrimaryDark, modifier = Modifier.size(15.dp))
+                Spacer(Modifier.width(3.dp))
+                Text("Top 3", color = MgpColors.Navy, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1)
             }
         }
-    }
-}
-
-@Composable
-private fun Fact(icon: ImageVector, label: String, value: String?, content: (@Composable () -> Unit)? = null) {
-    Row(verticalAlignment = Alignment.Top) {
-        Icon(icon, null, tint = MgpColors.PrimaryDark, modifier = Modifier.size(22.dp).padding(top = 2.dp))
-        Spacer(Modifier.width(6.dp))
-        Column {
-            LabelText(label, color = MgpColors.Navy, size = 10.sp)
-            if (value != null) Text(value, color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, maxLines = 2)
-            content?.invoke()
+        // Win up to, Play, entry fee
+        Column(
+            Modifier.width(118.dp).padding(end = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                LabelText("Win ", color = MgpColors.Navy, size = 10.sp)
+                Text(formatCoins(firstPrize), color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, maxLines = 1)
+                Spacer(Modifier.width(2.dp))
+                CoinIcon(14.dp)
+            }
+            GlossyButton("Play", onClick = onPlay, color = style.button, height = 42.dp, fontSize = 19.sp, modifier = Modifier.fillMaxWidth())
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.ConfirmationNumber, "Entry fee", tint = MgpColors.PrimaryDark, modifier = Modifier.size(14.dp))
+                Spacer(Modifier.width(3.dp))
+                CoinAmount(tournament.entryFee, iconSize = 14.dp, fontSize = 13.sp, iconFirst = false)
+            }
         }
     }
 }

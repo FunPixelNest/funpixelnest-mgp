@@ -71,9 +71,11 @@ object SampleCatalog {
             // Async 1v1 duels (same ids as the Supabase seed).
             Tournament.duel("${game.id}_duel_quick", game.id, "Quick", entryFee = 20, platformFeePercent = 10),
             Tournament.duel("${game.id}_duel_high", game.id, "High Stakes", entryFee = 100, platformFeePercent = 10),
-            // 5-player pools.
+            // 5-player pools (same ids as the Supabase seed + migration 20261020000002).
+            Tournament("${game.id}_rookie", game.id, "Rookie", entryFee = 10, platformFeePercent = 10),
             Tournament("${game.id}_starter", game.id, "Starter", entryFee = 20, platformFeePercent = 10),
             Tournament("${game.id}_pro", game.id, "Pro", entryFee = 100, platformFeePercent = 10),
+            Tournament("${game.id}_champion", game.id, "Champion", entryFee = 250, platformFeePercent = 10),
             Tournament("${game.id}_elite", game.id, "Elite", entryFee = 500, platformFeePercent = 10),
         )
     }

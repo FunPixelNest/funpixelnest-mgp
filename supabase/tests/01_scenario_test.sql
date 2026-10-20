@@ -79,7 +79,7 @@ begin
                          'permission denied for function join_tournament', 'anon cannot call RPC');
   -- ...but can read the catalog
   perform t.check((select count(*) from public.games) = 14, 'anon reads 14 games');
-  perform t.check((select count(*) from public.tournaments) = 70, 'anon reads 70 tournaments');
+  perform t.check((select count(*) from public.tournaments) = 98, 'anon reads 98 tournaments');
   perform t.check((select count(*) from public.store_packs) = 5, 'anon reads 5 packs (progression migration)');
   perform t.check((select count(*) from public.tournaments where featured) = 4, '4 featured tournaments');
 

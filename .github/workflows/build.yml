@@ -57,7 +57,14 @@ jobs:
         run: |
           mkdir -p preview
           cp -r composeApp/build/dist/wasmJs/productionExecutable/. preview/
-          cp composeApp/build/outputs/apk/debug/*.apk preview/funpixelnest-mgp-debug.apk
+          # GitHub refuses files over 100 MB in a branch. With the native Unity games the APK is larger, so then
+          # it is only in this run's "android-debug-apk" artifact (Actions tab) and the branch gets a note instead.
+          apk=$(ls composeApp/build/outputs/apk/debug/*.apk | head -1)
+          if [ "$(stat -c %s "$apk")" -lt 95000000 ]; then
+            cp "$apk" preview/funpixelnest-mgp-debug.apk
+          else
+            echo "Debug APK ($(du -h "$apk" | cut -f1)) is too big for a branch: download the android-debug-apk artifact of run ${{ github.run_id }} (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})." > preview/APK.txt
+          fi
 
       - name: Publish preview branch
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

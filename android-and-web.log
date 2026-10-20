@@ -1,0 +1,330 @@
+Starting a Gradle Daemon (subsequent builds will be faster)
+Calculating task graph as no cached configuration is available for tasks: :composeApp:testDebugUnitTest
+Type-safe project accessors is an incubating feature.
+
+> Configure project :composeApp
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/build.gradle.kts:146:36: 'runtime: String' is deprecated. Specify dependency directly
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/build.gradle.kts:147:36: 'foundation: String' is deprecated. Specify dependency directly
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/build.gradle.kts:148:36: 'material3: String' is deprecated. Specify dependency directly
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/build.gradle.kts:149:36: 'ui: String' is deprecated. Specify dependency directly
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/build.gradle.kts:150:36: 'components: ComposePlugin.CommonComponentsDependencies' is deprecated. Specify dependency directly
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/build.gradle.kts:150:47: 'resources: String' is deprecated. Specify dependency directly
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/build.gradle.kts:152:36: 'materialIconsExtended: String' is deprecated. This artifact is pinned to version 1.7.3 and will not receive updates. Either use this version explicitly or migrate to Material Symbols (vector resources). See https://kotlinlang.org/docs/multiplatform/whats-new-compose-180.html
+FunPixelNest: joined 3 pieces into composeApp/unity/unityLibrary-release.aar
+FunPixelNest: native Unity games ON (composeApp/unity/)
+w: ⚠️ Deprecated Gradle Version
+The used Gradle version (Gradle 8.14.3) is deprecated and will not be supported in future Kotlin Gradle Plugin releases.
+The minimum supported Gradle version will become Gradle 8.14.4 in Kotlin 2.5.0.
+
+This warning can be suppressed in 'gradle.properties':
+    kotlin.suppressGradlePluginWarnings=DeprecatedGradleVersionWarning
+Solution: Please update the Gradle version to at least Gradle 8.14.4.
+
+w: ⚠️ Native task 'iosSimulatorArm64Test' is disabled
+Task 'iosSimulatorArm64Test' for target 'ios_simulator_arm64' cannot run on the current host (linux-x86_64).
+Reason: simulator tests require macOS
+Solution: To suppress this warning, add 'kotlin.native.ignoreDisabledTargets=true' to gradle.properties.
+
+
+> Task :composeApp:copyNonXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :composeApp:kmpPartiallyResolvedDependenciesChecker
+> Task :composeApp:convertXmlValueResourcesForCommonMain NO-SOURCE
+> Task :composeApp:convertXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :composeApp:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :composeApp:prepareComposeResourcesTaskForAndroidMain NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForAndroidMain NO-SOURCE
+> Task :composeApp:generateBackendConfig
+> Task :composeApp:convertXmlValueResourcesForAndroidDebug NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForAndroidDebug NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForAndroidDebug NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForAndroidDebug NO-SOURCE
+> Task :composeApp:preBuild UP-TO-DATE
+> Task :composeApp:preDebugBuild UP-TO-DATE
+> Task :composeApp:generateExpectResourceCollectorsForCommonMain
+> Task :composeApp:generateComposeResClass
+> Task :composeApp:generateDebugResValues FROM-CACHE
+> Task :composeApp:copyNonXmlValueResourcesForCommonMain
+> Task :composeApp:prepareComposeResourcesTaskForCommonMain
+> Task :composeApp:createDebugCompatibleScreenManifests
+> Task :composeApp:generateDebugResources FROM-CACHE
+> Task :composeApp:generateResourceAccessorsForCommonMain
+> Task :composeApp:generateActualResourceCollectorsForAndroidMain
+> Task :composeApp:copyDebugComposeResourcesToAndroidAssets
+> Task :composeApp:packageDebugResources FROM-CACHE
+> Task :composeApp:parseDebugLocalResources FROM-CACHE
+> Task :composeApp:extractDeepLinksDebug FROM-CACHE
+> Task :composeApp:mapDebugSourceSetPaths
+> Task :composeApp:javaPreCompileDebug FROM-CACHE
+> Task :composeApp:convertXmlValueResourcesForAndroidUnitTest NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForAndroidUnitTest NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForAndroidUnitTest NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForAndroidUnitTest NO-SOURCE
+> Task :composeApp:convertXmlValueResourcesForAndroidUnitTestDebug NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForAndroidUnitTestDebug NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForAndroidUnitTestDebug NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForAndroidUnitTestDebug NO-SOURCE
+> Task :composeApp:convertXmlValueResourcesForCommonTest NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForCommonTest NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForCommonTest NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForCommonTest NO-SOURCE
+> Task :composeApp:preDebugUnitTestBuild UP-TO-DATE
+> Task :composeApp:javaPreCompileDebugUnitTest FROM-CACHE
+> Task :composeApp:processDebugMainManifest FROM-CACHE
+> Task :composeApp:processDebugManifest FROM-CACHE
+> Task :composeApp:processDebugManifestForPackage FROM-CACHE
+> Task :composeApp:checkDebugAarMetadata
+> Task :composeApp:mergeDebugResources FROM-CACHE
+> Task :composeApp:processDebugResources FROM-CACHE
+> Task :composeApp:compileDebugKotlinAndroid
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/src/androidMain/kotlin/com/funpixelnest/mgp/game/WebViewGameLauncher.kt:169:30 'var databaseEnabled: Boolean' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/src/androidMain/kotlin/com/funpixelnest/mgp/push/AndroidPush.kt:58:45 'val token: Task<String!>' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/src/androidMain/kotlin/com/funpixelnest/mgp/push/AndroidPush.kt:102:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/src/androidUnity/kotlin/com/funpixelnest/mgp/unity/UnityGameLauncher.kt:111:21 'fun pause(): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/src/androidUnity/kotlin/com/funpixelnest/mgp/unity/UnityGameLauncher.kt:152:75 'static field FLAG_FULLSCREEN: Int' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/src/androidUnity/kotlin/com/funpixelnest/mgp/unity/UnityGameLauncher.kt:158:19 'fun pause(): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/src/androidUnity/kotlin/com/funpixelnest/mgp/unity/UnityGameLauncher.kt:171:23 'fun resume(): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/src/androidUnity/kotlin/com/funpixelnest/mgp/unity/UnityGameLauncher.kt:179:62 'fun resume(): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/src/androidUnity/kotlin/com/funpixelnest/mgp/unity/UnityGameLauncher.kt:180:46 'fun pause(): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/src/commonMain/kotlin/com/funpixelnest/mgp/App.kt:341:55 Unnecessary safe call on a non-null receiver of type 'GameSession'.
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/src/commonMain/kotlin/com/funpixelnest/mgp/ui/screens/EconomyScreens.kt:186:25 Unnecessary non-null assertion (!!) on a non-null receiver of type 'String'.
+
+> Task :composeApp:compileDebugJavaWithJavac NO-SOURCE
+> Task :composeApp:processDebugJavaRes
+> Task :composeApp:bundleDebugClassesToCompileJar
+> Task :composeApp:bundleDebugClassesToRuntimeJar
+> Task :composeApp:compileDebugUnitTestKotlinAndroid
+> Task :composeApp:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :composeApp:processDebugUnitTestJavaRes
+> Task :composeApp:testDebugUnitTest
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_2-1792493270878.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 1m 8s
+31 actionable tasks: 19 executed, 12 from cache
+Configuration cache entry stored.
+Calculating task graph as no cached configuration is available for tasks: :composeApp:assembleDebug
+Type-safe project accessors is an incubating feature.
+
+> Configure project :composeApp
+FunPixelNest: native Unity games ON (composeApp/unity/)
+w: ⚠️ Deprecated Gradle Version
+The used Gradle version (Gradle 8.14.3) is deprecated and will not be supported in future Kotlin Gradle Plugin releases.
+The minimum supported Gradle version will become Gradle 8.14.4 in Kotlin 2.5.0.
+
+This warning can be suppressed in 'gradle.properties':
+    kotlin.suppressGradlePluginWarnings=DeprecatedGradleVersionWarning
+Solution: Please update the Gradle version to at least Gradle 8.14.4.
+
+w: ⚠️ Native task 'iosSimulatorArm64Test' is disabled
+Task 'iosSimulatorArm64Test' for target 'ios_simulator_arm64' cannot run on the current host (linux-x86_64).
+Reason: simulator tests require macOS
+Solution: To suppress this warning, add 'kotlin.native.ignoreDisabledTargets=true' to gradle.properties.
+
+
+> Task :composeApp:preBuild UP-TO-DATE
+> Task :composeApp:preDebugBuild UP-TO-DATE
+> Task :composeApp:kmpPartiallyResolvedDependenciesChecker
+> Task :composeApp:copyNonXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :composeApp:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :composeApp:convertXmlValueResourcesForCommonMain NO-SOURCE
+> Task :composeApp:convertXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :composeApp:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForAndroidMain NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForAndroidMain NO-SOURCE
+> Task :composeApp:generateBackendConfig UP-TO-DATE
+> Task :composeApp:convertXmlValueResourcesForAndroidDebug NO-SOURCE
+> Task :composeApp:generateComposeResClass UP-TO-DATE
+> Task :composeApp:copyNonXmlValueResourcesForAndroidDebug NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForCommonMain UP-TO-DATE
+> Task :composeApp:prepareComposeResourcesTaskForAndroidDebug NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForAndroidDebug NO-SOURCE
+> Task :composeApp:generateExpectResourceCollectorsForCommonMain UP-TO-DATE
+> Task :composeApp:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :composeApp:generateDebugResValues UP-TO-DATE
+> Task :composeApp:javaPreCompileDebug UP-TO-DATE
+> Task :composeApp:generateDebugResources UP-TO-DATE
+> Task :composeApp:prepareComposeResourcesTaskForCommonMain UP-TO-DATE
+> Task :composeApp:generateResourceAccessorsForCommonMain UP-TO-DATE
+> Task :composeApp:generateActualResourceCollectorsForAndroidMain UP-TO-DATE
+> Task :composeApp:copyDebugComposeResourcesToAndroidAssets UP-TO-DATE
+> Task :composeApp:checkDebugAarMetadata UP-TO-DATE
+> Task :composeApp:extractDeepLinksDebug UP-TO-DATE
+> Task :composeApp:mapDebugSourceSetPaths UP-TO-DATE
+> Task :composeApp:packageDebugResources UP-TO-DATE
+> Task :composeApp:mergeDebugResources UP-TO-DATE
+> Task :composeApp:parseDebugLocalResources UP-TO-DATE
+> Task :composeApp:debugAssetsCopyForAGP NO-SOURCE
+> Task :composeApp:processDebugMainManifest UP-TO-DATE
+> Task :composeApp:processDebugManifest UP-TO-DATE
+> Task :composeApp:processDebugManifestForPackage UP-TO-DATE
+> Task :composeApp:desugarDebugFileDependencies FROM-CACHE
+> Task :composeApp:processDebugResources UP-TO-DATE
+> Task :composeApp:mergeDebugShaders
+> Task :composeApp:compileDebugKotlinAndroid UP-TO-DATE
+> Task :composeApp:compileDebugJavaWithJavac NO-SOURCE
+> Task :composeApp:compileDebugShaders NO-SOURCE
+> Task :composeApp:generateDebugAssets UP-TO-DATE
+> Task :composeApp:processDebugJavaRes UP-TO-DATE
+> Task :composeApp:mergeDebugJniLibFolders
+> Task :composeApp:checkDebugDuplicateClasses
+> Task :composeApp:mergeDebugJavaResource
+> Task :composeApp:mergeLibDexDebug FROM-CACHE
+> Task :composeApp:mergeDebugAssets
+> Task :composeApp:mergeExtDexDebug FROM-CACHE
+> Task :composeApp:validateSigningDebug
+> Task :composeApp:writeDebugAppMetadata
+> Task :composeApp:writeDebugSigningConfigVersions
+> Task :composeApp:mergeDebugNativeLibs
+
+> Task :composeApp:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: lib_burst_generated.so, libandroidx.graphics.path.so, libdatastore_shared_counter.so, libil2cpp.so, libmain.so, libunity.so. Run with --info option to learn more.
+
+> Task :composeApp:compressDebugAssets
+> Task :composeApp:dexBuilderDebug
+> Task :composeApp:mergeProjectDexDebug
+> Task :composeApp:packageDebug
+> Task :composeApp:assembleDebug
+> Task :composeApp:createDebugApkListingFileRedirect
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_4-1792493333887.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 17s
+43 actionable tasks: 16 executed, 3 from cache, 24 up-to-date
+Configuration cache entry stored.
+Calculating task graph as no cached configuration is available for tasks: :composeApp:wasmJsBrowserDistribution
+Type-safe project accessors is an incubating feature.
+
+> Configure project :composeApp
+FunPixelNest: native Unity games ON (composeApp/unity/)
+w: ⚠️ Deprecated Gradle Version
+The used Gradle version (Gradle 8.14.3) is deprecated and will not be supported in future Kotlin Gradle Plugin releases.
+The minimum supported Gradle version will become Gradle 8.14.4 in Kotlin 2.5.0.
+
+This warning can be suppressed in 'gradle.properties':
+    kotlin.suppressGradlePluginWarnings=DeprecatedGradleVersionWarning
+Solution: Please update the Gradle version to at least Gradle 8.14.4.
+
+w: ⚠️ Native task 'iosSimulatorArm64Test' is disabled
+Task 'iosSimulatorArm64Test' for target 'ios_simulator_arm64' cannot run on the current host (linux-x86_64).
+Reason: simulator tests require macOS
+Solution: To suppress this warning, add 'kotlin.native.ignoreDisabledTargets=true' to gradle.properties.
+
+Configuration 'wasmJsNpmAggregated' was resolved during configuration time.
+This is a build performance and scalability issue.
+See https://github.com/gradle/gradle/issues/2298
+Run with --info for a stacktrace.
+Configuration 'wasmJsTestNpmAggregated' was resolved during configuration time.
+This is a build performance and scalability issue.
+See https://github.com/gradle/gradle/issues/2298
+Run with --info for a stacktrace.
+
+> Task :kotlinWasmRestoreYarnLock SKIPPED
+> Task :composeApp:convertXmlValueResourcesForCommonMain NO-SOURCE
+> Task :kotlinWasmKotlinNpmCachesSetup
+> Task :composeApp:copyNonXmlValueResourcesForCommonMain UP-TO-DATE
+> Task :composeApp:prepareComposeResourcesTaskForCommonMain UP-TO-DATE
+> Task :composeApp:convertXmlValueResourcesForWasmJsMain NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForWasmJsMain NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForWasmJsMain NO-SOURCE
+> Task :composeApp:convertXmlValueResourcesForWebMain NO-SOURCE
+> Task :composeApp:copyNonXmlValueResourcesForWebMain NO-SOURCE
+> Task :composeApp:prepareComposeResourcesTaskForWebMain NO-SOURCE
+> Task :composeApp:assembleWasmJsMainResources
+> Task :composeApp:wasmJsResolveResourcesFromDependencies
+> Task :composeApp:kmpPartiallyResolvedDependenciesChecker
+> Task :composeApp:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :composeApp:checkWasmJsMainComposeLibrariesCompatibility
+> Task :composeApp:generateResourceAccessorsForCommonMain UP-TO-DATE
+> Task :composeApp:generateResourceAccessorsForWasmJsMain NO-SOURCE
+> Task :composeApp:generateResourceAccessorsForWebMain NO-SOURCE
+> Task :composeApp:generateActualResourceCollectorsForWasmJsMain
+> Task :composeApp:generateBackendConfig
+> Task :composeApp:generateComposeResClass UP-TO-DATE
+> Task :composeApp:generateExpectResourceCollectorsForCommonMain UP-TO-DATE
+> Task :composeApp:wasmJsResolveSelfResourcesCopyHierarchicalMultiplatformResources
+> Task :composeApp:wasmJsAggregateResources
+> Task :composeApp:wasmJsProcessResources
+> Task :composeApp:kotlinWasmBinaryenSetup
+> Task :composeApp:unpackSkikoWasmRuntime
+> Task :composeApp:processSkikoRuntimeForKWasm
+> Task :kotlinWasmNodeJsSetup
+> Task :kotlinWasmYarnSetup
+
+> Task :kotlinWasmToolingSetup
+(node:2925) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+> Task :composeApp:wasmJsPackageJson
+> Task :composeApp:wasmJsPublicPackageJson
+> Task :composeApp:wasmJsTestPackageJson
+> Task :composeApp:wasmJsTestPublicPackageJson
+> Task :kotlinWasmPackageJsonUmbrella
+> Task :wasmRootPackageJson
+
+> Task :kotlinWasmNpmInstall
+warning Waiting for the other yarn instance to finish (2925)
+
+> Task :composeApp:compileKotlinWasmJs
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/src/commonMain/kotlin/com/funpixelnest/mgp/App.kt:341:55 Unnecessary safe call on a non-null receiver of type 'GameSession'.
+w: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/composeApp/src/commonMain/kotlin/com/funpixelnest/mgp/ui/screens/EconomyScreens.kt:186:25 Unnecessary non-null assertion (!!) on a non-null receiver of type 'String'.
+
+> Task :composeApp:wasmJsMainClasses
+
+> Task :kotlinWasmToolingSetup
+warning "webpack-dev-server > webpack-dev-middleware > memfs@4.56.10" has unmet peer dependency "tslib@2".
+warning Ignored scripts due to flag.
+
+> Task :kotlinWasmNpmInstall
+(node:2938) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+warning Ignored scripts due to flag.
+
+> Task :kotlinWasmStoreYarnLock
+> Task :composeApp:compileProductionExecutableKotlinWasmJs
+> Task :composeApp:compileProductionExecutableKotlinWasmJsOptimize
+> Task :composeApp:wasmJsProductionExecutableCompileSync
+
+> Task :composeApp:wasmJsBrowserProductionWebpack
+Critical dependency: the request of a dependency is an expression
+asset size limit: The following asset(s) exceed the recommended size limit (244 KiB).
+This can impact web performance.
+Assets: 
+  composeApp.js (532 KiB)
+  597b35a58ecdf25294e1.wasm (5.3 MiB)
+  6e23e5428398b92da386.wasm (8.25 MiB)
+entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.
+Entrypoints:
+  main (532 KiB)
+      composeApp.js
+webpack performance recommendations: 
+You can limit the size of your bundles by using import() or require.ensure to lazy load some parts of your application.
+For more info visit https://webpack.js.org/guides/code-splitting/
+asset 6e23e5428398b92da386.wasm 8.25 MiB [emitted] [immutable] [from: kotlin/skiko.wasm] [big] (auxiliary name: main)
+asset 597b35a58ecdf25294e1.wasm 5.3 MiB [emitted] [immutable] [from: kotlin/composeApp.wasm] [big] (auxiliary name: main)
+asset composeApp.js 532 KiB [emitted] [minimized] [big] (name: main) 2 related assets
+runtime modules 4.38 KiB 7 modules
+built modules 946 KiB (javascript) 13.6 MiB (asset) [built]
+  javascript modules 946 KiB
+    modules by path ./kotlin/*.mjs 554 KiB
+      modules with warnings 51 KiB [true warnings]
+        ./kotlin/composeApp.mjs 2.76 KiB [built] [code generated] [4 warnings]
+        ./kotlin/composeApp.import-object.mjs 48.2 KiB [built] [code generated] [2 warnings]
+      ./kotlin/skiko.mjs 501 KiB [built] [code generated]
+      ./kotlin/composeApp.js-builtins.mjs 2.05 KiB [built] [code generated]
+    ../../node_modules/@js-joda/core/dist/js-joda.esm.js 392 KiB [built] [code generated]
+    ./kotlin/ lazy strict namespace object 160 bytes [built] [code generated]
+  asset modules 13.6 MiB (asset) 84 bytes (javascript)
+    ./kotlin/composeApp.wasm 5.3 MiB (asset) 42 bytes (javascript) [built] [code generated]
+    ./kotlin/skiko.wasm 8.25 MiB (asset) 42 bytes (javascript) [built] [code generated]
+webpack 5.101.3 compiled with 4 warnings in 4362 ms
+
+> Task :composeApp:wasmJsBrowserDistribution
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_5-1792493351595.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/funpixelnest-mgp/funpixelnest-mgp/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 3m 11s
+34 actionable tasks: 29 executed, 5 up-to-date
+Configuration cache entry stored.

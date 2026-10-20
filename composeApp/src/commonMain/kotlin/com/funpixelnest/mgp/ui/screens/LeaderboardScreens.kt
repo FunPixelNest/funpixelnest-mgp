@@ -136,9 +136,9 @@ private fun ResultRow(
 ) {
     val bg = when {
         completed && rank == 1 -> Brush.verticalGradient(listOf(Color(0xFFFFE57A), Color(0xFFFFC93C)))
-        completed && rank == 2 -> Brush.verticalGradient(listOf(Color(0xFFF2F7FF), Color(0xFFDCE8FA)))
+        completed && rank == 2 -> Brush.verticalGradient(if (MgpColors.isDark) listOf(Color(0xFF2F4170), Color(0xFF24345E)) else listOf(MgpColors.CardLow, Color(0xFFDCE8FA)))
         completed && rank == 3 -> Brush.verticalGradient(listOf(Color(0xFFFFE5D8), Color(0xFFF7CDB8)))
-        else -> Brush.verticalGradient(listOf(Color(0xFFF7FBFF), Color(0xFFE6F0FC)))
+        else -> Brush.verticalGradient(listOf(MgpColors.Card, MgpColors.CardLow))
     }
     Row(
         Modifier
@@ -146,7 +146,7 @@ private fun ResultRow(
             .shadow(5.dp, RoundedCornerShape(20.dp))
             .clip(RoundedCornerShape(20.dp))
             .background(bg)
-            .border(if (isMe) 2.5.dp else 1.dp, if (isMe) MgpColors.Primary else Color.White, RoundedCornerShape(20.dp))
+            .border(if (isMe) 2.5.dp else 1.dp, if (isMe) MgpColors.Primary else MgpColors.CardEdge, RoundedCornerShape(20.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -162,7 +162,7 @@ private fun ResultRow(
         if (avatarId != null) {
             Avatar(avatarId, 56.dp)
         } else {
-            Box(Modifier.size(56.dp).clip(CircleShape).background(Color(0xFFDDE8F7)))
+            Box(Modifier.size(56.dp).clip(CircleShape).background(MgpColors.Track))
         }
         Spacer(Modifier.width(12.dp))
         Text(

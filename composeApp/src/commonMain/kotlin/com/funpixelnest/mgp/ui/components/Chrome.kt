@@ -98,7 +98,7 @@ fun PlayerHeader(
                             .fillMaxWidth()
                             .shadow(3.dp, RoundedCornerShape(10.dp))
                             .clip(RoundedCornerShape(10.dp))
-                            .background(Color.White)
+                            .background(MgpColors.Card)
                             .padding(start = 20.dp, end = 8.dp, top = 3.dp, bottom = 4.dp),
                     ) {
                         Text(
@@ -125,7 +125,7 @@ fun PlayerHeader(
 
 @Composable
 fun XpBar(progress: Float, modifier: Modifier = Modifier) {
-    Box(modifier.clip(RoundedCornerShape(4.dp)).background(Color(0xFFDDE7F5))) {
+    Box(modifier.clip(RoundedCornerShape(4.dp)).background(MgpColors.Track)) {
         Box(
             Modifier
                 .fillMaxWidth(progress.coerceIn(0f, 1f))
@@ -142,7 +142,7 @@ private fun CurrencyPill(amount: Long, gems: Boolean, showPlus: Boolean, onClick
         Modifier
             .shadow(3.dp, RoundedCornerShape(12.dp))
             .clip(RoundedCornerShape(12.dp))
-            .background(Color.White)
+            .background(MgpColors.Card)
             .clickable(onClick = onClick)
             .padding(start = 5.dp, end = if (showPlus) 5.dp else 8.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -175,10 +175,10 @@ fun MgpBottomBar(selected: Tab, challengeBadge: Int, onSelect: (Tab) -> Unit, mo
             Modifier
                 .fillMaxWidth()
                 .height(78.dp)
-                .shadow(10.dp, RoundedCornerShape(24.dp), ambientColor = Color(0x551E6CF2), spotColor = Color(0x551E6CF2))
+                .shadow(10.dp, RoundedCornerShape(24.dp), ambientColor = MgpColors.Glow, spotColor = MgpColors.Glow)
                 .clip(RoundedCornerShape(24.dp))
-                .background(Color(0xFFF7FAFF))
-                .border(1.dp, Color.White, RoundedCornerShape(24.dp))
+                .background(MgpColors.Sheet)
+                .border(1.dp, MgpColors.CardEdge, RoundedCornerShape(24.dp))
                 .padding(horizontal = 4.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -199,14 +199,14 @@ fun MgpBottomBar(selected: Tab, challengeBadge: Int, onSelect: (Tab) -> Unit, mo
 private fun BottomItem(tab: Tab, selected: Boolean, badge: Int, onClick: () -> Unit, modifier: Modifier) {
     val scale by animateFloatAsState(if (selected) 1.15f else 1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy))
     val lift by animateDpAsState(if (selected) (-3).dp else 0.dp)
-    val tint by animateColorAsState(if (selected) MgpColors.Primary else Color(0xFF2C4C9C))
+    val tint by animateColorAsState(if (selected) MgpColors.Primary else if (MgpColors.isDark) MgpColors.TextMuted else Color(0xFF2C4C9C))
     val underline by animateDpAsState(if (selected) 34.dp else 0.dp)
     Box(
         modifier
             .fillMaxHeight()
             .padding(horizontal = 2.dp)
             .clip(RoundedCornerShape(18.dp))
-            .background(if (selected) Color.White else Color.Transparent)
+            .background(if (selected) MgpColors.Card else Color.Transparent)
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {

@@ -309,7 +309,7 @@ private fun TimerBox(text: String) {
 private fun SettingRow(icon: ImageVector, label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(
-            Modifier.size(50.dp).shadow(3.dp, CircleShape).clip(CircleShape).background(Color(0xFFEAF2FF)).border(2.dp, Color.White, CircleShape),
+            Modifier.size(50.dp).shadow(3.dp, CircleShape).clip(CircleShape).background(MgpColors.Tint).border(2.dp, Color.White, CircleShape),
             contentAlignment = Alignment.Center,
         ) { Icon(icon, null, tint = MgpColors.Primary, modifier = Modifier.size(28.dp)) }
         Spacer(Modifier.width(16.dp))
@@ -327,9 +327,9 @@ fun MgpSwitch(checked: Boolean, onChange: (Boolean) -> Unit) {
             checkedTrackColor = MgpColors.Green,
             checkedThumbColor = Color.White,
             checkedBorderColor = Color(0xFF2E8A18),
-            uncheckedTrackColor = Color(0xFFD5DEEB),
+            uncheckedTrackColor = MgpColors.Track,
             uncheckedThumbColor = Color.White,
-            uncheckedBorderColor = Color(0xFFB7C4D8),
+            uncheckedBorderColor = MgpColors.Border,
         ),
     )
 }

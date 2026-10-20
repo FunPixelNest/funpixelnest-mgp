@@ -33,6 +33,8 @@ import com.funpixelnest.mgp.game.WebViewGameLauncher
 import com.funpixelnest.mgp.push.AndroidPush
 import com.funpixelnest.mgp.ui.Navigator
 import com.funpixelnest.mgp.ui.Screen
+import com.funpixelnest.mgp.platform.LocalPrefs
+import com.funpixelnest.mgp.ui.theme.ThemeState
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -61,6 +63,8 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
+        LocalPrefs.init(applicationContext)
+        com.funpixelnest.mgp.ui.AppSettings.loadTheme()
         CrashReport.install(applicationContext)
         if (savedInstanceState == null) CrashReport.showIfAny(this)
         pendingPoolId.value = intent.poolIdExtra()
@@ -97,6 +101,13 @@ class MainActivity : ComponentActivity() {
                     navigator.push(Screen.PoolLeaderboard(id))
                     pendingPoolId.value = null
                 }
+            }
+
+            // Status / navigation bar icons follow the app theme (light icons on the dark theme).
+            val dark = ThemeState.dark
+            LaunchedEffect(dark) {
+                val bars = if (dark) SystemBarStyle.dark(Color.TRANSPARENT) else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+                enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
             }
 
             App(repository = repository, navigator = navigator, gameLauncher = gameLauncher)

@@ -139,6 +139,7 @@ fun App(
     gameLauncher: GameLauncher? = null,
     settings: AppSettings = remember { AppSettings() },
 ) {
+    remember { AppSettings.loadTheme() }
     MgpTheme {
         val status by repository.status.collectAsState()
         val scope = rememberCoroutineScope()
@@ -572,8 +573,11 @@ private fun MainApp(
                             )
                             Tab.Games -> GamesScreen(
                                 repository.games(),
+                                packs = repository.storePacks(),
                                 onGameClick = { navigator.push(Screen.GameDetail(it.id)) },
                                 onSeeAll = { navigator.push(Screen.AllGames(it)) },
+                                onBuyPack = { economy.buyPack(it) },
+                                onOpenStore = { navigator.selectTab(Tab.Store) },
                             )
                             Tab.Rewards -> RewardsScreen(repository, economy, onViewChallenges = { navigator.selectTab(Tab.Challenges) })
                             Tab.Store -> StoreScreen(repository, economy)
@@ -599,6 +603,8 @@ private fun MainApp(
             repository = repository,
             onClose = { navigator.drawerOpen = false },
             onRename = { navigator.show(Popup.Rename) },
+            darkMode = settings.darkMode,
+            onDarkMode = { settings.darkMode = it },
             onItem = { item ->
                 navigator.drawerOpen = false
                 when (item) {

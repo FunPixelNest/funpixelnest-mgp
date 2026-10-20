@@ -1,5 +1,7 @@
 package com.funpixelnest.mgp.ui.screens
 
+import androidx.compose.material.icons.rounded.ShoppingCart
+import com.funpixelnest.mgp.domain.StorePack
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -60,6 +62,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -89,9 +92,6 @@ import org.jetbrains.compose.resources.painterResource
 
 // ---------------------------------------------------------------- Games tab
 
-/** Games shown per category on the Games tab (2 rows of 2); "See All" opens the rest. */
-private const val PREVIEW_PER_CATEGORY = 4
-
 /** Category icon (falls back to a game pad). */
 fun categoryIcon(category: String): ImageVector = when (category) {
     "Puzzle" -> Icons.Rounded.Extension
@@ -108,41 +108,63 @@ fun gamesByCategory(games: List<Game>): List<Pair<String, List<Game>>> {
         .sortedBy { (c, _) -> order.indexOf(c).let { if (it < 0) Int.MAX_VALUE else it } }
 }
 
-/** Games tab: banner, then games by category, 2 per row. "See All" opens every game. */
+/** Games tab: 3 coin packs from the Store, then every game, 2 per row. "See All" opens the games by category. */
 @Composable
 fun GamesScreen(
     games: List<Game>,
+    packs: List<StorePack>,
     onGameClick: (Game) -> Unit,
     onSeeAll: (category: String?) -> Unit,
+    onBuyPack: (StorePack) -> Unit,
+    onOpenStore: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val gridState = rememberLazyGridState()
-    val scope = rememberCoroutineScope()
-    val sections = remember(games) { gamesByCategory(games) }
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
-        state = gridState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 14.dp, end = 14.dp, top = 6.dp, bottom = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            HeroBanner(onPlay = { scope.launch { gridState.animateScrollToItem(1) } })
+        if (packs.isNotEmpty()) {
+            item(span = { GridItemSpan(maxLineSpan) }, key = "packs") {
+                StorePacksRow(packs.take(3), onBuyPack, onOpenStore)
+            }
         }
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        item(span = { GridItemSpan(maxLineSpan) }, key = "play_header") {
+            Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.SportsEsports, null, tint = MgpColors.Primary, modifier = Modifier.size(30.dp))
                 Spacer(Modifier.width(8.dp))
                 Text("PLAY GAMES", color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, modifier = Modifier.weight(1f))
                 SeeAllButton { onSeeAll(null) }
             }
         }
-        sections.forEach { (category, list) ->
-            item(span = { GridItemSpan(maxLineSpan) }, key = "header_$category") {
-                CategoryHeader(category, list.size, showSeeAll = list.size > PREVIEW_PER_CATEGORY) { onSeeAll(category) }
+        items(games, key = { it.id }) { game -> GameTile(game, onClick = { onGameClick(game) }) }
+    }
+}
+
+/** "COIN PACKS" header with a Store link and three packs side by side. */
+@Composable
+private fun StorePacksRow(packs: List<StorePack>, onBuy: (StorePack) -> Unit, onOpenStore: () -> Unit) {
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Rounded.ShoppingCart, null, tint = MgpColors.Primary, modifier = Modifier.size(28.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("COIN PACKS", color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, modifier = Modifier.weight(1f))
+            SeeAllButton(label = "Store", onClick = onOpenStore)
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            packs.forEachIndexed { index, pack ->
+                PackCard(
+                    pack,
+                    index,
+                    onBuy = { onBuy(pack) },
+                    modifier = Modifier.weight(1f),
+                    height = 176.dp,
+                    artSize = 64.dp,
+                )
             }
-            items(list.take(PREVIEW_PER_CATEGORY), key = { it.id }) { game -> GameTile(game, onClick = { onGameClick(game) }) }
         }
     }
 }
@@ -182,29 +204,14 @@ fun AllGamesScreen(
 }
 
 @Composable
-private fun SeeAllButton(onClick: () -> Unit) {
+private fun SeeAllButton(label: String = "See All", onClick: () -> Unit) {
     Row(
         Modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("See All", color = MgpColors.Primary, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp)
+        Text(label, color = MgpColors.Primary, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp)
         Spacer(Modifier.width(4.dp))
         Icon(Icons.AutoMirrored.Rounded.ArrowForwardIos, null, tint = MgpColors.Primary, modifier = Modifier.size(13.dp))
-    }
-}
-
-@Composable
-private fun CategoryHeader(category: String, count: Int, showSeeAll: Boolean, onSeeAll: () -> Unit) {
-    Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            Modifier.size(34.dp).shadow(3.dp, RoundedCornerShape(10.dp)).clip(RoundedCornerShape(10.dp)).background(Color.White),
-            contentAlignment = Alignment.Center,
-        ) { Icon(categoryIcon(category), null, tint = MgpColors.Primary, modifier = Modifier.size(22.dp)) }
-        Spacer(Modifier.width(10.dp))
-        Text(category.uppercase(), color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp)
-        Spacer(Modifier.width(6.dp))
-        Text("($count)", color = MgpColors.TextMuted, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.weight(1f))
-        if (showSeeAll) SeeAllButton(onSeeAll)
     }
 }
 
@@ -215,7 +222,7 @@ private fun CategoryChip(label: String, icon: ImageVector?, selected: Boolean, o
             .height(40.dp)
             .shadow(if (selected) 4.dp else 1.dp, RoundedCornerShape(20.dp))
             .clip(RoundedCornerShape(20.dp))
-            .background(if (selected) MgpColors.Primary else Color.White)
+            .background(if (selected) MgpColors.Primary else MgpColors.Card)
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -226,46 +233,6 @@ private fun CategoryChip(label: String, icon: ImageVector?, selected: Boolean, o
             Spacer(Modifier.width(6.dp))
         }
         Text(label, color = if (selected) Color.White else MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
-    }
-}
-
-@Composable
-private fun HeroBanner(onPlay: () -> Unit) {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(262.dp)
-            .shadow(8.dp, RoundedCornerShape(26.dp))
-            .clip(RoundedCornerShape(26.dp))
-            .background(Brush.verticalGradient(listOf(Color(0xFFF4FAFF), Color(0xFFD3EBFF), Color(0xFFE9F6FF))))
-            .border(1.dp, Color.White, RoundedCornerShape(26.dp)),
-    ) {
-        val t = rememberInfiniteTransition()
-        val bob by t.animateFloat(-4f, 4f, infiniteRepeatable(tween(1_800), RepeatMode.Reverse))
-        Image(
-            painterResource(Art.heroChest),
-            contentDescription = null,
-            contentScale = ContentScale.Fit,
-            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 4.dp).size(200.dp).offset(y = bob.dp),
-        )
-        Column(Modifier.padding(20.dp).fillMaxSize(), verticalArrangement = Arrangement.Center) {
-            DisplayText("PLAY\nGAMES", size = 31.sp, color = MgpColors.Navy)
-            DisplayText("WIN BIG", size = 31.sp, color = MgpColors.Primary)
-            Text(
-                "Play, compete and win\nexciting rewards!",
-                color = MgpColors.Navy,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(vertical = 8.dp),
-            )
-            GlossyButton(
-                "Play games",
-                onClick = onPlay,
-                height = 44.dp,
-                fontSize = 16.sp,
-                icon = Icons.AutoMirrored.Rounded.ArrowForwardIos,
-            )
-        }
     }
 }
 
@@ -316,7 +283,7 @@ private data class TierStyle(val label: String, val color: Color, val button: Bu
 
 private val tierStyles = listOf(
     TierStyle("Beginner", Color(0xFF34A11E), ButtonColor.Green, Color(0xFFEFFAEA)),
-    TierStyle("Intermediate", Color(0xFF1E6CF2), ButtonColor.Blue, Color(0xFFEAF2FF)),
+    TierStyle("Intermediate", Color(0xFF1E6CF2), ButtonColor.Blue, MgpColors.Tint),
     TierStyle("Advanced", Color(0xFF7B3FE4), ButtonColor.Purple, Color(0xFFF3ECFF)),
     TierStyle("Expert", Color(0xFFF06A00), ButtonColor.Orange, Color(0xFFFFF2E6)),
     TierStyle("Mega", Color(0xFFE0186D), ButtonColor.Pink, Color(0xFFFFEBF3)),
@@ -340,7 +307,7 @@ fun GameDetailScreen(
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
-                    Modifier.size(96.dp).shadow(6.dp, RoundedCornerShape(22.dp)).clip(RoundedCornerShape(22.dp)).background(Color.White).padding(4.dp),
+                    Modifier.size(96.dp).shadow(6.dp, RoundedCornerShape(22.dp)).clip(RoundedCornerShape(22.dp)).background(MgpColors.Card).padding(4.dp),
                 ) { GameIcon(game, 88.dp, cornerRadius = 18.dp) }
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
@@ -418,10 +385,10 @@ private fun TournamentCard(tournament: Tournament, style: TierStyle, index: Int,
         Modifier
             .fillMaxWidth()
             .height(112.dp)
-            .shadow(6.dp, shape, ambientColor = Color(0x331E6CF2), spotColor = Color(0x331E6CF2))
+            .shadow(6.dp, shape, ambientColor = MgpColors.Glow, spotColor = MgpColors.Glow)
             .clip(shape)
-            .background(Brush.horizontalGradient(listOf(style.tint, Color.White, Color.White)))
-            .border(1.dp, Color.White, shape),
+            .background(Brush.horizontalGradient(if (MgpColors.isDark) listOf(style.color.copy(alpha = 0.28f).compositeOver(MgpColors.Card), MgpColors.Card, MgpColors.Card) else listOf(style.tint, Color.White, Color.White)))
+            .border(1.dp, MgpColors.CardEdge, shape),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Tier colour strip + art
@@ -482,14 +449,14 @@ fun JoiningScreen(game: Game, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center,
     ) {
         Box(
-            Modifier.scale(pulse).size(190.dp).shadow(10.dp, RoundedCornerShape(42.dp)).clip(RoundedCornerShape(42.dp)).background(Color.White).padding(10.dp),
+            Modifier.scale(pulse).size(190.dp).shadow(10.dp, RoundedCornerShape(42.dp)).clip(RoundedCornerShape(42.dp)).background(MgpColors.Card).padding(10.dp),
         ) { GameIcon(game, 170.dp, cornerRadius = 34.dp) }
         Spacer(Modifier.height(18.dp))
         DisplayText(game.name.uppercase(), size = 34.sp, color = Color.White, outline = Color(0xFF1655DA), textAlign = TextAlign.Center)
         Spacer(Modifier.height(18.dp))
         Text("Joining Tournament...", color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
         Spacer(Modifier.height(16.dp))
-        CircularProgressIndicator(Modifier.size(54.dp), color = MgpColors.Primary, trackColor = Color(0xFFBFDCFF), strokeWidth = 6.dp)
+        CircularProgressIndicator(Modifier.size(54.dp), color = MgpColors.Primary, trackColor = MgpColors.Track, strokeWidth = 6.dp)
         Spacer(Modifier.height(26.dp))
         Text("Pro Tip: $tip", color = MgpColors.PrimaryDark, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
     }

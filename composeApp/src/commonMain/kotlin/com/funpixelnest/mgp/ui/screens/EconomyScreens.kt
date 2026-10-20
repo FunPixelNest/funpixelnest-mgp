@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.funpixelnest.mgp.data.PlatformRepository
@@ -109,7 +110,7 @@ fun StoreScreen(repository: PlatformRepository, actions: EconomyActions, modifie
                     Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(12.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    repository.storePacks().forEachIndexed { index, pack -> PackCard(pack, index) { actions.buyPack(pack) } }
+                    repository.storePacks().forEachIndexed { index, pack -> PackCard(pack, index, onBuy = { actions.buyPack(pack) }) }
                 }
                 Hint("Payments aren't connected yet, so buying is a free demo.", Modifier.fillMaxWidth().padding(bottom = 10.dp))
             }
@@ -154,24 +155,31 @@ fun StoreScreen(repository: PlatformRepository, actions: EconomyActions, modifie
 }
 
 @Composable
-private fun PackCard(pack: StorePack, index: Int, onBuy: () -> Unit) {
+fun PackCard(
+    pack: StorePack,
+    index: Int,
+    onBuy: () -> Unit,
+    modifier: Modifier = Modifier.width(108.dp),
+    height: Dp = 200.dp,
+    artSize: Dp = 78.dp,
+) {
     val best = pack.tag != null
-    Box {
+    Box(modifier) {
         Column(
             Modifier
-                .padding(top = if (best) 0.dp else 0.dp)
-                .width(108.dp)
-                .height(200.dp)
+                .padding(top = 8.dp)
+                .fillMaxWidth()
+                .height(height)
                 .clip(RoundedCornerShape(16.dp))
-                .background(Brush.verticalGradient(listOf(Color.White, Color(0xFFF2F7FF))))
+                .background(Brush.verticalGradient(listOf(MgpColors.Card, MgpColors.CardLow)))
                 .border(if (best) 2.dp else 1.dp, if (best) MgpColors.Primary else MgpColors.Border, RoundedCornerShape(16.dp))
                 .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(Modifier.height(if (best) 12.dp else 4.dp))
+            Spacer(Modifier.height(if (best) 10.dp else 4.dp))
             DisplayText(formatShort(pack.totalCoins), size = 26.sp, maxLines = 1)
             Text("COINS", color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp)
-            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { ArtImage(Art.pack(index), 78.dp) }
+            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { ArtImage(Art.pack(index), artSize) }
             GlossyButton(
                 pack.priceLabel,
                 onBuy,
@@ -189,8 +197,7 @@ private fun PackCard(pack: StorePack, index: Int, onBuy: () -> Unit) {
                 fontSize = 10.sp,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .offset(y = (-2).dp)
-                    .clip(RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp))
+                    .clip(RoundedCornerShape(8.dp))
                     .background(MgpColors.Pink)
                     .padding(horizontal = 8.dp, vertical = 3.dp),
             )
@@ -216,14 +223,14 @@ private fun EarnCard(
             .fillMaxHeight()
             .shadow(3.dp, RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp))
-            .background(Color.White)
+            .background(MgpColors.Card)
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (timerMillis != null) {
             val left = rememberCountdown(timerMillis)
             Row(
-                Modifier.clip(RoundedCornerShape(10.dp)).background(Color(0xFFEFF4FB)).padding(horizontal = 6.dp, vertical = 2.dp),
+                Modifier.clip(RoundedCornerShape(10.dp)).background(MgpColors.SurfaceRaised).padding(horizontal = 6.dp, vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(Icons.Rounded.Schedule, null, tint = MgpColors.Navy, modifier = Modifier.size(12.dp))
@@ -236,7 +243,7 @@ private fun EarnCard(
         if (reward != null) RewardChip(reward, Modifier.padding(vertical = 4.dp), fontSize = 13.sp, iconSize = 18.dp)
         when {
             doneCheck -> Box(
-                Modifier.fillMaxWidth().height(36.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFFE9F7E4)),
+                Modifier.fillMaxWidth().height(36.dp).clip(RoundedCornerShape(12.dp)).background(if (MgpColors.isDark) Color(0xFF1F3B2A) else Color(0xFFE9F7E4)),
                 contentAlignment = Alignment.Center,
             ) { Icon(Icons.Rounded.CheckCircle, doneText, tint = MgpColors.Green, modifier = Modifier.size(26.dp)) }
             button != null -> GlossyButton(button, onClick, height = 38.dp, fontSize = 13.sp, modifier = Modifier.fillMaxWidth())
@@ -324,8 +331,8 @@ fun DayTile(day: DailyBonusDay, bonus: DailyBonusState, modifier: Modifier, onCl
             .clip(RoundedCornerShape(12.dp))
             .background(
                 when {
-                    epic -> Brush.verticalGradient(listOf(Color(0xFFEBDDFF), Color(0xFFF7F0FF)))
-                    else -> Brush.verticalGradient(listOf(Color.White, Color(0xFFF2F7FF)))
+                    epic -> Brush.verticalGradient(if (MgpColors.isDark) listOf(Color(0xFF3A2A66), Color(0xFF2A2052)) else listOf(Color(0xFFEBDDFF), Color(0xFFF7F0FF)))
+                    else -> Brush.verticalGradient(listOf(MgpColors.Card, MgpColors.CardLow))
                 },
             )
             .border(if (isToday) 2.dp else 1.dp, if (isToday) MgpColors.Primary else MgpColors.Border, RoundedCornerShape(12.dp))
@@ -383,7 +390,7 @@ private fun MilestoneCard(c: Challenge, modifier: Modifier, onClaim: () -> Unit)
         modifier
             .fillMaxHeight()
             .clip(RoundedCornerShape(14.dp))
-            .background(Color.White)
+            .background(MgpColors.Card)
             .border(1.dp, MgpColors.Border, RoundedCornerShape(14.dp))
             .padding(6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -409,7 +416,7 @@ private fun ChestCard(chest: ChestOffer, modifier: Modifier, onOpen: () -> Unit)
         modifier
             .fillMaxHeight()
             .clip(RoundedCornerShape(14.dp))
-            .background(Color.White)
+            .background(MgpColors.Card)
             .border(1.dp, MgpColors.Border, RoundedCornerShape(14.dp))
             .padding(6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

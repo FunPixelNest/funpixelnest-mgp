@@ -107,7 +107,7 @@ fun ChallengesScreen(
         }
         item {
             Row(
-                Modifier.fillMaxWidth().shadow(4.dp, RoundedCornerShape(18.dp)).clip(RoundedCornerShape(18.dp)).background(Color(0xFFF4F8FF)),
+                Modifier.fillMaxWidth().shadow(4.dp, RoundedCornerShape(18.dp)).clip(RoundedCornerShape(18.dp)).background(MgpColors.CardLow),
             ) {
                 SegmentTab("Daily", Icons.Rounded.EventAvailable, !weekly, Modifier.weight(1f)) { weekly = false }
                 SegmentTab("Weekly", Icons.Rounded.CalendarMonth, weekly, Modifier.weight(1f)) { weekly = true }
@@ -169,7 +169,7 @@ private fun SegmentTab(label: String, icon: ImageVector, selected: Boolean, modi
         modifier
             .height(56.dp)
             .clip(RoundedCornerShape(18.dp))
-            .background(if (selected) Brush.verticalGradient(listOf(Color(0xFF3D8BFF), Color(0xFF1458E0))) else Brush.verticalGradient(listOf(Color.White, Color(0xFFF0F5FD))))
+            .background(if (selected) Brush.verticalGradient(listOf(Color(0xFF3D8BFF), Color(0xFF1458E0))) else Brush.verticalGradient(listOf(MgpColors.Card, MgpColors.CardLow)))
             .clickable(onClick = onClick),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
@@ -184,7 +184,7 @@ private fun SegmentTab(label: String, icon: ImageVector, selected: Boolean, modi
 private fun ChallengeRow(challenge: Challenge, onClaim: (Challenge) -> Unit, onGo: (Challenge) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(
-            Modifier.size(62.dp).shadow(3.dp, RoundedCornerShape(14.dp)).clip(RoundedCornerShape(14.dp)).background(Color(0xFFF1F6FD)),
+            Modifier.size(62.dp).shadow(3.dp, RoundedCornerShape(14.dp)).clip(RoundedCornerShape(14.dp)).background(MgpColors.CardLow),
             contentAlignment = Alignment.Center,
         ) { ArtImage(Art.challenge(challenge.id), 46.dp) }
         Spacer(Modifier.width(10.dp))
@@ -235,7 +235,7 @@ private fun MiniSection(
                         .weight(1f)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(14.dp))
-                        .background(Color.White)
+                        .background(MgpColors.Card)
                         .border(1.dp, MgpColors.Border, RoundedCornerShape(14.dp))
                         .clickable { if (c.canClaim) onClaim(c) else if (!c.claimed) onGo(c) }
                         .padding(8.dp),
@@ -298,7 +298,7 @@ fun LeaguesScreen(
                     Text("Compete in leagues, earn points and climb the ranks!", color = MgpColors.TextMuted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 }
                 Column(
-                    Modifier.shadow(3.dp, RoundedCornerShape(14.dp)).clip(RoundedCornerShape(14.dp)).background(Color.White).padding(horizontal = 10.dp, vertical = 8.dp),
+                    Modifier.shadow(3.dp, RoundedCornerShape(14.dp)).clip(RoundedCornerShape(14.dp)).background(MgpColors.Card).padding(horizontal = 10.dp, vertical = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text("SEASON ENDS IN", color = MgpColors.Navy, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
@@ -389,7 +389,7 @@ fun LeaguesScreen(
                             Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (current) Color(0xFFEAF2FF) else Color.White)
+                                .background(if (current) MgpColors.Tint else MgpColors.Card)
                                 .border(if (current) 2.dp else 1.dp, if (current) MgpColors.Primary else MgpColors.Border, RoundedCornerShape(12.dp))
                                 .padding(vertical = 6.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -457,7 +457,7 @@ private fun LeagueRowView(row: LeagueRow, isMe: Boolean, youLabel: Boolean = fal
             .fillMaxWidth()
             .padding(vertical = 3.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(if (isMe) Color(0xFFE6EFFC) else Color.White)
+            .background(if (isMe) MgpColors.Tint else MgpColors.Card)
             .border(1.dp, MgpColors.Border, RoundedCornerShape(14.dp))
             .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,

@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -262,7 +263,7 @@ fun TileIconButton(
                 .fillMaxSize()
                 .shadow(4.dp, RoundedCornerShape(14.dp))
                 .clip(RoundedCornerShape(14.dp))
-                .background(Color.White)
+                .background(MgpColors.Card)
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center,
         ) {
@@ -300,10 +301,10 @@ fun Panel(
     Column(
         modifier
             .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(corner), ambientColor = Color(0x331E6CF2), spotColor = Color(0x331E6CF2))
+            .shadow(8.dp, RoundedCornerShape(corner), ambientColor = MgpColors.Glow, spotColor = MgpColors.Glow)
             .clip(RoundedCornerShape(corner))
             .background(color)
-            .border(1.dp, Color.White, RoundedCornerShape(corner))
+            .border(1.dp, MgpColors.CardEdge, RoundedCornerShape(corner))
             .padding(padding),
         content = content,
     )
@@ -317,12 +318,13 @@ fun SkyBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.(
             .fillMaxSize()
             .background(Brush.verticalGradient(listOf(MgpColors.SkyTop, MgpColors.Background, MgpColors.SkyBottom))),
     ) {
+        val squareColor = Color.White.copy(alpha = if (MgpColors.isDark) 0.05f else 0.35f)
         Canvas(Modifier.fillMaxSize()) {
             val squares = listOf(0.08f to 0.06f, 0.86f to 0.12f, 0.06f to 0.42f, 0.92f to 0.55f, 0.12f to 0.78f)
             squares.forEachIndexed { i, (x, y) ->
                 val s = (18 + i * 4).dp.toPx()
                 drawRoundRect(
-                    color = Color.White.copy(alpha = 0.35f),
+                    color = squareColor,
                     topLeft = Offset(size.width * x, size.height * y),
                     size = Size(s, s),
                     cornerRadius = CornerRadius(4.dp.toPx()),
@@ -408,8 +410,8 @@ fun RewardChip(reward: RewardGrant, modifier: Modifier = Modifier, fontSize: Tex
     Row(
         modifier
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFFFFF7E6))
-            .border(1.dp, Color(0xFFFFE7B3), RoundedCornerShape(12.dp))
+            .background(if (MgpColors.isDark) Color(0xFF3A3322) else Color(0xFFFFF7E6))
+            .border(1.dp, if (MgpColors.isDark) Color(0xFF5E4C24) else Color(0xFFFFE7B3), RoundedCornerShape(12.dp))
             .padding(horizontal = 8.dp, vertical = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -429,7 +431,7 @@ fun ProgressPill(
     label: String? = null,
     color: Color = MgpColors.Green,
     height: Dp = 16.dp,
-    track: Color = Color(0xFFE1E8F2),
+    track: Color = MgpColors.Track,
 ) {
     Box(modifier.height(height).clip(RoundedCornerShape(height)).background(track), contentAlignment = Alignment.Center) {
         Box(
@@ -441,12 +443,20 @@ fun ProgressPill(
                 .background(Brush.verticalGradient(listOf(color.copy(alpha = 0.85f), color))),
         )
         if (label != null) {
+            // The line box is trimmed to the font size and centered, so the digits sit in the middle of the bar
+            // (by default the font's ascent / descent padding pushed them down).
+            val size = (height.value * 0.62f).sp
             Text(
                 label,
                 color = if (fraction > 0.45f) Color.White else MgpColors.Navy,
-                fontSize = (height.value * 0.62f).sp,
-                fontWeight = FontWeight.ExtraBold,
                 maxLines = 1,
+                style = TextStyle(
+                    fontSize = size,
+                    lineHeight = size,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontFamily = MaterialTheme.typography.labelSmall.fontFamily,
+                    lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both),
+                ),
             )
         }
     }
@@ -518,7 +528,7 @@ fun ScreenHeader(
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         if (artInTile) {
             Box(
-                Modifier.size(70.dp).shadow(6.dp, RoundedCornerShape(18.dp)).clip(RoundedCornerShape(18.dp)).background(Color.White),
+                Modifier.size(70.dp).shadow(6.dp, RoundedCornerShape(18.dp)).clip(RoundedCornerShape(18.dp)).background(MgpColors.Card),
                 contentAlignment = Alignment.Center,
             ) { ArtImage(art, 46.dp) }
         } else {

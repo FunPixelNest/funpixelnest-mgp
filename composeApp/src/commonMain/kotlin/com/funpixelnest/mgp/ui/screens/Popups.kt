@@ -210,7 +210,7 @@ fun PopupCard(onClose: (() -> Unit)?, modifier: Modifier = Modifier, content: @C
                 .padding(top = 6.dp)
                 .shadow(18.dp, RoundedCornerShape(28.dp))
                 .clip(RoundedCornerShape(28.dp))
-                .background(Brush.verticalGradient(listOf(Color(0xFFF7FBFF), Color(0xFFE5F0FF))))
+                .background(Brush.verticalGradient(listOf(MgpColors.Card, MgpColors.CardLow)))
                 .border(3.dp, Color(0xFF5B9BFF), RoundedCornerShape(28.dp))
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { }
                 .verticalScroll(rememberScrollState())
@@ -248,7 +248,7 @@ private fun WelcomePopup(repository: PlatformRepository, onClaim: () -> Unit, on
                 .padding(vertical = 10.dp)
                 .shadow(4.dp, RoundedCornerShape(18.dp))
                 .clip(RoundedCornerShape(18.dp))
-                .background(Color.White)
+                .background(MgpColors.Card)
                 .padding(horizontal = 22.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -274,7 +274,7 @@ private fun DailyBonusPopup(repository: PlatformRepository, onClaim: () -> Unit,
                 .padding(top = 50.dp)
                 .shadow(18.dp, RoundedCornerShape(28.dp))
                 .clip(RoundedCornerShape(28.dp))
-                .background(Color.White)
+                .background(MgpColors.Card)
                 .border(3.dp, Color(0xFF5B9BFF), RoundedCornerShape(28.dp))
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { },
         ) {
@@ -346,7 +346,7 @@ private fun RenamePopup(current: String, rename: suspend (String) -> String?, on
             onValueChange = { name = it.take(20) },
             singleLine = true,
             shape = RoundedCornerShape(16.dp),
-            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White),
+            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = MgpColors.Card, unfocusedContainerColor = MgpColors.Card, focusedTextColor = MgpColors.Navy, unfocusedTextColor = MgpColors.Navy),
             modifier = Modifier.fillMaxWidth(),
         )
         if (error != null) Text(error!!, color = MgpColors.Error, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))

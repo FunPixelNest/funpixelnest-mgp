@@ -1,5 +1,7 @@
 package com.funpixelnest.mgp.ui.screens
 
+import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -330,6 +332,8 @@ fun MoreOptionsDrawer(
     onClose: () -> Unit,
     onItem: (MenuItem) -> Unit,
     onRename: () -> Unit,
+    darkMode: Boolean = false,
+    onDarkMode: (Boolean) -> Unit = {},
 ) {
     val profile by repository.profile.collectAsState()
     val wallet by repository.wallet.collectAsState()
@@ -351,7 +355,7 @@ fun MoreOptionsDrawer(
                     .fillMaxWidth(0.8f)
                     .shadow(16.dp, RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp))
                     .clip(RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp))
-                    .background(Color(0xFFF2F7FF))
+                    .background(MgpColors.CardLow)
                     .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { }
                     .windowInsetsPadding(WindowInsets.safeDrawing)
                     .verticalScroll(rememberScrollState())
@@ -378,6 +382,8 @@ fun MoreOptionsDrawer(
                     }
                 }
                 Spacer(Modifier.height(16.dp))
+                DarkModeRow(darkMode, onDarkMode)
+                Spacer(Modifier.height(8.dp))
                 MenuItem.entries.forEach { item ->
                     MenuRow(item, dot = item == MenuItem.Inbox && profile.unreadNotifications > 0) { onItem(item) }
                     Spacer(Modifier.height(8.dp))
@@ -385,6 +391,31 @@ fun MoreOptionsDrawer(
                 Text("App Version $APP_VERSION", color = MgpColors.TextMuted, fontSize = 13.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 6.dp))
             }
         }
+    }
+}
+
+/** Dark mode switch at the top of the side menu (same setting as in Settings). */
+@Composable
+private fun DarkModeRow(dark: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .height(58.dp)
+            .shadow(3.dp, RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .background(MgpColors.Card)
+            .clickable { onChange(!dark) }
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val tint = if (dark) Color(0xFFFFC23A) else Color(0xFF5B5FE0)
+        Box(
+            Modifier.size(38.dp).clip(RoundedCornerShape(10.dp)).background(tint.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center,
+        ) { Icon(if (dark) Icons.Rounded.LightMode else Icons.Rounded.DarkMode, null, tint = tint, modifier = Modifier.size(24.dp)) }
+        Spacer(Modifier.width(14.dp))
+        Text("DARK MODE", color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, modifier = Modifier.weight(1f))
+        MgpSwitch(dark, onChange)
     }
 }
 
@@ -396,7 +427,7 @@ private fun MenuRow(item: MenuItem, dot: Boolean, onClick: () -> Unit) {
             .height(58.dp)
             .shadow(3.dp, RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp))
-            .background(Color.White)
+            .background(MgpColors.Card)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -450,6 +481,14 @@ fun SettingsScreen(repository: PlatformRepository, settings: AppSettings, onBack
     Column(Modifier.fillMaxSize()) {
         SimpleTopBar("Settings", onBack)
         Column(Modifier.verticalScroll(rememberScrollState()).padding(14.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Panel(padding = 14.dp) {
+                Text("APPEARANCE", color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    ThemeChoice("Light", Icons.Rounded.LightMode, selected = !settings.darkMode, Modifier.weight(1f)) { settings.darkMode = false }
+                    ThemeChoice("Dark", Icons.Rounded.DarkMode, selected = settings.darkMode, Modifier.weight(1f)) { settings.darkMode = true }
+                }
+            }
             Panel(padding = 8.dp) {
                 ToggleRow("Music", settings.music) { settings.music = it }
                 ToggleRow("Sound", settings.sound) { settings.sound = it }
@@ -476,6 +515,25 @@ fun SettingsScreen(repository: PlatformRepository, settings: AppSettings, onBack
             }
             Text("App Version $APP_VERSION", color = MgpColors.TextMuted, fontSize = 13.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
         }
+    }
+}
+
+/** Light / Dark option card in Settings. */
+@Composable
+private fun ThemeChoice(label: String, icon: ImageVector, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    Row(
+        modifier
+            .height(54.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (selected) MgpColors.Primary else MgpColors.SurfaceRaised)
+            .border(2.dp, if (selected) MgpColors.Primary else MgpColors.Border, RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Icon(icon, null, tint = if (selected) Color.White else MgpColors.Primary, modifier = Modifier.size(24.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(label.uppercase(), color = if (selected) Color.White else MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
     }
 }
 
@@ -551,7 +609,7 @@ fun ReferEarnScreen(onBack: () -> Unit, playerId: String, onCopy: (String, Strin
                 Text("Invite your friends", color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp)
                 Text("Share your code so friends can find you and challenge you.", color = MgpColors.TextMuted, fontSize = 14.sp, modifier = Modifier.padding(vertical = 6.dp))
                 Box(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color(0xFFEAF2FF)).border(2.dp, MgpColors.Primary, RoundedCornerShape(14.dp)).padding(14.dp),
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(MgpColors.Tint).border(2.dp, MgpColors.Primary, RoundedCornerShape(14.dp)).padding(14.dp),
                     contentAlignment = Alignment.Center,
                 ) { DisplayText(code, size = 30.sp, color = MgpColors.Primary) }
                 Spacer(Modifier.height(12.dp))

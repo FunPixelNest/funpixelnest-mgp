@@ -104,7 +104,7 @@ fun SplashScreen(message: String?, onRetry: (() -> Unit)?) {
                         .height(22.dp)
                         .shadow(3.dp, RoundedCornerShape(11.dp))
                         .clip(RoundedCornerShape(11.dp))
-                        .background(Color.White)
+                        .background(MgpColors.Card)
                         .padding(3.dp),
                 ) {
                     Box(
@@ -232,7 +232,7 @@ private fun SocialButton(text: String, logo: DrawableResource?, vector: ImageVec
             .height(54.dp)
             .shadow(3.dp, RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp))
-            .background(Color.White)
+            .background(MgpColors.Card)
             .border(BorderStroke(1.dp, MgpColors.Border), RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp),

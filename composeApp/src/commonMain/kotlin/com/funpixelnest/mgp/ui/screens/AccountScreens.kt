@@ -552,7 +552,7 @@ private val faqs = listOf(
     "How do 1v1 duels work?" to "Two players play the same board. The winner takes the whole pot (after the 10% fee).",
     "What are gems for?" to "Gems open chests on the Rewards tab. You earn them from the daily bonus, challenges, the lucky spin and league promotions.",
     "How do leagues work?" to "Every match earns league points: 1st 100, 2nd 60, 3rd 30, others 10 (duel win 80). Reach 1,000 for Silver, 2,000 for Gold and so on. Each new league pays a one-time reward.",
-    "Can I pause a game?" to "Yes. Press Back or Pause. You have 5 minutes to resume, otherwise the game ends. Ending a paid game early counts as a score of 0.",
+    "Can I pause a game?" to "Yes. Press Back or Pause. You have 5 minutes to resume, otherwise the game ends. Ending a game early submits your score so far.",
 )
 
 @Composable

@@ -177,6 +177,7 @@ fun App(
 /** A match in progress (the Unity game or the placeholder). */
 @Stable
 private class GameSession(val ticket: MatchTicket, val game: Game, val real: Boolean) {
+    val started: TimeMark = TimeSource.Monotonic.markNow()
     var paused by mutableStateOf(false)
     var confirmEnd by mutableStateOf(false)
     var pauseStarted by mutableStateOf<TimeMark?>(null)
@@ -287,7 +288,8 @@ private fun MainApp(
         if (session === s) session = null
         gameLauncher?.setPauseRequestListener(null)
         navigator.popWhile { it is Screen.PlayGame || it is Screen.GameRunning }
-        finishMatch(s.ticket, result)
+        val hud = if (s.real) gameLauncher?.hud?.value else null
+        finishMatch(s.ticket, finalResult(result, hud, s.started.elapsedNow().inWholeMilliseconds))
     }
 
     fun pauseGame() {
@@ -743,3 +745,22 @@ private fun AnimatedContentTransitionScope<Page>.pageTransition(from: Page, to: 
         else -> (fadeIn(t()) + scaleIn(t(), initialScale = 0.94f)) togetherWith fadeOut(t())
     }.also { if (to.depth > from.depth) it.targetContentZIndex = 1f else if (to.depth < from.depth) it.targetContentZIndex = -1f }
 }
+
+/**
+ * The score shown on Game Over and submitted. The game's own result wins, except:
+ * - the match ended without a score (End game in the pause menu, the pause time ran out, or the game's own
+ *   exit button): the last live score the game showed in the HUD counts, so the player keeps what they earned;
+ * - the game sent 0 while its HUD showed points (a game that reset its score before submitting): the HUD score.
+ * Null only when the game never reported anything.
+ */
+internal fun finalResult(result: GameResult?, hud: GameHud?, elapsedMillis: Long): GameResult? {
+    val live = hud?.takeIf { it.reported }?.score ?: 0L
+    return when {
+        result == null && hud?.reported == true -> GameResult(live, elapsedMillis.coerceAtLeast(0), listOf(ENDED_EARLY_EVENT))
+        result != null && result.score <= 0L && live > 0L -> result.copy(score = live)
+        else -> result
+    }
+}
+
+/** Event-log marker for a match that ended before the game submitted (the HUD score was used). */
+const val ENDED_EARLY_EVENT = "ended_early"

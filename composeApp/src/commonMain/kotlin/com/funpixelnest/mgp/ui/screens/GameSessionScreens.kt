@@ -239,10 +239,10 @@ fun EndGameScreen(
                 Spacer(Modifier.width(12.dp))
                 Text(
                     buildAnnotatedString {
-                        append(if (isPractice) "Ending now stops the practice round." else "Ending now will forfeit the game and ")
+                        append(if (isPractice) "Ending now stops the practice round." else "Ending now submits ")
                         if (!isPractice) {
-                            withStyle(SpanStyle(color = MgpColors.Primary)) { append("no rewards") }
-                            append(" will be given.")
+                            withStyle(SpanStyle(color = MgpColors.Primary)) { append("your score so far") }
+                            append(". You can't continue this game later.")
                         }
                     },
                     color = MgpColors.Navy,

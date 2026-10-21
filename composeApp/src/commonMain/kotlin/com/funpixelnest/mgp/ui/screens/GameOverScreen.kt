@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp.ui.screens
 
+import com.funpixelnest.mgp.ENDED_EARLY_EVENT
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -103,7 +104,14 @@ fun GameOverScreen(
     val total = result?.score ?: 0L
     val lines = remember(result) {
         val fromGame = result?.scoreLines().orEmpty()
-        fromGame.ifEmpty { listOf(ScoreLine(if (result == null) "Left the match" else "Score", total)) }
+        fromGame.ifEmpty {
+            val label = when {
+                result == null -> "Left the match"
+                ENDED_EARLY_EVENT in result.eventLog -> "Score so far"
+                else -> "Score"
+            }
+            listOf(ScoreLine(label, total))
+        }
     }
 
     BoxWithConstraints(modifier.fillMaxSize()) {

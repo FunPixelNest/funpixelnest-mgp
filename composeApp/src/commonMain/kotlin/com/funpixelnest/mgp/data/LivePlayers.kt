@@ -40,7 +40,7 @@ object LivePlayers {
 
     /** A few hundred to a few thousand; popular games start higher. */
     private fun startingCount(id: String, random: Random): Int {
-        val popular = id in setOf("block_puzzle", "solitaire", "bubble_shooter", "bingo", "mahjong")
+        val popular = id in setOf("block_puzzle", "bubble_shooter", "bingo", "mahjong")
         return if (popular) random.nextInt(1_800, 6_500) else random.nextInt(300, 2_400)
     }
 }

@@ -301,7 +301,7 @@ class SupabasePlatformRepository(
 
     // ---------------------------------------------------------------- catalog (local, matches server seed)
 
-    override fun games(): List<Game> = SampleCatalog.games
+    override fun games(): List<Game> = SampleCatalog.visibleGames
     override fun game(gameId: String): Game? = SampleCatalog.games.find { it.id == gameId }
     override fun tournamentsFor(gameId: String): List<Tournament> = SampleCatalog.tournaments.filter { it.gameId == gameId }
     override fun tournament(tournamentId: String): Tournament? = SampleCatalog.tournaments.find { it.id == tournamentId }

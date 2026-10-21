@@ -1,0 +1,1 @@
+Debug APK (143M) is too big for a branch: download the android-debug-apk artifact of run 39671644796 (https://github.com/FunPixelNest/funpixelnest-mgp/actions/runs/39671644796).

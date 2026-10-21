@@ -9,9 +9,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.funpixelnest.mgp.MainActivity
-import com.funpixelnest.mgp.config.BackendConfig
-import com.google.firebase.FirebaseApp
-import com.google.firebase.FirebaseOptions
+import com.funpixelnest.mgp.firebase.FirebaseSetup
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
@@ -31,23 +29,11 @@ object AndroidPush {
     @Volatile
     var onNewToken: ((String) -> Unit)? = null
 
-    val isConfigured: Boolean
-        get() = BackendConfig.FIREBASE_PROJECT_ID.isNotBlank() &&
-            BackendConfig.FIREBASE_API_KEY.isNotBlank() &&
-            BackendConfig.FIREBASE_ANDROID_APP_ID.isNotBlank()
+    val isConfigured: Boolean get() = FirebaseSetup.isConfigured
 
     /** Sets up Firebase and the notification channel. Returns false when push isn't configured. */
     fun init(context: Context): Boolean {
-        if (!isConfigured) return false
-        if (FirebaseApp.getApps(context).isEmpty()) {
-            val options = FirebaseOptions.Builder()
-                .setProjectId(BackendConfig.FIREBASE_PROJECT_ID)
-                .setApiKey(BackendConfig.FIREBASE_API_KEY)
-                .setApplicationId(BackendConfig.FIREBASE_ANDROID_APP_ID)
-                .apply { if (BackendConfig.FIREBASE_SENDER_ID.isNotBlank()) setGcmSenderId(BackendConfig.FIREBASE_SENDER_ID) }
-                .build()
-            FirebaseApp.initializeApp(context, options)
-        }
+        if (!FirebaseSetup.init(context)) return false
         createChannel(context)
         return true
     }

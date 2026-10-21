@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp.ui.screens
 
+import androidx.compose.material.icons.rounded.OndemandVideo
 import com.funpixelnest.mgp.ui.components.LevelBadge
 import com.funpixelnest.mgp.domain.LevelRewards
 import androidx.compose.ui.draw.scale
@@ -109,6 +110,13 @@ class PopupActions(
     val rename: suspend (String) -> String?,
     val logout: () -> Unit,
     val openStore: () -> Unit,
+    /** "Watch video for 2x" can be offered (rewarded ads on). */
+    val doubleEnabled: Boolean = false,
+    /**
+     * Plays a rewarded video, then pays [rewards] again (several for a multi-level level-up).
+     * [onDone] gets true when the extra reward was paid.
+     */
+    val doubleReward: (source: String, rewards: List<RewardGrant>, onDone: (Boolean) -> Unit) -> Unit = { _, _, done -> done(false) },
 )
 
 /**
@@ -158,7 +166,7 @@ private fun PopupContent(popup: Popup, repository: PlatformRepository, actions: 
     val close = { actions.dismiss(popup) }
     run {
         when (popup) {
-            Popup.Welcome -> WelcomePopup(repository, onClaim = {
+            Popup.Welcome -> WelcomePopup(repository, actions, onClaim = {
                 actions.ackWelcome()
                 close()
             }, onClose = {
@@ -166,8 +174,8 @@ private fun PopupContent(popup: Popup, repository: PlatformRepository, actions: 
                 close()
             })
             Popup.DailyBonus -> DailyBonusPopup(repository, onClaim = actions.claimDaily, onClose = close)
-            Popup.LuckySpin -> LuckySpinPopup(repository, actions.spin, onClose = close)
-            is Popup.Reward -> RewardPopup(popup, onClose = close)
+            Popup.LuckySpin -> LuckySpinPopup(repository, actions, onClose = close)
+            is Popup.Reward -> RewardPopup(popup, actions, onClose = close)
             is Popup.Message -> PopupCard(onClose = close) {
                 DisplayText(popup.title.uppercase(), size = 26.sp, textAlign = TextAlign.Center, modifier = Modifier.align(Alignment.CenterHorizontally))
                 Spacer(Modifier.height(10.dp))
@@ -230,7 +238,7 @@ private fun PopupContent(popup: Popup, repository: PlatformRepository, actions: 
                 Spacer(Modifier.height(12.dp))
                 GlossyButton("Close", close, modifier = Modifier.fillMaxWidth())
             }
-            is Popup.LevelUp -> LevelUpPopup(popup, onClose = close)
+            is Popup.LevelUp -> LevelUpPopup(popup, actions, onClose = close)
             Popup.NeedCoins -> PopupCard(onClose = close) {
                 ArtImage(Art.coinsPile, 110.dp, Modifier.align(Alignment.CenterHorizontally))
                 DisplayText("NOT ENOUGH COINS", size = 26.sp, textAlign = TextAlign.Center, modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -283,8 +291,10 @@ fun PopupCard(onClose: (() -> Unit)?, modifier: Modifier = Modifier, content: @C
 }
 
 @Composable
-private fun WelcomePopup(repository: PlatformRepository, onClaim: () -> Unit, onClose: () -> Unit) {
+private fun WelcomePopup(repository: PlatformRepository, actions: PopupActions, onClaim: () -> Unit, onClose: () -> Unit) {
     val profile by repository.profile.collectAsState()
+    var doubled by remember { mutableStateOf(false) }
+    val shown = profile.welcomeCoins * (if (doubled) 2 else 1)
     PopupCard(onClose = onClose) {
         DisplayText("WELCOME BONUS!", size = 32.sp, color = MgpColors.Primary, modifier = Modifier.align(Alignment.CenterHorizontally), maxLines = 1)
         Text("Thank you for joining!\nHere's a special gift for you.", color = MgpColors.Navy, fontSize = 17.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
@@ -303,13 +313,14 @@ private fun WelcomePopup(repository: PlatformRepository, onClaim: () -> Unit, on
             ArtImage(Art.coinsPile, 80.dp)
             Spacer(Modifier.width(12.dp))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                DisplayText(formatCoins(profile.welcomeCoins), size = 40.sp)
+                DisplayText(formatCoins(shown), size = 40.sp)
                 Text("COINS", color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
             }
         }
         Text("Use coins to enter tournaments and win big rewards!", color = MgpColors.Navy, fontSize = 15.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(16.dp))
-        GlossyButton("Claim now", onClaim, height = 58.dp, fontSize = 24.sp, modifier = Modifier.fillMaxWidth())
+        DoubleRewardButton(actions, "welcome", listOf(RewardGrant(profile.welcomeCoins)), doubled, Modifier.padding(bottom = 10.dp)) { doubled = true }
+        GlossyButton(if (doubled) "Claim ${formatCoins(shown)}" else "Claim now", onClaim, height = 58.dp, fontSize = 24.sp, modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -361,7 +372,9 @@ private fun DailyBonusPopup(repository: PlatformRepository, onClaim: () -> Unit,
 }
 
 @Composable
-private fun RewardPopup(popup: Popup.Reward, onClose: () -> Unit) {
+private fun RewardPopup(popup: Popup.Reward, actions: PopupActions, onClose: () -> Unit) {
+    var doubled by remember(popup) { mutableStateOf(false) }
+    val times = if (doubled) 2 else 1
     PopupCard(onClose = onClose) {
         val art = when {
             popup.art != null -> Art.chest(popup.art)
@@ -372,18 +385,23 @@ private fun RewardPopup(popup: Popup.Reward, onClose: () -> Unit) {
         DisplayText(popup.title.uppercase(), size = 26.sp, textAlign = TextAlign.Center, modifier = Modifier.align(Alignment.CenterHorizontally))
         Text("YOU GOT", color = MgpColors.Primary, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp))
         Row(Modifier.align(Alignment.CenterHorizontally).padding(vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-            if (popup.reward.coins > 0) CoinAmount(popup.reward.coins, iconSize = 40.dp, fontSize = 32.sp)
-            if (popup.reward.gems > 0) CoinAmount(popup.reward.gems, iconSize = 36.dp, fontSize = 32.sp, gems = true)
+            if (popup.reward.coins > 0) CoinAmount(popup.reward.coins * times, iconSize = 40.dp, fontSize = 32.sp)
+            if (popup.reward.gems > 0) CoinAmount(popup.reward.gems * times, iconSize = 36.dp, fontSize = 32.sp, gems = true)
         }
         Spacer(Modifier.height(10.dp))
-        GlossyButton("Awesome!", onClose, color = ButtonColor.Green, modifier = Modifier.fillMaxWidth())
+        if (popup.doublable) {
+            DoubleRewardButton(actions, popup.title, listOf(popup.reward), doubled, Modifier.padding(bottom = 10.dp)) { doubled = true }
+        }
+        GlossyButton(if (doubled) "Collect" else "Awesome!", onClose, color = ButtonColor.Green, modifier = Modifier.fillMaxWidth())
     }
 }
 
 /** "LEVEL UP!": the new level in a big badge with turning light rays, and the coins / gems it paid. */
 @Composable
-private fun LevelUpPopup(popup: Popup.LevelUp, onClose: () -> Unit) {
+private fun LevelUpPopup(popup: Popup.LevelUp, actions: PopupActions, onClose: () -> Unit) {
     val reward = remember(popup) { LevelRewards.between(popup.fromLevel, popup.toLevel) }
+    var doubled by remember(popup) { mutableStateOf(false) }
+    val times = if (doubled) 2 else 1
     val spin = rememberInfiniteTransition(label = "rays")
     val angle by spin.animateFloat(0f, 360f, infiniteRepeatable(tween(12_000, easing = LinearEasing)), label = "angle")
     val glow by spin.animateFloat(0.85f, 1.08f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "glow")
@@ -451,8 +469,8 @@ private fun LevelUpPopup(popup: Popup.LevelUp, onClose: () -> Unit) {
                 Modifier.align(Alignment.CenterHorizontally).padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(18.dp),
             ) {
-                if (reward.coins > 0) CoinAmount((reward.coins * count.value).toLong(), iconSize = 38.dp, fontSize = 30.sp)
-                if (reward.gems > 0) CoinAmount((reward.gems * count.value).toLong(), iconSize = 34.dp, fontSize = 30.sp, gems = true)
+                if (reward.coins > 0) CoinAmount((reward.coins * times * count.value).toLong(), iconSize = 38.dp, fontSize = 30.sp)
+                if (reward.gems > 0) CoinAmount((reward.gems * times * count.value).toLong(), iconSize = 34.dp, fontSize = 30.sp, gems = true)
             }
         }
         Text(
@@ -462,8 +480,44 @@ private fun LevelUpPopup(popup: Popup.LevelUp, onClose: () -> Unit) {
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp),
         )
+        if (!reward.isEmpty) {
+            val perLevel = ((popup.fromLevel + 1)..popup.toLevel).map { LevelRewards.forLevel(it) }.filterNot { it.isEmpty }
+            DoubleRewardButton(actions, "level_up", perLevel, doubled, Modifier.padding(bottom = 10.dp)) { doubled = true }
+        }
         GlossyButton("Collect", onClose, color = ButtonColor.Green, modifier = Modifier.fillMaxWidth())
     }
+}
+
+/**
+ * "2X" button with a video icon: plays a rewarded video, then the reward is paid again. Hidden after it worked,
+ * or when rewarded ads are off.
+ */
+@Composable
+fun DoubleRewardButton(
+    actions: PopupActions,
+    source: String,
+    rewards: List<RewardGrant>,
+    doubled: Boolean,
+    modifier: Modifier = Modifier,
+    onDoubled: () -> Unit,
+) {
+    if (!actions.doubleEnabled || doubled || rewards.isEmpty()) return
+    var busy by remember { mutableStateOf(false) }
+    GlossyButton(
+        if (busy) "Loading video…" else "Watch video · 2X",
+        onClick = {
+            if (busy) return@GlossyButton
+            busy = true
+            actions.doubleReward(source, rewards) { ok ->
+                busy = false
+                if (ok) onDoubled()
+            }
+        },
+        enabled = !busy,
+        color = ButtonColor.Purple,
+        icon = Icons.Rounded.OndemandVideo,
+        modifier = modifier.fillMaxWidth(),
+    )
 }
 
 @Composable
@@ -503,7 +557,9 @@ private val wheelColors = listOf(
 )
 
 @Composable
-private fun LuckySpinPopup(repository: PlatformRepository, spin: suspend () -> Result<SpinResult>, onClose: () -> Unit) {
+private fun LuckySpinPopup(repository: PlatformRepository, actions: PopupActions, onClose: () -> Unit) {
+    val spin = actions.spin
+    var doubled by remember { mutableStateOf(false) }
     val shop by repository.shop.collectAsState()
     val segments = shop.spinSegments
     val rotation = remember { Animatable(0f) }
@@ -545,7 +601,10 @@ private fun LuckySpinPopup(repository: PlatformRepository, spin: suspend () -> R
         when {
             result != null -> {
                 Text("YOU WON", color = MgpColors.Primary, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
-                RewardChip(result!!, Modifier.align(Alignment.CenterHorizontally).padding(vertical = 8.dp), fontSize = 24.sp, iconSize = 30.dp)
+                val won = result!!
+                val shownWin = if (doubled) RewardGrant(won.coins * 2, won.gems * 2) else won
+                RewardChip(shownWin, Modifier.align(Alignment.CenterHorizontally).padding(vertical = 8.dp), fontSize = 24.sp, iconSize = 30.dp)
+                if (!won.isEmpty) DoubleRewardButton(actions, "lucky_spin", listOf(won), doubled, Modifier.padding(bottom = 10.dp)) { doubled = true }
                 GlossyButton("Collect", onClose, color = ButtonColor.Green, modifier = Modifier.fillMaxWidth())
             }
             !ready && !spinning -> {

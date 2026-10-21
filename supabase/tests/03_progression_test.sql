@@ -525,6 +525,40 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------------
+-- Watch video for 2x: the latest matching reward is paid once more, only once
+-- ---------------------------------------------------------------------------
+do $$
+declare c bigint; g bigint; v jsonb;
+begin
+  perform t.login(t.uid(206));
+  -- F's level rewards above: level 5 paid 500 coins + 10 gems a moment ago.
+  c := t.coins(t.uid(206)); g := t.gems(t.uid(206));
+  v := public.double_reward(500, 10);
+  perform t.check(v = '{"coins":500,"gems":10}'::jsonb, 'double level 5 reward');
+  perform t.check(t.coins(t.uid(206)) = c + 500 and t.gems(t.uid(206)) = g + 10, '2x credited');
+  perform t.expect_error('select public.double_reward(500, 10)', 'NOTHING_TO_DOUBLE', 'same reward twice');
+  perform t.expect_error('select public.double_reward(123, 0)', 'NOTHING_TO_DOUBLE', 'amount not granted');
+  perform t.expect_error('select public.double_reward(0, 0)', 'NOTHING_TO_DOUBLE', 'nothing');
+  perform t.expect_error('select public.double_reward(-5, 0)', 'NOTHING_TO_DOUBLE', 'negative');
+  -- Level 4 (400 coins) is older but still in the window: allowed once.
+  perform t.check(public.double_reward(400, 0) = '{"coins":400,"gems":0}'::jsonb, 'double level 4 reward');
+  -- The welcome bonus (1000) of a player created just now.
+  perform t.admin();
+  insert into auth.users (id, email) values (t.uid(207), 'prog207@test') on conflict do nothing;
+  perform t.login(t.uid(207));
+  perform public.ensure_player('Gina2');
+  perform t.check(public.double_reward(1000, 0) = '{"coins":1000,"gems":0}'::jsonb, 'double welcome bonus');
+  perform t.check(t.coins(t.uid(207)) >= 2000, 'welcome doubled');
+  perform t.admin();
+  -- Old rewards can't be doubled.
+  update public.wallet_transactions set created_at = now() - interval '1 hour'
+   where player_id = t.uid(206) and description = 'Level 3 reward';
+  perform t.login(t.uid(206));
+  perform t.expect_error('select public.double_reward(300, 0)', 'NOTHING_TO_DOUBLE', 'too old');
+  perform t.admin();
+end $$;
+
+-- ---------------------------------------------------------------------------
 do $$
 declare v jsonb;
 begin

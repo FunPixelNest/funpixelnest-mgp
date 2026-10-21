@@ -1,5 +1,10 @@
 package com.funpixelnest.mgp
 
+import com.funpixelnest.mgp.ui.screens.RemoveAdsState
+import com.funpixelnest.mgp.domain.LevelRewards
+import com.funpixelnest.mgp.analytics.NoAnalytics
+import com.funpixelnest.mgp.analytics.AnalyticsEvents
+import com.funpixelnest.mgp.analytics.Analytics
 import com.funpixelnest.mgp.ads.NoAds
 import com.funpixelnest.mgp.ads.AdService
 import com.funpixelnest.mgp.platform.LocalPrefs
@@ -146,6 +151,7 @@ fun App(
     gameLauncher: GameLauncher? = null,
     settings: AppSettings = remember { AppSettings() },
     ads: AdService = NoAds,
+    analytics: Analytics = NoAnalytics,
 ) {
     remember { AppSettings.loadTheme() }
     MgpTheme {
@@ -172,7 +178,7 @@ fun App(
                 BackendStatus.Loading -> SplashScreen(message = null, onRetry = null)
                 is BackendStatus.Error -> SplashScreen(message = s.message, onRetry = { scope.launch { repository.initialize() } })
                 BackendStatus.SignedOut -> LoginScreen(repository)
-                BackendStatus.Ready -> MainApp(repository, navigator, gameLauncher, settings, ads)
+                BackendStatus.Ready -> MainApp(repository, navigator, gameLauncher, settings, ads, analytics)
             }
         }
     }
@@ -195,6 +201,7 @@ private fun MainApp(
     gameLauncher: GameLauncher?,
     settings: AppSettings,
     ads: AdService,
+    analytics: Analytics,
 ) {
     val wallet by repository.wallet.collectAsState()
     val profile by repository.profile.collectAsState()
@@ -242,8 +249,31 @@ private fun MainApp(
         val key = "level_seen_" + repository.player.id
         val seen = LocalPrefs.get(key)?.toIntOrNull()
         if (seen != level) LocalPrefs.set(key, level.toString())
-        if (seen != null && level > seen) navigator.show(Popup.LevelUp(seen, level))
+        if (seen != null && level > seen) {
+            val r = LevelRewards.between(seen, level)
+            analytics.event(AnalyticsEvents.LEVEL_UP, mapOf("level" to level, "coins" to r.coins, "gems" to r.gems))
+            navigator.show(Popup.LevelUp(seen, level))
+        }
     }
+    // Analytics: who is playing (also tags crash reports) and which page is open.
+    LaunchedEffect(repository.player.id) { analytics.setUser(repository.player.id) }
+    val screenName = when (val c = navigator.current) {
+        null -> navigator.tab.name.lowercase()
+        is Screen.GameDetail -> "game_detail"
+        is Screen.AllGames -> "all_games"
+        is Screen.PlayGame, is Screen.GameRunning -> "game"
+        is Screen.GameOver -> "game_over"
+        is Screen.PoolLeaderboard -> "leaderboard"
+        is Screen.PracticeResult -> "practice_result"
+        Screen.Profile -> "profile"
+        Screen.Inbox -> "inbox"
+        Screen.Settings -> "settings"
+        Screen.HelpCenter -> "help"
+        Screen.Support -> "support"
+        Screen.ReferEarn -> "refer"
+        is Screen.Legal -> if (c.privacy) "privacy" else "terms"
+    }
+    LaunchedEffect(screenName) { analytics.screen(screenName) }
     // Fresh challenge / league / shop data whenever a tab opens.
     LaunchedEffect(navigator.tab) { repository.refreshProgress() }
     // Let a running game know when sound settings change.
@@ -261,7 +291,11 @@ private fun MainApp(
 
     // Area the in-game HUD covers (status bar + HUD row) and the system bar at the bottom; the game keeps it clear.
     val hudInsetTop = WindowInsets.statusBars.union(WindowInsets.displayCutout).asPaddingValues().calculateTopPadding() + GAME_HUD_HEIGHT
-    val hudInsetBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    // With a banner under the game, the game view stops above the banner + system bar (nothing to keep clear).
+    val bannerInGame = ads.bannerEnabled
+    val hudInsetBottom = if (bannerInGame) 0.dp else navBarBottom
+    val belowGame = if (bannerInGame) navBarBottom + ads.bannerHeightDp.dp else 0.dp
 
     fun modeFor(ticket: MatchTicket): LaunchMode = when {
         ticket.isPractice -> LaunchMode.PRACTICE
@@ -291,8 +325,9 @@ private fun MainApp(
             }.isSuccess
             submitting = false
             if (ok) {
+                analytics.event(AnalyticsEvents.SCORE_SUBMITTED, mapOf("game_id" to screen.ticket.gameId, "score" to (screen.result?.score ?: 0L)))
                 navigator.replace(Screen.PoolLeaderboard(screen.ticket.poolId))
-                // Interstitial between matches (at most one a minute), over the leaderboard.
+                // Interstitial between matches (Remote Config: on/off, every N games, min interval), over the leaderboard.
                 ads.showInterstitial()
             } else {
                 submitError = "Couldn't send your score. Check your connection and tap Submit again."
@@ -307,7 +342,18 @@ private fun MainApp(
         gameLauncher?.setPauseRequestListener(null)
         navigator.popWhile { it is Screen.PlayGame || it is Screen.GameRunning }
         val hud = if (s.real) gameLauncher?.hud?.value else null
-        finishMatch(s.ticket, finalResult(result, hud, s.started.elapsedNow().inWholeMilliseconds))
+        val final = finalResult(result, hud, s.started.elapsedNow().inWholeMilliseconds)
+        ads.onMatchFinished()
+        analytics.event(
+            AnalyticsEvents.MATCH_END,
+            mapOf(
+                "game_id" to s.ticket.gameId,
+                "score" to (final?.score ?: 0L),
+                "duration_s" to ((final?.durationMillis ?: 0L) / 1000),
+                "ended_early" to (final == null || ENDED_EARLY_EVENT in final.eventLog),
+            ),
+        )
+        finishMatch(s.ticket, final)
     }
 
     fun pauseGame() {
@@ -335,6 +381,10 @@ private fun MainApp(
     /** Opens the real game when this platform has it, otherwise the placeholder game screen. */
     fun startMatch(ticket: MatchTicket) {
         val game = repository.game(ticket.gameId) ?: return
+        analytics.event(
+            AnalyticsEvents.MATCH_START,
+            mapOf("game_id" to ticket.gameId, "tournament_id" to ticket.tournamentId, "practice" to ticket.isPractice),
+        )
         val launcher = gameLauncher
         if (launcher == null || !launcher.isAvailable(ticket.gameId)) {
             session = GameSession(ticket, game, real = false)
@@ -355,6 +405,7 @@ private fun MainApp(
                 settings = settings.forGame,
                 hudInsetTopDp = hudInsetTop.value.toInt(),
                 hudInsetBottomDp = hudInsetBottom.value.toInt(),
+                belowGameDp = belowGame.value.toInt(),
             )
             val result = launcher.launch(request)
             gameEnded(s, result)
@@ -422,9 +473,10 @@ private fun MainApp(
                     // Rewarded ad first; the coins are claimed only after the video was watched to the end.
                     ads.showRewarded(
                         onReward = {
+                            analytics.event(AnalyticsEvents.REWARDED_WATCHED, mapOf("placement" to "free_coins"))
                             scope.launch {
                                 val coins = repository.claimFreeCoins()
-                                if (coins > 0) navigator.show(Popup.Reward("Free coins", RewardGrant(coins)))
+                                if (coins > 0) navigator.show(Popup.Reward("Free coins", RewardGrant(coins), doublable = false))
                                 else navigator.show(Popup.Message("No more videos", "You've watched all of today's videos. Come back tomorrow!"))
                             }
                         },
@@ -435,6 +487,19 @@ private fun MainApp(
                 }
             },
             invite = { navigator.push(Screen.ReferEarn) },
+            removeAds = {
+                ads.buyRemoveAds { message ->
+                    if (message == null) {
+                        navigator.show(Popup.Message("Ads removed", "Thank you! Banners and ads between games are now off. You can still watch videos for extra rewards."))
+                    } else {
+                        navigator.show(Popup.Message("Remove Ads", message))
+                    }
+                }
+            },
+            restorePurchases = {
+                ads.restorePurchases()
+                toast = "Checking your purchases…"
+            },
             rate = { openUrl(STORE_URL) },
             claimDaily = {
                 scope.launch {
@@ -451,6 +516,9 @@ private fun MainApp(
     }
 
     // ---------------------------------------------------------------- layout
+
+    // "Remove Ads" card (Store and Settings) where the platform has ads.
+    val removeAdsState = if (ads === NoAds) null else RemoveAdsState(ads.adsRemoved, ads.removeAdsPrice, ads.removeAdsAvailable)
 
     val current = navigator.current
     val onTabRoot = current == null
@@ -526,14 +594,17 @@ private fun MainApp(
                             val game = repository.game(current.ticket.gameId)
                             val s = session
                             if (game != null) {
-                                Box(Modifier.fillMaxSize()) {
-                                    PlaceholderGameScreen(
-                                        game = game,
-                                        ticket = current.ticket,
-                                        onFinished = { result -> if (s != null) gameEnded(s, result) else navigator.back() },
-                                        modifier = Modifier.padding(top = hudInsetTop).windowInsetsPadding(WindowInsets.navigationBars),
-                                    )
-                                    GameHudOverlay(GameHud(), onPause = { pauseGame() })
+                                GameWithBanner(ads) {
+                                    Box(Modifier.fillMaxSize()) {
+                                        PlaceholderGameScreen(
+                                            game = game,
+                                            ticket = current.ticket,
+                                            onFinished = { result -> if (s != null) gameEnded(s, result) else navigator.back() },
+                                            modifier = Modifier.padding(top = hudInsetTop)
+                                                .then(if (bannerInGame) Modifier else Modifier.windowInsetsPadding(WindowInsets.navigationBars)),
+                                        )
+                                        GameHudOverlay(GameHud(), onPause = { pauseGame() })
+                                    }
                                 }
                             }
                         }
@@ -541,14 +612,16 @@ private fun MainApp(
                             // The game fills the screen; the app's HUD (same for every game) floats over its top.
                             val launcher = gameLauncher
                             val hud = launcher?.hud?.collectAsState()?.value ?: GameHud()
-                            Box(Modifier.fillMaxSize()) {
-                                repository.game(current.ticket.gameId)?.let { GameRunningBackdrop(it) }
-                                // Android draws the game here (WebView); on web it opens over the app below the HUD.
-                                launcher?.GameView(Modifier.fillMaxSize())
-                                // Only once the game is actually playing (it has sent its first HUD values),
-                                // not while Unity / the WebGL build is still loading.
-                                androidx.compose.animation.AnimatedVisibility(visible = hud.reported, enter = fadeIn(), exit = fadeOut()) {
-                                    GameHudOverlay(hud, onPause = { pauseGame() }, gameId = current.ticket.gameId)
+                            GameWithBanner(ads) {
+                                Box(Modifier.fillMaxSize()) {
+                                    repository.game(current.ticket.gameId)?.let { GameRunningBackdrop(it) }
+                                    // Android draws the game here (WebView); on web it opens over the app below the HUD.
+                                    launcher?.GameView(Modifier.fillMaxSize())
+                                    // Only once the game is actually playing (it has sent its first HUD values),
+                                    // not while Unity / the WebGL build is still loading.
+                                    androidx.compose.animation.AnimatedVisibility(visible = hud.reported, enter = fadeIn(), exit = fadeOut()) {
+                                        GameHudOverlay(hud, onPause = { pauseGame() }, gameId = current.ticket.gameId)
+                                    }
                                 }
                             }
                         }
@@ -598,7 +671,14 @@ private fun MainApp(
                             onAvatarPick = { id -> scope.launch { repository.setAvatar(id)?.let { toast = it } } },
                         )
                         Screen.Inbox -> InboxScreen(repository) { navigator.back() }
-                        Screen.Settings -> SettingsScreen(repository, settings, onBack = { navigator.back() }, onLogout = { navigator.show(Popup.ConfirmLogout) })
+                        Screen.Settings -> SettingsScreen(
+                            repository,
+                            settings,
+                            onBack = { navigator.back() },
+                            onLogout = { navigator.show(Popup.ConfirmLogout) },
+                            removeAds = removeAdsState,
+                            removeAdsActions = economy,
+                        )
                         Screen.HelpCenter -> HelpCenterScreen { navigator.back() }
                         Screen.Support -> SupportScreen(
                             onBack = { navigator.back() },
@@ -636,7 +716,7 @@ private fun MainApp(
                                     onSeeAll = { navigator.push(Screen.AllGames(it)) },
                                 )
                                 Tab.Rewards -> RewardsScreen(repository, economy, onViewChallenges = { navigator.selectTab(Tab.Challenges) })
-                                Tab.Store -> StoreScreen(repository, economy)
+                                Tab.Store -> StoreScreen(repository, economy, removeAds = removeAdsState)
                             }
                         }
                     }
@@ -647,15 +727,11 @@ private fun MainApp(
                 enter = expandVertically(tween(PAGE_MS), expandFrom = Alignment.Top) + fadeIn(tween(PAGE_MS)),
                 exit = shrinkVertically(tween(PAGE_MS), shrinkTowards = Alignment.Top) + fadeOut(tween(PAGE_MS)),
             ) {
-                Column {
-                    // Banner ad above the bottom tabs (tab pages and game pages, never during a game).
-                    ads.Banner(Modifier.fillMaxWidth())
-                    MgpBottomBar(
-                        selected = if (onTabRoot) Tab.entries[tabPager.targetPage] else navigator.tab,
-                        challengeBadge = challenges.claimableCount,
-                        onSelect = { navigator.selectTab(it) },
-                    )
-                }
+                MgpBottomBar(
+                    selected = if (onTabRoot) Tab.entries[tabPager.targetPage] else navigator.tab,
+                    challengeBadge = challenges.claimableCount,
+                    onSelect = { navigator.selectTab(it) },
+                )
             }
         }
 
@@ -719,6 +795,29 @@ private fun MainApp(
                 rename = { name -> repository.setDisplayName(name) },
                 logout = { scope.launch { repository.signOut() } },
                 openStore = { navigator.selectTab(Tab.Store) },
+                doubleEnabled = ads.doubleEnabled,
+                doubleReward = { source, rewards, onDone ->
+                    ads.showRewarded(
+                        onReward = {
+                            analytics.event(AnalyticsEvents.REWARDED_WATCHED, mapOf("placement" to "double_$source"))
+                            scope.launch {
+                                var ok = false
+                                rewards.forEach { r -> if (repository.doubleReward(r)) ok = true }
+                                if (ok) {
+                                    val sum = rewards.fold(RewardGrant()) { a, r -> RewardGrant(a.coins + r.coins, a.gems + r.gems) }
+                                    analytics.event(AnalyticsEvents.REWARD_DOUBLED, mapOf("source" to source, "coins" to sum.coins, "gems" to sum.gems))
+                                } else {
+                                    toast = "Couldn't double this reward."
+                                }
+                                onDone(ok)
+                            }
+                        },
+                        onUnavailable = {
+                            toast = "No video right now. Please try again in a minute."
+                            onDone(false)
+                        },
+                    )
+                },
             ),
         )
 
@@ -798,3 +897,19 @@ internal fun finalResult(result: GameResult?, hud: GameHud?, elapsedMillis: Long
 
 /** Event-log marker for a match that ended before the game submitted (the HUD score was used). */
 const val ENDED_EARLY_EVENT = "ended_early"
+
+
+/** A game screen with the banner ad under it (when banners are on): the game area ends above the banner. */
+@Composable
+private fun GameWithBanner(ads: AdService, game: @Composable () -> Unit) {
+    if (!ads.bannerEnabled) {
+        game()
+        return
+    }
+    Column(Modifier.fillMaxSize()) {
+        Box(Modifier.weight(1f).fillMaxWidth()) { game() }
+        Box(Modifier.fillMaxWidth().background(Color.Black).windowInsetsPadding(WindowInsets.navigationBars)) {
+            ads.Banner(Modifier.fillMaxWidth())
+        }
+    }
+}

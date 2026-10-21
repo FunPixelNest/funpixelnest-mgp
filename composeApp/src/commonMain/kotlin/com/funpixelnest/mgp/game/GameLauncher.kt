@@ -32,6 +32,8 @@ data class GameLaunchRequest(
     /** Space the app's HUD covers at the top / system bar at the bottom (dp), for the game to keep clear. */
     val hudInsetTopDp: Int = 0,
     val hudInsetBottomDp: Int = 0,
+    /** Height under the game view taken by the app (banner ad + system bar), dp; the game view is that much shorter. */
+    val belowGameDp: Int = 0,
 ) {
     /**
      * The launch data the Unity bridge reads (`FpnPlatform.LaunchData`).

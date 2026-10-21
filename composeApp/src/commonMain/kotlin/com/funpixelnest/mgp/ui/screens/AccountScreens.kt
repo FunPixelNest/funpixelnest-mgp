@@ -477,7 +477,14 @@ fun InboxScreen(repository: PlatformRepository, onBack: () -> Unit) {
 }
 
 @Composable
-fun SettingsScreen(repository: PlatformRepository, settings: AppSettings, onBack: () -> Unit, onLogout: () -> Unit) {
+fun SettingsScreen(
+    repository: PlatformRepository,
+    settings: AppSettings,
+    onBack: () -> Unit,
+    onLogout: () -> Unit,
+    removeAds: RemoveAdsState? = null,
+    removeAdsActions: EconomyActions? = null,
+) {
     Column(Modifier.fillMaxSize()) {
         SimpleTopBar("Settings", onBack)
         Column(Modifier.verticalScroll(rememberScrollState()).padding(14.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -489,6 +496,7 @@ fun SettingsScreen(repository: PlatformRepository, settings: AppSettings, onBack
                     ThemeChoice("Dark", Icons.Rounded.DarkMode, selected = settings.darkMode, Modifier.weight(1f)) { settings.darkMode = true }
                 }
             }
+            if (removeAds != null && removeAdsActions != null) RemoveAdsCard(removeAds, removeAdsActions)
             Panel(padding = 8.dp) {
                 ToggleRow("Music", settings.music) { settings.music = it }
                 ToggleRow("Sound", settings.sound) { settings.sound = it }

@@ -127,3 +127,19 @@ development. The real backend never adds bots.
 - "Flappy Bird" is listed as **Flap Dash** (the original name is trademarked).
 - The web version can't show emoji (it draws text with the app's fonts), so the UI uses drawn icons; put
   coins in text with `CoinText("… 🪙 …")`.
+
+## Ads, analytics and Remove Ads (Android)
+
+- **AdMob** (`play-services-ads`) with mediation adapters for **Liftoff Monetize** (`vungle`), **Unity Ads** and **Mintegral**.
+  Ad unit ids live in `composeApp/src/commonMain/.../ads/Ads.kt` (`AdUnits`) and the app id in `AndroidManifest.xml`;
+  both are Google's public **test** ids for now — replace them before release. Add Liftoff / Unity / Mintegral to each
+  ad unit's mediation group in the AdMob dashboard (no code change).
+- **Placements:** banner under the game while playing; interstitial over the leaderboard after submitting a score;
+  rewarded video for Watch Video and for "Watch video · 2X" on reward pop-ups (welcome, daily bonus, challenges,
+  chests, lucky spin, level up). The 2X reward is paid by the `double_reward` database function (migration `20261021000002`).
+- **Firebase Remote Config** keys (defaults in `AdSettings`): `show_banner`, `show_interstitial`,
+  `interstitial_interval_seconds`, `interstitial_every_n_games`, `show_rewarded`, `rewarded_double_enabled`.
+- **Firebase Analytics + Crashlytics** start when `FIREBASE_PROJECT_ID`, `FIREBASE_API_KEY` and `FIREBASE_ANDROID_APP_ID`
+  are set (local.properties or config/backend.properties); without them they stay off and ads use the defaults.
+- **Remove Ads**: one-time Google Play in-app product `remove_ads` (create it in Play Console). Turns off banner and
+  interstitial ads; rewarded videos stay optional. Restored from Google Play on every start ("Restore purchase" too).

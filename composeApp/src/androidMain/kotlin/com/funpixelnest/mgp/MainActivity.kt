@@ -34,6 +34,7 @@ import com.funpixelnest.mgp.push.AndroidPush
 import com.funpixelnest.mgp.ui.Navigator
 import com.funpixelnest.mgp.ui.Screen
 import com.funpixelnest.mgp.ads.AdMobAds
+import com.funpixelnest.mgp.firebase.FirebaseAnalyticsService
 import com.funpixelnest.mgp.platform.LocalPrefs
 import com.funpixelnest.mgp.ui.theme.ThemeState
 import kotlinx.coroutines.launch
@@ -58,7 +59,10 @@ class MainActivity : ComponentActivity() {
     private val repository: PlatformRepository by lazy { createPlatformRepository() }
 
     /** AdMob (banner, interstitial, rewarded) with Liftoff, Unity Ads and Mintegral mediation. */
-    private val ads by lazy { AdMobAds(this) }
+    private val ads by lazy { AdMobAds(this, analytics) }
+
+    /** Firebase Analytics (+ Crashlytics user id); nothing is sent when Firebase isn't configured. */
+    private val analytics by lazy { FirebaseAnalyticsService(applicationContext) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Light background → dark status and navigation bar icons.
@@ -115,7 +119,7 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
             }
 
-            App(repository = repository, navigator = navigator, gameLauncher = gameLauncher, ads = ads)
+            App(repository = repository, navigator = navigator, gameLauncher = gameLauncher, ads = ads, analytics = analytics)
         }
     }
 

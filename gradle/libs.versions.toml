@@ -17,6 +17,8 @@ playServicesAds = "25.5.0"
 admobLiftoff = "7.7.8.1"
 admobUnity = "4.21.0.0"
 admobMintegral = "17.1.81.1"
+crashlyticsPlugin = "3.0.8"
+billing = "9.1.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -35,6 +37,11 @@ supabase-realtime = { module = "io.github.jan-tennert.supabase:realtime-kt" }
 # Push notifications (Android). Initialized from BackendConfig, no google-services.json needed.
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
+firebase-config = { module = "com.google.firebase:firebase-config" }
+# Google Play Billing ("Remove Ads" in-app purchase).
+play-billing = { module = "com.android.billingclient:billing", version.ref = "billing" }
 
 # Ads (Android): AdMob and its mediation adapters; each adapter brings its network's SDK.
 play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
@@ -53,3 +60,4 @@ composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMul
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+firebaseCrashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlyticsPlugin" }

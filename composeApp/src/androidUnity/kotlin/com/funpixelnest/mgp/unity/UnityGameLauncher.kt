@@ -72,7 +72,8 @@ class UnityGameLauncher(private val activity: ComponentActivity) : GameLauncher,
 
         // Area the app's HUD covers, as a share of the screen height (the game keeps it clear).
         val metrics = activity.resources.displayMetrics
-        val screenDp = metrics.heightPixels / metrics.density
+        // The game view is shorter than the screen when a banner sits under it.
+        val screenDp = (metrics.heightPixels / metrics.density - request.belowGameDp).coerceAtLeast(1f)
         FpnUnityBridge.insetTop = (request.hudInsetTopDp / screenDp).coerceIn(0f, 0.5f)
         FpnUnityBridge.insetBottom = (request.hudInsetBottomDp / screenDp).coerceIn(0f, 0.5f)
         FpnUnityBridge.listener = object : FpnUnityBridge.Listener {

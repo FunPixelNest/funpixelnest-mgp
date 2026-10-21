@@ -11,6 +11,7 @@ import com.funpixelnest.mgp.domain.MatchTicket
 import com.funpixelnest.mgp.domain.Player
 import com.funpixelnest.mgp.domain.PlayerProfile
 import com.funpixelnest.mgp.domain.Pool
+import com.funpixelnest.mgp.domain.RewardGrant
 import com.funpixelnest.mgp.domain.ShopState
 import com.funpixelnest.mgp.domain.SpinResult
 import com.funpixelnest.mgp.domain.StorePack
@@ -109,6 +110,13 @@ interface PlatformRepository {
 
     /** Free coins after a rewarded video. Returns coins granted (0 if none left today). */
     suspend fun claimFreeCoins(): Long
+
+    /**
+     * "Watch a video for 2x": pays [reward] (the reward the player just got) once more.
+     * The server only doubles a recent welcome / daily / challenge / chest / spin / level / league reward
+     * with exactly these amounts, once. Returns false when there was nothing to double.
+     */
+    suspend fun doubleReward(reward: RewardGrant): Boolean
 
     /** Reloads challenges, league, bonus and shop (e.g. when a tab opens). */
     suspend fun refreshProgress()

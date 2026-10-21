@@ -1,5 +1,8 @@
 package com.funpixelnest.mgp.ui.screens
 
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.OndemandVideo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -74,6 +77,9 @@ import org.jetbrains.compose.resources.DrawableResource
 class EconomyActions(
     val buyPack: (StorePack) -> Unit,
     val watchVideo: () -> Unit,
+    /** Buy "Remove Ads" (Android, Google Play). */
+    val removeAds: () -> Unit = {},
+    val restorePurchases: () -> Unit = {},
     val invite: () -> Unit,
     val rate: () -> Unit,
     val claimDaily: () -> Unit,
@@ -84,8 +90,70 @@ class EconomyActions(
 
 // ---------------------------------------------------------------- Store
 
+/** "Remove Ads" for the Store card: null = not offered on this platform. */
+data class RemoveAdsState(val owned: Boolean, val price: String?, val available: Boolean)
+
+/** One-time purchase that turns off banner and between-game ads (videos for rewards stay). */
 @Composable
-fun StoreScreen(repository: PlatformRepository, actions: EconomyActions, modifier: Modifier = Modifier) {
+fun RemoveAdsCard(state: RemoveAdsState, actions: EconomyActions, modifier: Modifier = Modifier) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .shadow(8.dp, RoundedCornerShape(22.dp), ambientColor = MgpColors.Glow, spotColor = MgpColors.Glow)
+            .clip(RoundedCornerShape(22.dp))
+            .background(Brush.linearGradient(listOf(Color(0xFF6A2FE0), Color(0xFF9C6BFF), Color(0xFF3D8BFF))))
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier.size(58.dp).clip(RoundedCornerShape(16.dp)).background(Color.White.copy(alpha = 0.18f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Icons.Rounded.Block, null, tint = Color.White, modifier = Modifier.size(38.dp))
+            Text("AD", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp)
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text("REMOVE ADS", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp)
+            Text(
+                if (state.owned) "Ads are off. Thank you for your support!"
+                else "No banners or ads between games. Forever. Videos for rewards stay optional.",
+                color = Color.White.copy(alpha = 0.9f),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            if (!state.owned) {
+                Text(
+                    "Restore purchase",
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.padding(top = 4.dp).clickable(onClick = actions.restorePurchases),
+                )
+            }
+        }
+        Spacer(Modifier.width(8.dp))
+        if (state.owned) {
+            Icon(Icons.Rounded.CheckCircle, "Owned", tint = Color.White, modifier = Modifier.size(36.dp))
+        } else {
+            GlossyButton(
+                state.price ?: "Buy",
+                actions.removeAds,
+                color = ButtonColor.Gold,
+                height = 44.dp,
+                fontSize = 15.sp,
+            )
+        }
+    }
+}
+
+@Composable
+fun StoreScreen(
+    repository: PlatformRepository,
+    actions: EconomyActions,
+    modifier: Modifier = Modifier,
+    removeAds: RemoveAdsState? = null,
+) {
     val shop by repository.shop.collectAsState()
     val bonus by repository.dailyBonus.collectAsState()
     LazyColumn(
@@ -94,6 +162,7 @@ fun StoreScreen(repository: PlatformRepository, actions: EconomyActions, modifie
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         item { ScreenHeader(Art.cart, "Store", "Buy coins, get rewards and more!", artInTile = true) }
+        if (removeAds != null) item { RemoveAdsCard(removeAds, actions) }
         item {
             Panel(padding = 0.dp) {
                 Text(
@@ -125,6 +194,7 @@ fun StoreScreen(repository: PlatformRepository, actions: EconomyActions, modifie
                         reward = RewardGrant(shop.freeCoinsAmount),
                         button = if (shop.freeCoinsLeftToday > 0) "Watch" else null,
                         doneText = "Back tomorrow",
+                        buttonIcon = Icons.Rounded.OndemandVideo,
                         onClick = actions.watchVideo)
                     EarnCard(Art.earnInvite, "Invite Your Friend", "Share your code and play together!", Modifier.weight(1f),
                         button = "Invite", onClick = actions.invite)
@@ -217,6 +287,7 @@ private fun EarnCard(
     doneText: String? = null,
     doneCheck: Boolean = false,
     onClick: () -> Unit,
+    buttonIcon: ImageVector? = null,
 ) {
     Column(
         modifier
@@ -246,7 +317,7 @@ private fun EarnCard(
                 Modifier.fillMaxWidth().height(36.dp).clip(RoundedCornerShape(12.dp)).background(if (MgpColors.isDark) Color(0xFF1F3B2A) else Color(0xFFE9F7E4)),
                 contentAlignment = Alignment.Center,
             ) { Icon(Icons.Rounded.CheckCircle, doneText, tint = MgpColors.Green, modifier = Modifier.size(26.dp)) }
-            button != null -> GlossyButton(button, onClick, height = 38.dp, fontSize = 13.sp, modifier = Modifier.fillMaxWidth())
+            button != null -> GlossyButton(button, onClick, height = 38.dp, fontSize = if (buttonIcon != null) 12.sp else 13.sp, icon = buttonIcon, modifier = Modifier.fillMaxWidth())
             else -> Text(doneText ?: "Soon", color = MgpColors.TextMuted, fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.height(36.dp).padding(top = 10.dp))
         }
     }
@@ -282,7 +353,8 @@ fun RewardsScreen(repository: PlatformRepository, actions: EconomyActions, onVie
                 Spacer(Modifier.height(6.dp))
                 val today = bonus.rewards.getOrNull(bonus.day - 1)
                 OtherWayRow(Art.earnVideo, "Watch Video", "Watch videos and earn rewards", RewardGrant(shop.freeCoinsAmount),
-                    button = if (shop.freeCoinsLeftToday > 0) "Watch" else null, done = shop.freeCoinsLeftToday <= 0, onClick = actions.watchVideo)
+                    button = if (shop.freeCoinsLeftToday > 0) "Watch" else null, done = shop.freeCoinsLeftToday <= 0, onClick = actions.watchVideo,
+                    buttonIcon = Icons.Rounded.OndemandVideo)
                 OtherWayRow(Art.earnCheckin, "Login Bonus", "Log in daily and claim bonuses",
                     today?.let { RewardGrant(it.coins, it.gems) }?.takeIf { !it.isEmpty },
                     button = if (bonus.claimedToday) null else "Claim", done = bonus.claimedToday, onClick = actions.claimDaily)
@@ -434,6 +506,7 @@ private fun OtherWayRow(
     button: String?,
     done: Boolean,
     onClick: () -> Unit,
+    buttonIcon: ImageVector? = null,
 ) {
     Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         ArtImage(art, 46.dp)
@@ -444,10 +517,10 @@ private fun OtherWayRow(
         }
         if (reward != null) RewardChip(reward, fontSize = 14.sp, iconSize = 20.dp)
         Spacer(Modifier.width(8.dp))
-        Box(Modifier.width(84.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.width(if (buttonIcon != null) 98.dp else 84.dp), contentAlignment = Alignment.Center) {
             when {
                 done -> Icon(Icons.Rounded.CheckCircle, "Done", tint = MgpColors.Green, modifier = Modifier.size(32.dp))
-                button != null -> GlossyButton(button, onClick, height = 40.dp, fontSize = 14.sp, modifier = Modifier.fillMaxWidth())
+                button != null -> GlossyButton(button, onClick, height = 40.dp, fontSize = if (buttonIcon != null) 13.sp else 14.sp, icon = buttonIcon, modifier = Modifier.fillMaxWidth())
             }
         }
     }

@@ -433,6 +433,17 @@ class SupabasePlatformRepository(
         return coins
     }
 
+    override suspend fun doubleReward(reward: RewardGrant): Boolean {
+        val ok = runCatching {
+            rpc("double_reward", GrantDto.serializer()) {
+                put("p_coins", reward.coins)
+                put("p_gems", reward.gems)
+            }
+        }.isSuccess
+        afterClaim()
+        return ok
+    }
+
     private suspend fun grant(function: String, params: JsonObjectBuilder.() -> Unit, title: () -> String): ClaimResult = try {
         val dto = rpc(function, GrantDto.serializer(), params)
         val name = title()

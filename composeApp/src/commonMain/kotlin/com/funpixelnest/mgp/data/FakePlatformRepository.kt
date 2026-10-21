@@ -304,6 +304,12 @@ class FakePlatformRepository(
         FREE_COINS
     }
 
+    override suspend fun doubleReward(reward: RewardGrant): Boolean = mutex.withLock {
+        if (reward.isEmpty || reward.coins < 0 || reward.gems < 0) return false
+        addTransaction(reward.coins, reward.gems, "Reward (2x video)")
+        true
+    }
+
     override suspend fun refreshProgress() = mutex.withLock { rebuildProgress() }
 
     private fun chestContents(id: String): RewardGrant = when (id) {

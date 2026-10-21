@@ -52,7 +52,8 @@ sealed interface Popup {
     data object Welcome : Popup
     data object DailyBonus : Popup
     data object LuckySpin : Popup
-    data class Reward(val title: String, val reward: RewardGrant, val art: String? = null) : Popup
+    /** [doublable] = offer "Watch video for 2x" (not for rewards that came from a video). */
+    data class Reward(val title: String, val reward: RewardGrant, val art: String? = null, val doublable: Boolean = true) : Popup
     data class Message(val title: String, val text: String) : Popup
     data class HowToPlay(val gameId: String) : Popup
     data object Rename : Popup

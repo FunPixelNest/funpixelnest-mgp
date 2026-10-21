@@ -221,14 +221,16 @@ fun GlossyButton(
                 .clip(RoundedCornerShape(height))
                 .background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.38f), Color.White.copy(alpha = 0.04f)))),
         )
+        // Small buttons (cards, rows) keep icon and text close so both fit.
+        val compact = height < 44.dp
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.padding(horizontal = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 10.dp),
+            modifier = Modifier.padding(horizontal = if (compact) 6.dp else 14.dp),
         ) {
             if (leading != null) leading()
             if (image != null) Image(painterResource(image), null, Modifier.size(height * 0.62f))
-            if (icon != null) Icon(icon, null, tint = Color.White, modifier = Modifier.size(height * 0.5f))
+            if (icon != null) Icon(icon, null, tint = Color.White, modifier = Modifier.size(height * (if (compact) 0.45f else 0.5f)))
             if (text.isNotEmpty()) {
                 Text(
                     text.uppercase(),

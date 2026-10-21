@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 import java.security.MessageDigest
+import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -9,6 +10,8 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
+    // Crashlytics: adds the build id crash reports need and uploads R8 mapping files (when Firebase is configured).
+    alias(libs.plugins.firebaseCrashlytics)
 }
 
 // ---------- Backend configuration ----------
@@ -31,6 +34,8 @@ fun configValue(key: String, default: String = ""): String {
         ?: sharedProps.getProperty(key)?.takeIf { it.isNotBlank() }
         ?: default
 }
+
+val firebaseConfigured = listOf("FIREBASE_PROJECT_ID", "FIREBASE_API_KEY", "FIREBASE_ANDROID_APP_ID").all { configValue(it).isNotBlank() }
 
 val backendConfigValues = linkedMapOf(
     "SUPABASE_URL" to configValue("SUPABASE_URL"),
@@ -167,6 +172,10 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(project.dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.messaging)
+            implementation(libs.firebase.analytics)
+            implementation(libs.firebase.crashlytics)
+            implementation(libs.firebase.config)
+            implementation(libs.play.billing)
             implementation(libs.play.services.ads)
             implementation(libs.admob.mediation.liftoff)
             implementation(libs.admob.mediation.unity)
@@ -198,6 +207,14 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "0.1.0"
+        // Standard Firebase resources (only when Firebase is configured): Crashlytics uploads R8 mapping files for
+        // this app id, and Firebase starts with the app.
+        if (firebaseConfigured) {
+            resValue("string", "google_app_id", configValue("FIREBASE_ANDROID_APP_ID"))
+            resValue("string", "google_api_key", configValue("FIREBASE_API_KEY"))
+            resValue("string", "project_id", configValue("FIREBASE_PROJECT_ID"))
+            if (configValue("FIREBASE_SENDER_ID").isNotBlank()) resValue("string", "gcm_defaultSenderId", configValue("FIREBASE_SENDER_ID"))
+        }
     }
     packaging {
         resources {
@@ -212,6 +229,7 @@ android {
             noCompress += listOf(".unity3d", ".ress", ".resource", ".obb", ".bundle", ".unityexp")
         }
     }
+    buildFeatures { resValues = true }
     buildTypes {
         getByName("release") {
             // Smaller app: R8 removes unused code and resources (rules in proguard-rules.pro).
@@ -220,6 +238,8 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             // Until the Play Store upload key is set up, release test builds are signed with the debug key.
             signingConfig = signingConfigs.getByName("debug")
+            // Readable Crashlytics stack traces need the R8 mapping file, uploaded only when Firebase is configured.
+            configure<CrashlyticsExtension> { mappingFileUploadEnabled = firebaseConfigured }
         }
     }
     // One APK per phone CPU type (a phone only downloads the Unity engine it can run) plus one universal APK.

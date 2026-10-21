@@ -9,10 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.funpixelnest.mgp.analytics.Analytics
+import com.funpixelnest.mgp.analytics.AnalyticsEvents
+import com.funpixelnest.mgp.billing.RemoveAdsBilling
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
@@ -30,24 +32,45 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 /**
- * Google AdMob with mediation (Liftoff Monetize, Unity Ads, Mintegral adapters are in the app; AdMob
- * initializes them). Interstitial and rewarded ads are loaded ahead of time and reloaded after each show.
+ * Google AdMob with mediation (the Liftoff Monetize, Unity Ads and Mintegral adapters are in the app; AdMob
+ * initializes them), driven by Remote Config ([RemoteSettings]) and switched off by the "Remove Ads" purchase
+ * ([RemoveAdsBilling]) — except rewarded videos, which the player chooses to watch.
  */
-class AdMobAds(private val activity: Activity) : AdService {
+class AdMobAds(
+    private val activity: Activity,
+    private val analytics: Analytics,
+) : AdService {
+    private val remote = RemoteSettings()
+    private val billing = RemoveAdsBilling(activity, AdUnits.REMOVE_ADS_PRODUCT)
+
     private var interstitial: InterstitialAd? = null
     private var rewarded: RewardedAd? = null
     private var loadingInterstitial = false
     private var loadingRewarded = false
     private var lastInterstitialAt = 0L
-    private var ready = false
+    private var matchesSinceInterstitial = 0
+    private var sdkReady = false
 
-    /** Starts the SDK (and the mediation adapters) off the main thread, then preloads the full-screen ads. */
+    override val settings: AdSettings get() = remote.ads
+    override val adsRemoved: Boolean get() = billing.owned
+    override val bannerEnabled: Boolean get() = settings.showBanner && !adsRemoved
+    override val bannerHeightDp: Int
+        get() = if (!bannerEnabled) 0 else {
+            val widthDp = (activity.resources.displayMetrics.widthPixels / activity.resources.displayMetrics.density).toInt()
+            AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(activity, widthDp).height
+        }
+    override val removeAdsAvailable: Boolean get() = billing.available
+    override val removeAdsPrice: String? get() = billing.price
+
+    /** Starts Remote Config, billing and the ads SDK (with the mediation adapters, off the main thread). */
     fun initialize() {
+        remote.start()
+        billing.start()
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             MobileAds.initialize(activity) { status ->
                 status.adapterStatusMap.forEach { (name, s) -> Log.d(TAG, "adapter $name: ${s.initializationState} ${s.description}") }
                 activity.runOnUiThread {
-                    ready = true
+                    sdkReady = true
                     loadInterstitial()
                     loadRewarded()
                 }
@@ -56,7 +79,7 @@ class AdMobAds(private val activity: Activity) : AdService {
     }
 
     private fun loadInterstitial() {
-        if (!ready || interstitial != null || loadingInterstitial) return
+        if (!sdkReady || interstitial != null || loadingInterstitial || !settings.showInterstitial || adsRemoved) return
         loadingInterstitial = true
         InterstitialAd.load(activity, AdUnits.INTERSTITIAL, AdRequest.Builder().build(), object : InterstitialAdLoadCallback() {
             override fun onAdLoaded(ad: InterstitialAd) {
@@ -72,7 +95,7 @@ class AdMobAds(private val activity: Activity) : AdService {
     }
 
     private fun loadRewarded() {
-        if (!ready || rewarded != null || loadingRewarded) return
+        if (!sdkReady || rewarded != null || loadingRewarded || !settings.showRewarded) return
         loadingRewarded = true
         RewardedAd.load(activity, AdUnits.REWARDED, AdRequest.Builder().build(), object : RewardedAdLoadCallback() {
             override fun onAdLoaded(ad: RewardedAd) {
@@ -87,18 +110,30 @@ class AdMobAds(private val activity: Activity) : AdService {
         })
     }
 
+    override fun onMatchFinished() {
+        matchesSinceInterstitial++
+    }
+
     override fun showInterstitial(onClosed: () -> Unit) {
-        val ad = interstitial
+        val s = settings
         val now = SystemClock.elapsedRealtime()
-        if (ad == null || (lastInterstitialAt != 0L && now - lastInterstitialAt < AdUnits.INTERSTITIAL_MIN_GAP_MILLIS)) {
+        val gapOk = lastInterstitialAt == 0L || now - lastInterstitialAt >= s.interstitialIntervalSeconds * 1_000
+        val countOk = matchesSinceInterstitial >= s.interstitialEveryNGames
+        val ad = interstitial
+        if (!s.showInterstitial || adsRemoved || !gapOk || !countOk || ad == null) {
             loadInterstitial()
             onClosed()
             return
         }
         interstitial = null
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-            override fun onAdDismissedFullScreenContent() {
+            override fun onAdShowedFullScreenContent() {
                 lastInterstitialAt = SystemClock.elapsedRealtime()
+                matchesSinceInterstitial = 0
+                analytics.event(AnalyticsEvents.INTERSTITIAL_SHOWN)
+            }
+
+            override fun onAdDismissedFullScreenContent() {
                 loadInterstitial()
                 onClosed()
             }
@@ -113,7 +148,7 @@ class AdMobAds(private val activity: Activity) : AdService {
 
     override fun showRewarded(onReward: () -> Unit, onUnavailable: () -> Unit) {
         val ad = rewarded
-        if (ad == null) {
+        if (!settings.showRewarded || ad == null) {
             loadRewarded()
             onUnavailable()
             return
@@ -134,20 +169,31 @@ class AdMobAds(private val activity: Activity) : AdService {
         ad.show(activity) { earned = true }
     }
 
+    override fun buyRemoveAds(onResult: (String?) -> Unit) = billing.buy { message ->
+        if (message == null) {
+            interstitial = null
+            analytics.event(AnalyticsEvents.REMOVE_ADS_PURCHASED)
+        }
+        onResult(message)
+    }
+
+    override fun restorePurchases() = billing.restore()
+
     @Composable
     override fun Banner(modifier: Modifier) {
+        if (!bannerEnabled) return
         val context = LocalContext.current
-        val widthDp = LocalConfiguration.current.screenWidthDp
-        val size = remember(widthDp) { AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, widthDp) }
-        val view = remember(size) {
+        val height = bannerHeightDp
+        val view = remember {
+            val widthDp = (context.resources.displayMetrics.widthPixels / context.resources.displayMetrics.density).toInt()
             AdView(context).apply {
                 adUnitId = AdUnits.BANNER
-                setAdSize(size)
+                setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, widthDp))
                 loadAd(AdRequest.Builder().build())
             }
         }
         DisposableEffect(view) { onDispose { view.destroy() } }
-        AndroidView(factory = { view }, modifier = modifier.fillMaxWidth().height(size.height.dp))
+        AndroidView(factory = { view }, modifier = modifier.fillMaxWidth().height(height.dp))
     }
 
     private companion object {

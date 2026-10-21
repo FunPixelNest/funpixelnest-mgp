@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp.data
 
+import com.funpixelnest.mgp.domain.LevelRewards
 import com.funpixelnest.mgp.domain.AVATAR_COUNT
 import com.funpixelnest.mgp.domain.Challenge
 import com.funpixelnest.mgp.domain.ChallengeCategory
@@ -207,6 +208,7 @@ class FakePlatformRepository(
     override suspend fun submitScore(ticket: MatchTicket, result: GameResult): Pool = mutex.withLock {
         check(usedTickets.add(ticket.ticketId)) { "This ticket has already been used" }
         val pool = recordScore(ticket.poolId, player.id, result.score, result.durationMillis)
+        addXp(LevelRewards.XP_PER_GAME)
         rebuildProgress()
         pool
     }
@@ -498,7 +500,7 @@ class FakePlatformRepository(
             addTransaction(myRow.prize, 0, "Prize: $what")
         }
         // XP and league points, same rules as the server.
-        _profile.value = _profile.value.copy(xp = _profile.value.xp + LeaguePoints.xpForResult(myRow.rank, tournament.isDuel))
+        addXp(LeaguePoints.xpForResult(myRow.rank, tournament.isDuel))
         val before = LeagueTier.forTrophies(trophies)
         val points = LeaguePoints.forResult(myRow.rank, tournament.isDuel)
         trophies += points
@@ -521,6 +523,17 @@ class FakePlatformRepository(
         val updated = pools.value + (pool.id to pool)
         pools.value = updated
         _myPools.value = updated.values.filter { p -> p.entries.any { it.playerId == player.id } }.reversed()
+    }
+
+    /** Adds XP and pays the reward of every level reached (same as the server's level trigger). */
+    private fun addXp(amount: Long) {
+        val before = _profile.value.levelInfo.level
+        _profile.value = _profile.value.copy(xp = _profile.value.xp + amount)
+        val after = _profile.value.levelInfo.level
+        for (level in (before + 1)..after) {
+            val r = LevelRewards.forLevel(level)
+            addTransaction(r.coins, r.gems, "Level $level reward")
+        }
     }
 
     private fun addTransaction(coins: Long, gems: Long, description: String) {

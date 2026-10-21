@@ -135,7 +135,7 @@ begin
   for n in 201..205 loop
     insert into t.tix values ('starter_' || n, t.join(n, 'rugby_rumble_starter'));
   end loop;
-  perform t.check((select xp from public.profiles where id = t.uid(201)) = 0, 'no XP before completion');
+  perform t.check((select xp from public.profiles where id = t.uid(201)) = 0, 'no XP before playing');
   for n in 201..205 loop
     v := t.submit(n, (select ticket from t.tix where name = 'starter_' || n), (206 - n) * 100);
   end loop;
@@ -147,7 +147,7 @@ begin
   perform t.check((e ->> 'avatar_id')::int = 1, 'B default avatar 1 in pool');
 
   perform t.check((select array_agg(xp order by id) from public.profiles where id between t.uid(201) and t.uid(205))
-                  = array[50,35,25,20,20]::bigint[], 'pool XP 50/35/25/20/20');
+                  = array[75,60,50,45,45]::bigint[], 'pool XP: 25 per game + 50/35/25/20/20 placement');
   perform t.check((select array_agg(trophies order by id) from public.profiles where id between t.uid(201) and t.uid(205))
                   = array[100,60,30,10,10]::bigint[], 'pool trophies 100/60/30/10/10');
   perform t.check((select array_agg(points order by player_id) from public.league_season_points
@@ -156,7 +156,7 @@ begin
 
   -- Re-running the update on a completed pool must not award again.
   update public.pools set status = 'completed' where tournament_id = 'rugby_rumble_starter';
-  perform t.check((select xp from public.profiles where id = t.uid(201)) = 50, 'trigger fires only on transition');
+  perform t.check((select xp from public.profiles where id = t.uid(201)) = 75, 'trigger fires only on transition');
 
   -- Duel: B (900) beats A (100)
   insert into t.tix values ('duel_201', t.join(201, 'rugby_rumble_duel_quick'));
@@ -164,8 +164,8 @@ begin
   perform t.submit(201, (select ticket from t.tix where name = 'duel_201'), 100);
   v := t.submit(202, (select ticket from t.tix where name = 'duel_202'), 900);
   perform t.check(v ->> 'status' = 'completed', 'duel completed');
-  perform t.check((select xp from public.profiles where id = t.uid(201)) = 70
-              and (select xp from public.profiles where id = t.uid(202)) = 85, 'duel XP: loser +20, winner +50');
+  perform t.check((select xp from public.profiles where id = t.uid(201)) = 120
+              and (select xp from public.profiles where id = t.uid(202)) = 135, 'duel XP: +25 each, loser +20, winner +50');
   perform t.check((select trophies from public.profiles where id = t.uid(201)) = 110
               and (select trophies from public.profiles where id = t.uid(202)) = 140, 'duel trophies: loser +10, winner +80');
 
@@ -177,7 +177,7 @@ begin
   perform t.check((v -> 'stats' ->> 'games_won')::int = 1 and (v -> 'stats' ->> 'win_rate')::int = 50, 'A: 1 win, 50%');
   perform t.check((v -> 'stats' ->> 'coins_won')::int = 45, 'A: coins won 45 (90 pool * 50%)');
   perform t.check((v -> 'stats' ->> 'win_streak')::int = 0, 'A: streak broken by duel loss');
-  perform t.check((v ->> 'xp')::int = 70 and (v ->> 'level')::int = 1 and (v ->> 'level_xp')::int = 70, 'A: level 1, 70/250');
+  perform t.check((v ->> 'xp')::int = 120 and (v ->> 'level')::int = 1 and (v ->> 'level_xp')::int = 120, 'A: level 1, 120/250');
   perform t.login(t.uid(202));
   v := public.get_profile();
   perform t.check((v -> 'stats' ->> 'win_streak')::int = 1 and (v -> 'stats' ->> 'win_rate')::int = 50, 'B: streak 1, 50%');
@@ -488,6 +488,42 @@ end $$;
 
 -- ---------------------------------------------------------------------------
 -- 10. Wallet with gems + ledger invariants
+-- ---------------------------------------------------------------------------
+-- Level-up rewards: 100 coins x level (max 2000) + 10 gems every 5th level, each level paid once
+-- ---------------------------------------------------------------------------
+do $$
+declare c bigint; g bigint; n int; tix uuid;
+begin
+  perform t.check((select coins from public._level_reward(2)) = 200 and (select gems from public._level_reward(2)) = 0, 'L2 reward 200');
+  perform t.check((select coins from public._level_reward(5)) = 500 and (select gems from public._level_reward(5)) = 10, 'L5 reward 500 + 10 gems');
+  perform t.check((select coins from public._level_reward(30)) = 2000, 'reward capped at 2000');
+
+  -- One game takes F from 230 XP (level 1) over 250: level 2 paid.
+  update public.profiles set xp = 230, level_rewarded = 1 where id = t.uid(206);
+  c := t.coins(t.uid(206)); g := t.gems(t.uid(206));
+  tix := t.join(206, 'rugby_rumble_rookie');
+  c := c - (select entry_fee from public.tournaments where id = 'rugby_rumble_rookie');
+  perform t.submit(206, tix, 10);
+  perform t.check((select xp from public.profiles where id = t.uid(206)) = 255, 'F: +25 XP for the game');
+  perform t.check((select level_rewarded from public.profiles where id = t.uid(206)) = 2, 'F: level 2 recorded');
+  perform t.check(t.coins(t.uid(206)) = c + 200 and t.gems(t.uid(206)) = g, 'F: +200 coins for level 2');
+  perform t.check((select count(*) from public.wallet_transactions
+                    where player_id = t.uid(206) and description = 'Level 2 reward') = 1, 'level 2 history line');
+
+  -- Several levels at once (2500 XP = level 5): levels 3, 4, 5 each paid.
+  c := t.coins(t.uid(206));
+  update public.profiles set xp = 2500 where id = t.uid(206);
+  perform t.check(t.coins(t.uid(206)) = c + 300 + 400 + 500 and t.gems(t.uid(206)) = g + 10, 'F: levels 3-5 paid');
+  perform t.check((select level_rewarded from public.profiles where id = t.uid(206)) = 5, 'F: level 5 recorded');
+
+  -- More XP inside the same level, or XP going down and up again: nothing paid twice.
+  c := t.coins(t.uid(206));
+  update public.profiles set xp = 2600 where id = t.uid(206);
+  update public.profiles set xp = 100 where id = t.uid(206);
+  update public.profiles set xp = 2600 where id = t.uid(206);
+  perform t.check(t.coins(t.uid(206)) = c, 'F: no second payment');
+end $$;
+
 -- ---------------------------------------------------------------------------
 do $$
 declare v jsonb;

@@ -92,8 +92,8 @@ class ProgressionTest {
         val pool = repo.observePool(joined.ticket.poolId).first { it?.status == PoolStatus.COMPLETED }
         assertNotNull(pool)
 
-        // 1st of 5: 20 + 30 XP and 100 league points.
-        assertEquals(50L, repo.profile.value.xp)
+        // 25 XP for playing, then 1st of 5: 20 + 30 XP and 100 league points.
+        assertEquals(75L, repo.profile.value.xp)
         assertEquals(100L, repo.league.value.trophies)
         assertEquals(1, repo.profile.value.stats.gamesWon)
         val win = repo.challenges.value.challenges.first { it.id == "d_win_1" }

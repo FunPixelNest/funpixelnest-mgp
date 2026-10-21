@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp
 
+import com.funpixelnest.mgp.platform.LocalPrefs
 import com.funpixelnest.mgp.data.LivePlayers
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.foundation.pager.rememberPagerState
@@ -227,6 +228,17 @@ private fun MainApp(
         delay(500)
         if (!repository.dailyBonus.value.claimedToday) navigator.show(Popup.DailyBonus)
         if (repository.profile.value.welcomePending) navigator.show(Popup.Welcome)
+    }
+    // Level up (XP from games): show the new level and its reward once, never over a running game or
+    // the Game Over board. The last level shown is remembered per player on this device.
+    val level = profile.levelInfo.level
+    val inGame = session != null || navigator.current is Screen.GameOver
+    LaunchedEffect(level, inGame, profile.xp > 0) {
+        if (inGame || profile.xp <= 0) return@LaunchedEffect // xp 0 = profile not loaded yet (or brand new)
+        val key = "level_seen_" + repository.player.id
+        val seen = LocalPrefs.get(key)?.toIntOrNull()
+        if (seen != level) LocalPrefs.set(key, level.toString())
+        if (seen != null && level > seen) navigator.show(Popup.LevelUp(seen, level))
     }
     // Fresh challenge / league / shop data whenever a tab opens.
     LaunchedEffect(navigator.tab) { repository.refreshProgress() }

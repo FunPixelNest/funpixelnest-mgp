@@ -44,6 +44,28 @@ data class LevelInfo(val level: Int, val xpIntoLevel: Long, val xpNeeded: Long) 
     }
 }
 
+/**
+ * XP for every finished game and the reward for each new level (same rules as the server,
+ * migration 20261021000001_level_rewards.sql).
+ */
+object LevelRewards {
+    /** XP for submitting a score in any paid match, win or lose. Placement XP comes when the pool finishes. */
+    const val XP_PER_GAME = 25L
+
+    /** Reaching [level]: 100 coins × level (max 2,000), plus 10 gems on every 5th level. */
+    fun forLevel(level: Int): RewardGrant = RewardGrant(
+        coins = (100L * level).coerceAtMost(2_000L),
+        gems = if (level % 5 == 0) 10L else 0L,
+    )
+
+    /** Everything earned going from [fromLevel] up to [toLevel] (several levels at once add up). */
+    fun between(fromLevel: Int, toLevel: Int): RewardGrant =
+        ((fromLevel + 1)..toLevel).fold(RewardGrant()) { sum, l ->
+            val r = forLevel(l)
+            RewardGrant(sum.coins + r.coins, sum.gems + r.gems)
+        }
+}
+
 // ---------------------------------------------------------------- leagues
 
 enum class LeagueTier(val id: String, val label: String, val minTrophies: Long, val rewardCoins: Long, val rewardGems: Long) {

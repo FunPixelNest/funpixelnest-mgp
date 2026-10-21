@@ -1,5 +1,14 @@
 package com.funpixelnest.mgp.ui.screens
 
+import com.funpixelnest.mgp.ui.components.LevelBadge
+import com.funpixelnest.mgp.domain.LevelRewards
+import androidx.compose.ui.draw.scale
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -221,6 +230,7 @@ private fun PopupContent(popup: Popup, repository: PlatformRepository, actions: 
                 Spacer(Modifier.height(12.dp))
                 GlossyButton("Close", close, modifier = Modifier.fillMaxWidth())
             }
+            is Popup.LevelUp -> LevelUpPopup(popup, onClose = close)
             Popup.NeedCoins -> PopupCard(onClose = close) {
                 ArtImage(Art.coinsPile, 110.dp, Modifier.align(Alignment.CenterHorizontally))
                 DisplayText("NOT ENOUGH COINS", size = 26.sp, textAlign = TextAlign.Center, modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -367,6 +377,92 @@ private fun RewardPopup(popup: Popup.Reward, onClose: () -> Unit) {
         }
         Spacer(Modifier.height(10.dp))
         GlossyButton("Awesome!", onClose, color = ButtonColor.Green, modifier = Modifier.fillMaxWidth())
+    }
+}
+
+/** "LEVEL UP!": the new level in a big badge with turning light rays, and the coins / gems it paid. */
+@Composable
+private fun LevelUpPopup(popup: Popup.LevelUp, onClose: () -> Unit) {
+    val reward = remember(popup) { LevelRewards.between(popup.fromLevel, popup.toLevel) }
+    val spin = rememberInfiniteTransition(label = "rays")
+    val angle by spin.animateFloat(0f, 360f, infiniteRepeatable(tween(12_000, easing = LinearEasing)), label = "angle")
+    val glow by spin.animateFloat(0.85f, 1.08f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "glow")
+    val pop = remember { Animatable(0.3f) }
+    val count = remember { Animatable(0f) }
+    LaunchedEffect(popup) {
+        pop.animateTo(1f, spring(dampingRatio = 0.45f, stiffness = 220f))
+        count.animateTo(1f, tween(900, easing = FastOutSlowInEasing))
+    }
+    PopupCard(onClose = onClose) {
+        DisplayText(
+            "LEVEL UP!",
+            size = 40.sp,
+            color = MgpColors.Gold,
+            outline = Color(0xFF8A3B05),
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+        )
+        Box(Modifier.align(Alignment.CenterHorizontally).size(210.dp), contentAlignment = Alignment.Center) {
+            Canvas(Modifier.fillMaxSize().rotate(angle)) {
+                val c = center
+                val r = size.minDimension / 2
+                for (i in 0 until 12) {
+                    rotate(i * 30f, c) {
+                        val p = Path().apply {
+                            moveTo(c.x, c.y)
+                            lineTo(c.x - r * 0.13f, c.y - r)
+                            lineTo(c.x + r * 0.13f, c.y - r)
+                            close()
+                        }
+                        drawPath(p, Brush.radialGradient(listOf(Color(0x99FFD54F), Color.Transparent), c, r))
+                    }
+                }
+                drawCircle(Brush.radialGradient(listOf(Color(0x88FFF3B0), Color.Transparent), c, r * 0.7f * glow), r * 0.7f * glow, c)
+            }
+            LevelBadge(popup.toLevel, size = 120.dp, modifier = Modifier.scale(pop.value))
+        }
+        Text(
+            "You reached Level ${popup.toLevel}",
+            color = MgpColors.Navy,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 20.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        if (popup.toLevel - popup.fromLevel > 1) {
+            Text(
+                "${popup.toLevel - popup.fromLevel} levels at once!",
+                color = MgpColors.TextMuted,
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        if (!reward.isEmpty) {
+            Text(
+                "LEVEL REWARD",
+                color = MgpColors.Primary,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 16.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 14.dp),
+            )
+            Row(
+                Modifier.align(Alignment.CenterHorizontally).padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(18.dp),
+            ) {
+                if (reward.coins > 0) CoinAmount((reward.coins * count.value).toLong(), iconSize = 38.dp, fontSize = 30.sp)
+                if (reward.gems > 0) CoinAmount((reward.gems * count.value).toLong(), iconSize = 34.dp, fontSize = 30.sp, gems = true)
+            }
+        }
+        Text(
+            "Keep playing to earn XP and reach Level ${popup.toLevel + 1}.",
+            color = MgpColors.TextMuted,
+            fontSize = 13.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp),
+        )
+        GlossyButton("Collect", onClose, color = ButtonColor.Green, modifier = Modifier.fillMaxWidth())
     }
 }
 

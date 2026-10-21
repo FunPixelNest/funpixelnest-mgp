@@ -59,6 +59,8 @@ sealed interface Popup {
     data object ConfirmLogout : Popup
     data object LeagueRewards : Popup
     data object NeedCoins : Popup
+    /** The player went from [fromLevel] to [toLevel]; the reward of each new level is already in the wallet. */
+    data class LevelUp(val fromLevel: Int, val toLevel: Int) : Popup
 }
 
 /**

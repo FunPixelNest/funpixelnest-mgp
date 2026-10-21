@@ -29,7 +29,7 @@ object SampleCatalog {
      * Games not shown in the app for now (coming in a later update). Their tournaments and old results stay
      * on the server; they just aren't listed. Remove an id here to bring the game back.
      */
-    val hiddenGameIds: Set<String> = setOf("solitaire", "rugby_rumble")
+    val hiddenGameIds: Set<String> = setOf("solitaire", "rugby_rumble", "catdoku")
 
     /** Games listed in the app (everything except [hiddenGameIds]). */
     val visibleGames: List<Game> get() = games.filter { it.id !in hiddenGameIds }

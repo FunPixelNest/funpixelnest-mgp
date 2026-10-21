@@ -1,5 +1,7 @@
 package com.funpixelnest.mgp
 
+import com.funpixelnest.mgp.ads.NoAds
+import com.funpixelnest.mgp.ads.AdService
 import com.funpixelnest.mgp.platform.LocalPrefs
 import com.funpixelnest.mgp.data.LivePlayers
 import androidx.compose.runtime.snapshotFlow
@@ -143,6 +145,7 @@ fun App(
     navigator: Navigator = remember { Navigator() },
     gameLauncher: GameLauncher? = null,
     settings: AppSettings = remember { AppSettings() },
+    ads: AdService = NoAds,
 ) {
     remember { AppSettings.loadTheme() }
     MgpTheme {
@@ -169,7 +172,7 @@ fun App(
                 BackendStatus.Loading -> SplashScreen(message = null, onRetry = null)
                 is BackendStatus.Error -> SplashScreen(message = s.message, onRetry = { scope.launch { repository.initialize() } })
                 BackendStatus.SignedOut -> LoginScreen(repository)
-                BackendStatus.Ready -> MainApp(repository, navigator, gameLauncher, settings)
+                BackendStatus.Ready -> MainApp(repository, navigator, gameLauncher, settings, ads)
             }
         }
     }
@@ -191,6 +194,7 @@ private fun MainApp(
     navigator: Navigator,
     gameLauncher: GameLauncher?,
     settings: AppSettings,
+    ads: AdService,
 ) {
     val wallet by repository.wallet.collectAsState()
     val profile by repository.profile.collectAsState()
@@ -288,6 +292,8 @@ private fun MainApp(
             submitting = false
             if (ok) {
                 navigator.replace(Screen.PoolLeaderboard(screen.ticket.poolId))
+                // Interstitial between matches (at most one a minute), over the leaderboard.
+                ads.showInterstitial()
             } else {
                 submitError = "Couldn't send your score. Check your connection and tap Submit again."
             }
@@ -410,10 +416,22 @@ private fun MainApp(
                 }
             },
             watchVideo = {
-                scope.launch {
-                    val coins = repository.claimFreeCoins()
-                    if (coins > 0) navigator.show(Popup.Reward("Free coins", RewardGrant(coins)))
-                    else navigator.show(Popup.Message("No more videos", "You've watched all of today's videos. Come back tomorrow!"))
+                if (repository.shop.value.freeCoinsLeftToday <= 0) {
+                    navigator.show(Popup.Message("No more videos", "You've watched all of today's videos. Come back tomorrow!"))
+                } else {
+                    // Rewarded ad first; the coins are claimed only after the video was watched to the end.
+                    ads.showRewarded(
+                        onReward = {
+                            scope.launch {
+                                val coins = repository.claimFreeCoins()
+                                if (coins > 0) navigator.show(Popup.Reward("Free coins", RewardGrant(coins)))
+                                else navigator.show(Popup.Message("No more videos", "You've watched all of today's videos. Come back tomorrow!"))
+                            }
+                        },
+                        onUnavailable = {
+                            navigator.show(Popup.Message("No video right now", "There's no video to watch at the moment. Please try again in a minute."))
+                        },
+                    )
                 }
             },
             invite = { navigator.push(Screen.ReferEarn) },
@@ -629,11 +647,15 @@ private fun MainApp(
                 enter = expandVertically(tween(PAGE_MS), expandFrom = Alignment.Top) + fadeIn(tween(PAGE_MS)),
                 exit = shrinkVertically(tween(PAGE_MS), shrinkTowards = Alignment.Top) + fadeOut(tween(PAGE_MS)),
             ) {
-                MgpBottomBar(
-                    selected = if (onTabRoot) Tab.entries[tabPager.targetPage] else navigator.tab,
-                    challengeBadge = challenges.claimableCount,
-                    onSelect = { navigator.selectTab(it) },
-                )
+                Column {
+                    // Banner ad above the bottom tabs (tab pages and game pages, never during a game).
+                    ads.Banner(Modifier.fillMaxWidth())
+                    MgpBottomBar(
+                        selected = if (onTabRoot) Tab.entries[tabPager.targetPage] else navigator.tab,
+                        challengeBadge = challenges.claimableCount,
+                        onSelect = { navigator.selectTab(it) },
+                    )
+                }
             }
         }
 

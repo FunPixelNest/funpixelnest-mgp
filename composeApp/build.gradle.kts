@@ -167,6 +167,10 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(project.dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.messaging)
+            implementation(libs.play.services.ads)
+            implementation(libs.admob.mediation.liftoff)
+            implementation(libs.admob.mediation.unity)
+            implementation(libs.admob.mediation.mintegral)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)

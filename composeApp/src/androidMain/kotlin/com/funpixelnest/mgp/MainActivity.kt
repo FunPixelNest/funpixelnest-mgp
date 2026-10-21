@@ -33,6 +33,7 @@ import com.funpixelnest.mgp.game.WebViewGameLauncher
 import com.funpixelnest.mgp.push.AndroidPush
 import com.funpixelnest.mgp.ui.Navigator
 import com.funpixelnest.mgp.ui.Screen
+import com.funpixelnest.mgp.ads.AdMobAds
 import com.funpixelnest.mgp.platform.LocalPrefs
 import com.funpixelnest.mgp.ui.theme.ThemeState
 import kotlinx.coroutines.launch
@@ -56,6 +57,9 @@ class MainActivity : ComponentActivity() {
     /** One repository for the activity, so Google/Apple/Facebook sign-in redirects reach it. */
     private val repository: PlatformRepository by lazy { createPlatformRepository() }
 
+    /** AdMob (banner, interstitial, rewarded) with Liftoff, Unity Ads and Mintegral mediation. */
+    private val ads by lazy { AdMobAds(this) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Light background → dark status and navigation bar icons.
         enableEdgeToEdge(
@@ -70,6 +74,7 @@ class MainActivity : ComponentActivity() {
         pendingPoolId.value = intent.poolIdExtra()
         handleSignInRedirect(intent)
         val pushEnabled = AndroidPush.init(applicationContext)
+        ads.initialize()
 
         setContent {
             val navigator = remember { Navigator() }
@@ -110,7 +115,7 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
             }
 
-            App(repository = repository, navigator = navigator, gameLauncher = gameLauncher)
+            App(repository = repository, navigator = navigator, gameLauncher = gameLauncher, ads = ads)
         }
     }
 

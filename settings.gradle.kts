@@ -25,6 +25,10 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
+        // Mintegral SDK (needed by the AdMob Mintegral adapter); only Mintegral's own packages come from here.
+        maven("https://dl-maven-android.mintegral.com/repository/mbridge_android_sdk_oversea/") {
+            content { includeGroupAndSubgroups("com.mbridge.msdk") }
+        }
     }
 }
 

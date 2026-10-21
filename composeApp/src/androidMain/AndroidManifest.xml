@@ -49,6 +49,11 @@
             android:value="0"
             tools:replace="android:value" />
 
+        <!-- AdMob app id. This is Google's public TEST app id: replace it with the real one before release. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
+
         <!-- Push notifications (Firebase Cloud Messaging). Inactive until FIREBASE_* values are configured. -->
         <service
             android:name=".push.FpnMessagingService"

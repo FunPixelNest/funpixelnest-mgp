@@ -12,6 +12,11 @@ kotlinx-serialization = "1.11.0"
 ktor = "3.5.1"
 supabase = "3.8.0"
 firebaseBom = "35.0.1"
+# Ads: Google AdMob + mediation adapters (Liftoff Monetize = "vungle", Unity Ads, Mintegral).
+playServicesAds = "25.5.0"
+admobLiftoff = "7.7.8.1"
+admobUnity = "4.21.0.0"
+admobMintegral = "17.1.81.1"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -30,6 +35,12 @@ supabase-realtime = { module = "io.github.jan-tennert.supabase:realtime-kt" }
 # Push notifications (Android). Initialized from BackendConfig, no google-services.json needed.
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
+
+# Ads (Android): AdMob and its mediation adapters; each adapter brings its network's SDK.
+play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
+admob-mediation-liftoff = { module = "com.google.ads.mediation:vungle", version.ref = "admobLiftoff" }
+admob-mediation-unity = { module = "com.google.ads.mediation:unity", version.ref = "admobUnity" }
+admob-mediation-mintegral = { module = "com.google.ads.mediation:mintegral", version.ref = "admobMintegral" }
 
 # HTTP engines used by the Supabase client on each platform
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }

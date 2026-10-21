@@ -1,5 +1,7 @@
 package com.funpixelnest.mgp.ui.screens
 
+import com.funpixelnest.mgp.audio.Sfx
+import com.funpixelnest.mgp.audio.LocalUiAudio
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -320,9 +322,10 @@ private fun SettingRow(icon: ImageVector, label: String, checked: Boolean, onCha
 
 @Composable
 fun MgpSwitch(checked: Boolean, onChange: (Boolean) -> Unit) {
+    val audio = LocalUiAudio.current
     Switch(
         checked = checked,
-        onCheckedChange = onChange,
+        onCheckedChange = { audio.play(Sfx.Toggle); onChange(it) },
         colors = SwitchDefaults.colors(
             checkedTrackColor = MgpColors.Green,
             checkedThumbColor = Color.White,

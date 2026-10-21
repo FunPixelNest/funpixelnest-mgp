@@ -34,6 +34,7 @@ import com.funpixelnest.mgp.push.AndroidPush
 import com.funpixelnest.mgp.ui.Navigator
 import com.funpixelnest.mgp.ui.Screen
 import com.funpixelnest.mgp.ads.AdMobAds
+import com.funpixelnest.mgp.audio.AndroidUiAudio
 import com.funpixelnest.mgp.firebase.FirebaseAnalyticsService
 import com.funpixelnest.mgp.platform.LocalPrefs
 import com.funpixelnest.mgp.ui.theme.ThemeState
@@ -60,6 +61,9 @@ class MainActivity : ComponentActivity() {
 
     /** AdMob (banner, interstitial, rewarded) with Liftoff, Unity Ads and Mintegral mediation. */
     private val ads by lazy { AdMobAds(this, analytics) }
+
+    /** Background music + UI sounds of the app (not the games). */
+    private val uiAudio by lazy { AndroidUiAudio(this) }
 
     /** Firebase Analytics (+ Crashlytics user id); nothing is sent when Firebase isn't configured. */
     private val analytics by lazy { FirebaseAnalyticsService(applicationContext) }
@@ -119,7 +123,7 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
             }
 
-            App(repository = repository, navigator = navigator, gameLauncher = gameLauncher, ads = ads, analytics = analytics)
+            App(repository = repository, navigator = navigator, gameLauncher = gameLauncher, ads = ads, analytics = analytics, audio = uiAudio)
         }
     }
 
@@ -127,9 +131,11 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         gameLauncher.onActivityResume()
+        uiAudio.onActivityResume()
     }
 
     override fun onPause() {
+        uiAudio.onActivityPause()
         gameLauncher.onActivityPause()
         super.onPause()
     }

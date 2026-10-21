@@ -1,5 +1,11 @@
 package com.funpixelnest.mgp
 
+import androidx.compose.runtime.CompositionLocalProvider
+import com.funpixelnest.mgp.audio.SettingsGatedAudio
+import com.funpixelnest.mgp.audio.NoAudio
+import com.funpixelnest.mgp.audio.UiAudio
+import com.funpixelnest.mgp.audio.Sfx
+import com.funpixelnest.mgp.audio.LocalUiAudio
 import com.funpixelnest.mgp.ui.screens.RemoveAdsState
 import com.funpixelnest.mgp.domain.LevelRewards
 import com.funpixelnest.mgp.analytics.NoAnalytics
@@ -152,8 +158,12 @@ fun App(
     settings: AppSettings = remember { AppSettings() },
     ads: AdService = NoAds,
     analytics: Analytics = NoAnalytics,
+    audio: UiAudio = NoAudio,
 ) {
     remember { AppSettings.loadTheme() }
+    // UI sounds follow the Sound setting; the music follows the Music setting (and stops during games).
+    val uiAudio = remember(audio, settings) { SettingsGatedAudio(audio) { settings.sound } }
+    CompositionLocalProvider(LocalUiAudio provides uiAudio) {
     MgpTheme {
         val status by repository.status.collectAsState()
         // Live player counts on the game cards (random placeholder numbers until there are real players).
@@ -181,6 +191,11 @@ fun App(
                 BackendStatus.Ready -> MainApp(repository, navigator, gameLauncher, settings, ads, analytics)
             }
         }
+        // Calm music on the sign-in / loading screens too (in the app, MainApp decides).
+        LaunchedEffect(status == BackendStatus.Ready, settings.music) {
+            if (status != BackendStatus.Ready) uiAudio.setMusic(settings.music)
+        }
+    }
     }
 }
 
@@ -254,6 +269,15 @@ private fun MainApp(
             analytics.event(AnalyticsEvents.LEVEL_UP, mapOf("level" to level, "coins" to r.coins, "gems" to r.gems))
             navigator.show(Popup.LevelUp(seen, level))
         }
+    }
+    // Background music: on with the Music setting, off while a game runs (games play their own audio).
+    val audio = LocalUiAudio.current
+    LaunchedEffect(settings.music, session == null) { audio.setMusic(settings.music && session == null) }
+    // A light tick when the tab changes (tap or swipe).
+    val shownTab = navigator.tab
+    var firstTab by remember { mutableStateOf(true) }
+    LaunchedEffect(shownTab) {
+        if (firstTab) firstTab = false else audio.play(Sfx.Tab)
     }
     // Analytics: who is playing (also tags crash reports) and which page is open.
     LaunchedEffect(repository.player.id) { analytics.setUser(repository.player.id) }

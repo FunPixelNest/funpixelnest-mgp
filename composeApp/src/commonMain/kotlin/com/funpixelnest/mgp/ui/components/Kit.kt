@@ -1,5 +1,7 @@
 package com.funpixelnest.mgp.ui.components
 
+import com.funpixelnest.mgp.audio.Sfx
+import com.funpixelnest.mgp.audio.LocalUiAudio
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -197,6 +199,7 @@ fun GlossyButton(
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(if (pressed && enabled) 0.95f else 1f)
+    val audio = LocalUiAudio.current
     val c = if (enabled) color else ButtonColor.Gray
     val shape = RoundedCornerShape(height / 2.6f)
     Box(
@@ -209,7 +212,10 @@ fun GlossyButton(
             .padding(bottom = 4.dp)
             .clip(shape)
             .background(Brush.verticalGradient(listOf(c.top, c.bottom)))
-            .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick),
+            .clickable(interactionSource = interaction, indication = null, enabled = enabled) {
+                audio.play(Sfx.Tap)
+                onClick()
+            },
         contentAlignment = Alignment.Center,
     ) {
         // Shine on the upper half.
@@ -259,6 +265,7 @@ fun TileIconButton(
     tint: Color = MgpColors.Primary,
     badge: Int = 0,
 ) {
+    val audio = LocalUiAudio.current
     Box(modifier.size(size)) {
         Box(
             Modifier
@@ -266,7 +273,10 @@ fun TileIconButton(
                 .shadow(4.dp, RoundedCornerShape(14.dp))
                 .clip(RoundedCornerShape(14.dp))
                 .background(MgpColors.Card)
-                .clickable(onClick = onClick),
+                .clickable {
+                    audio.play(Sfx.Tap)
+                    onClick()
+                },
             contentAlignment = Alignment.Center,
         ) {
             Icon(icon, contentDescription, tint = tint, modifier = Modifier.size(size * 0.56f))

@@ -1,5 +1,7 @@
 package com.funpixelnest.mgp.ui.screens
 
+import com.funpixelnest.mgp.audio.Sfx
+import com.funpixelnest.mgp.audio.LocalUiAudio
 import androidx.compose.material.icons.rounded.OndemandVideo
 import com.funpixelnest.mgp.ui.components.LevelBadge
 import com.funpixelnest.mgp.domain.LevelRewards
@@ -125,6 +127,17 @@ class PopupActions(
  */
 @Composable
 fun PopupHost(popup: Popup?, repository: PlatformRepository, actions: PopupActions) {
+    // A soft sound for each pop-up: chime, coins for rewards, a little fanfare for a new level.
+    val audio = LocalUiAudio.current
+    LaunchedEffect(popup) {
+        when (popup) {
+            null -> Unit
+            is Popup.Reward -> audio.play(Sfx.Reward)
+            is Popup.LevelUp -> audio.play(Sfx.LevelUp)
+            is Popup.Message -> audio.play(if (popup.title == "Oops") Sfx.Error else Sfx.Popup)
+            else -> audio.play(Sfx.Popup)
+        }
+    }
     Box(Modifier.fillMaxSize()) {
         AnimatedVisibility(popup != null, enter = fadeIn(tween(220)), exit = fadeOut(tween(220))) {
             Box(
@@ -503,6 +516,7 @@ fun DoubleRewardButton(
 ) {
     if (!actions.doubleEnabled || doubled || rewards.isEmpty()) return
     var busy by remember { mutableStateOf(false) }
+    val audio = LocalUiAudio.current
     GlossyButton(
         if (busy) "Loading video…" else "Watch video · 2X",
         onClick = {
@@ -510,7 +524,10 @@ fun DoubleRewardButton(
             busy = true
             actions.doubleReward(source, rewards) { ok ->
                 busy = false
-                if (ok) onDoubled()
+                if (ok) {
+                    audio.play(Sfx.Reward)
+                    onDoubled()
+                }
             }
         },
         enabled = !busy,

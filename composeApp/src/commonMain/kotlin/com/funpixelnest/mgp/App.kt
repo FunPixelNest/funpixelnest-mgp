@@ -162,7 +162,7 @@ fun App(
 ) {
     remember { AppSettings.loadTheme() }
     // UI sounds follow the Sound setting; the music follows the Music setting (and stops during games).
-    val uiAudio = remember(audio, settings) { SettingsGatedAudio(audio) { settings.sound } }
+    val uiAudio = remember(audio, settings) { SettingsGatedAudio(audio, soundOn = { settings.sound }, vibrationOn = { settings.vibration }) }
     CompositionLocalProvider(LocalUiAudio provides uiAudio) {
     MgpTheme {
         val status by repository.status.collectAsState()
@@ -277,7 +277,10 @@ private fun MainApp(
     val shownTab = navigator.tab
     var firstTab by remember { mutableStateOf(true) }
     LaunchedEffect(shownTab) {
-        if (firstTab) firstTab = false else audio.play(Sfx.Tab)
+        if (firstTab) firstTab = false else {
+            audio.play(Sfx.Tab)
+            audio.tick()
+        }
     }
     // Analytics: who is playing (also tags crash reports) and which page is open.
     LaunchedEffect(repository.player.id) { analytics.setUser(repository.player.id) }

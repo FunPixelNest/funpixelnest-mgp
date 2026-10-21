@@ -214,6 +214,7 @@ fun GlossyButton(
             .background(Brush.verticalGradient(listOf(c.top, c.bottom)))
             .clickable(interactionSource = interaction, indication = null, enabled = enabled) {
                 audio.play(Sfx.Tap)
+                audio.tick()
                 onClick()
             },
         contentAlignment = Alignment.Center,
@@ -275,6 +276,7 @@ fun TileIconButton(
                 .background(MgpColors.Card)
                 .clickable {
                     audio.play(Sfx.Tap)
+                    audio.tick()
                     onClick()
                 },
             contentAlignment = Alignment.Center,

@@ -14,6 +14,9 @@ interface UiAudio {
 
     /** Calm background music on / off (fades). */
     fun setMusic(on: Boolean)
+
+    /** A very short, light vibration for a tap (buttons, tabs, switches). */
+    fun tick() {}
 }
 
 object NoAudio : UiAudio {
@@ -24,10 +27,18 @@ object NoAudio : UiAudio {
 /** UI sounds for any composable (GlossyButton, tabs, switches, pop-ups). */
 val LocalUiAudio = staticCompositionLocalOf<UiAudio> { NoAudio }
 
-/** Plays sounds only while the player's Sound setting is on. */
-class SettingsGatedAudio(private val inner: UiAudio, private val soundOn: () -> Boolean) : UiAudio {
+/** Plays sounds only while the Sound setting is on, and tap vibrations only while Vibration is on. */
+class SettingsGatedAudio(
+    private val inner: UiAudio,
+    private val soundOn: () -> Boolean,
+    private val vibrationOn: () -> Boolean = { true },
+) : UiAudio {
     override fun play(sfx: Sfx) {
         if (soundOn()) inner.play(sfx)
+    }
+
+    override fun tick() {
+        if (vibrationOn()) inner.tick()
     }
 
     override fun setMusic(on: Boolean) = inner.setMusic(on)

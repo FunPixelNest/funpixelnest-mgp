@@ -325,7 +325,7 @@ fun MgpSwitch(checked: Boolean, onChange: (Boolean) -> Unit) {
     val audio = LocalUiAudio.current
     Switch(
         checked = checked,
-        onCheckedChange = { audio.play(Sfx.Toggle); onChange(it) },
+        onCheckedChange = { audio.play(Sfx.Toggle); audio.tick(); onChange(it) },
         colors = SwitchDefaults.colors(
             checkedTrackColor = MgpColors.Green,
             checkedThumbColor = Color.White,

@@ -1,5 +1,10 @@
 package com.funpixelnest.mgp.audio
 
+import android.os.VibratorManager
+import android.os.Vibrator
+import android.os.VibrationEffect
+import android.os.SystemClock
+import android.os.Build
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
@@ -55,6 +60,32 @@ class AndroidUiAudio(context: Context) : UiAudio {
             else -> 0.7f
         }
         pool.play(id, v, v, 1, 0, 1f)
+    }
+
+    /** Light tap: the system "click" effect where available, else a 12 ms soft pulse. */
+    private val vibrator: Vibrator? = runCatching {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (app.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            app.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        }
+    }.getOrNull()?.takeIf { it.hasVibrator() }
+    private var lastTick = 0L
+
+    override fun tick() {
+        val v = vibrator ?: return
+        if (!foreground) return
+        val now = SystemClock.uptimeMillis()
+        if (now - lastTick < 40) return // one tick per tap, even if two handlers fire
+        lastTick = now
+        runCatching {
+            when {
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> v.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> v.vibrate(VibrationEffect.createOneShot(12, 60))
+                else -> @Suppress("DEPRECATION") v.vibrate(12)
+            }
+        }
     }
 
     override fun setMusic(on: Boolean) {

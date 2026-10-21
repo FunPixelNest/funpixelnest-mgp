@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Light tap vibration on buttons (Settings → Vibrations turns it off). -->
+    <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Match result notifications (Android 13+ asks the player). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 

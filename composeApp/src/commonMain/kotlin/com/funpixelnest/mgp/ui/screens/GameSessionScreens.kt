@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp.ui.screens
 
+import androidx.compose.material3.CircularProgressIndicator
 import com.funpixelnest.mgp.audio.Sfx
 import com.funpixelnest.mgp.audio.LocalUiAudio
 import androidx.compose.foundation.background
@@ -130,6 +131,27 @@ fun GameRunningBackdrop(game: Game, modifier: Modifier = Modifier) {
         GameIcon(game, 120.dp)
         Spacer(Modifier.height(12.dp))
         Text("Playing ${game.name}…", color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold)
+    }
+}
+
+/**
+ * Opaque "Loading <game>…" cover drawn over the game view until the new game is really running.
+ * Unity keeps showing the last frame of the previous game while it loads the next one; this hides it.
+ */
+@Composable
+fun GameLoadingCover(game: Game, modifier: Modifier = Modifier) {
+    SkyBackground(modifier) {
+        Column(
+            Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            GameIcon(game, 120.dp, cornerRadius = 28.dp)
+            Spacer(Modifier.height(16.dp))
+            Text("Loading ${game.name}…", color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
+            Spacer(Modifier.height(14.dp))
+            CircularProgressIndicator(Modifier.size(36.dp), color = MgpColors.Primary, trackColor = MgpColors.Track, strokeWidth = 4.dp)
+        }
     }
 }
 

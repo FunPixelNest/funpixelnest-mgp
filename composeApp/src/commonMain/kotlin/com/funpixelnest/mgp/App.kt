@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp
 
+import com.funpixelnest.mgp.ui.screens.GameLoadingCover
 import androidx.compose.runtime.CompositionLocalProvider
 import com.funpixelnest.mgp.audio.SettingsGatedAudio
 import com.funpixelnest.mgp.audio.NoAudio
@@ -648,6 +649,26 @@ private fun MainApp(
                                     // not while Unity / the WebGL build is still loading.
                                     androidx.compose.animation.AnimatedVisibility(visible = hud.reported, enter = fadeIn(), exit = fadeOut()) {
                                         GameHudOverlay(hud, onPause = { pauseGame() }, gameId = current.ticket.gameId)
+                                    }
+                                    // Cover the game view until this game is really running (first HUD values), so the
+                                    // last frame of the previous game never shows while Unity loads the next one.
+                                    // After 10 s it lifts anyway, for a game that never reports.
+                                    var gameShown by remember(current.ticket) { mutableStateOf(false) }
+                                    LaunchedEffect(current.ticket, hud.reported) {
+                                        if (hud.reported) {
+                                            delay(200)
+                                            gameShown = true
+                                        } else {
+                                            delay(10_000)
+                                            gameShown = true
+                                        }
+                                    }
+                                    androidx.compose.animation.AnimatedVisibility(
+                                        visible = !gameShown,
+                                        enter = EnterTransition.None,
+                                        exit = fadeOut(tween(250)),
+                                    ) {
+                                        repository.game(current.ticket.gameId)?.let { GameLoadingCover(it) }
                                     }
                                 }
                             }

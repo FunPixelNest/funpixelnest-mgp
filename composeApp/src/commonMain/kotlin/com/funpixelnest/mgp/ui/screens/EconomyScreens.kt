@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp.ui.screens
 
+import com.funpixelnest.mgp.ui.components.FitText
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.OndemandVideo
@@ -175,11 +176,14 @@ fun StoreScreen(
                         .background(Brush.horizontalGradient(listOf(MgpColors.Primary, MgpColors.PrimaryLight)))
                         .padding(horizontal = 22.dp, vertical = 10.dp),
                 )
-                Row(
-                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    repository.storePacks().forEachIndexed { index, pack -> PackCard(pack, index, onBuy = { actions.buyPack(pack) }) }
+                // A grid that fits the screen width (3 per row), so no card is cut at the edge on narrow phones.
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    repository.storePacks().withIndex().chunked(3).forEach { row ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            row.forEach { (index, pack) -> PackCard(pack, index, onBuy = { actions.buyPack(pack) }, modifier = Modifier.weight(1f)) }
+                            repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                        }
+                    }
                 }
                 Hint("Payments aren't connected yet, so buying is a free demo.", Modifier.fillMaxWidth().padding(bottom = 10.dp))
             }
@@ -451,7 +455,7 @@ private fun MilestoneCard(c: Challenge, modifier: Modifier, onClaim: () -> Unit)
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         ArtImage(Art.challenge(c.id), 46.dp)
-        Text(c.title, color = MgpColors.Navy, fontWeight = FontWeight.Bold, fontSize = 11.sp, textAlign = TextAlign.Center, lineHeight = 13.sp, modifier = Modifier.weight(1f).padding(top = 2.dp))
+        FitText(c.title, color = MgpColors.Navy, fontWeight = FontWeight.Bold, fontSize = 11.sp, textAlign = TextAlign.Center, lineHeight = 13.sp, maxLines = 3, modifier = Modifier.weight(1f).padding(top = 2.dp))
         ProgressPill(c.fraction, Modifier.fillMaxWidth().padding(vertical = 4.dp), "${formatShort(c.progress)}/${formatShort(c.target)}", height = 13.dp)
         when {
             c.claimed -> Icon(Icons.Rounded.CheckCircle, "Claimed", tint = MgpColors.Green, modifier = Modifier.size(22.dp))

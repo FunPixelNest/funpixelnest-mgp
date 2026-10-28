@@ -129,30 +129,21 @@ fun DisplayText(
     textAlign: TextAlign? = null,
     maxLines: Int = 2,
 ) {
-    val base = MaterialTheme.typography.headlineMedium.copy(
+    val style = MaterialTheme.typography.headlineMedium.copy(
         fontSize = size,
         lineHeight = size * 1.05f,
         fontWeight = FontWeight.Bold,
         textAlign = textAlign ?: TextAlign.Unspecified,
     )
-    Box(modifier) {
-        if (outline != null) {
-            Text(
-                text,
-                style = base.copy(color = outline, drawStyle = Stroke(width = size.value / 3f)),
-                maxLines = maxLines,
-            )
-        }
-        Text(
-            text,
-            style = base.copy(
-                color = color,
-                shadow = if (outline != null) Shadow(Color(0x55000E40), Offset(0f, 3f), 4f) else null,
-            ),
-            maxLines = maxLines,
-            overflow = TextOverflow.Ellipsis,
-        )
+    // Shrinks to fit narrow screens / large font settings instead of cutting the title ("LEAG...").
+    val layers = buildList {
+        if (outline != null) add(TextLayer(outline, drawStyle = Stroke(width = size.value / 3f)))
+        add(TextLayer(color, shadow = if (outline != null) Shadow(Color(0x55000E40), Offset(0f, 3f), 4f) else null))
     }
+    FitTextLayout(
+        text, style, layers, modifier, maxLines, minScale = 0.55f,
+        fillWidth = textAlign == TextAlign.Center || textAlign == TextAlign.End,
+    )
 }
 
 @Composable
@@ -526,8 +517,14 @@ fun Avatar(
 
 @Composable
 fun ArtImage(res: DrawableResource, size: Dp, modifier: Modifier = Modifier, description: String? = null) {
-    Image(painterResource(res), description, modifier.size(size), contentScale = ContentScale.Fit)
+    Image(painterResource(res), description, modifier.size(size * LocalArtScale.current), contentScale = ContentScale.Fit)
 }
+
+/**
+ * Scale for [ArtImage] sizes. Pop-ups lower it on short screens so the whole card (and its buttons) fits
+ * without scrolling or cut-off art.
+ */
+val LocalArtScale = androidx.compose.runtime.compositionLocalOf { 1f }
 
 /** Big tab header: art + title + subtitle (CHALLENGES, LEAGUES, STORE, REWARDS). */
 @Composable

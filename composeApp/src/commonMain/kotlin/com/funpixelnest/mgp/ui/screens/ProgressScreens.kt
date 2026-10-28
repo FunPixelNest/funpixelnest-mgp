@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp.ui.screens
 
+import com.funpixelnest.mgp.ui.components.FitText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -246,7 +247,7 @@ private fun MiniSection(
                     } else {
                         ArtImage(Art.challenge(c.id), 44.dp)
                     }
-                    Text(c.title, color = MgpColors.Navy, fontWeight = FontWeight.Bold, fontSize = 12.sp, lineHeight = 15.sp, maxLines = 3, modifier = Modifier.padding(top = 4.dp).weight(1f))
+                    FitText(c.title, color = MgpColors.Navy, fontWeight = FontWeight.Bold, fontSize = 12.sp, lineHeight = 15.sp, maxLines = 3, modifier = Modifier.padding(top = 4.dp).weight(1f))
                     ProgressPill(c.fraction, Modifier.fillMaxWidth().padding(vertical = 4.dp), "${formatCompact(c.progress)}/${formatCompact(c.target)}", color = color, height = 14.dp)
                     when {
                         c.claimed -> Row(verticalAlignment = Alignment.CenterVertically) {
@@ -395,9 +396,9 @@ fun LeaguesScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             ArtImage(Art.league(t), 44.dp)
-                            Text(t.label.uppercase(), color = MgpColors.Navy, fontSize = 8.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+                            FitText(t.label.uppercase(), color = MgpColors.Navy, fontSize = 8.sp, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp))
                             when {
-                                current -> Text("CURRENT", color = MgpColors.Primary, fontSize = 8.sp, fontWeight = FontWeight.ExtraBold)
+                                current -> FitText("CURRENT", color = MgpColors.Primary, fontSize = 8.sp, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp))
                                 passed -> Icon(Icons.Rounded.CheckCircle, null, tint = MgpColors.Green, modifier = Modifier.size(16.dp))
                                 else -> Icon(Icons.Rounded.Lock, null, tint = Color(0xFF6E86B5), modifier = Modifier.size(16.dp))
                             }

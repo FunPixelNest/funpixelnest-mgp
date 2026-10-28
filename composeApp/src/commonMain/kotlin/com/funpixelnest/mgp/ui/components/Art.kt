@@ -152,6 +152,13 @@ object Art {
         else -> Res.drawable.pack_5
     }
 
+    /** The same chest opened (shown when a chest reward is claimed). */
+    fun chestOpen(id: String): DrawableResource = when (id) {
+        "diamond" -> Res.drawable.art_hero_chest          // open, full of gems
+        "wooden", "gold", "epic" -> Res.drawable.chest_epic // open treasure chest
+        else -> Res.drawable.art_welcome_chest             // free / silver: the open blue-silver chest
+    }
+
     fun chest(id: String): DrawableResource = when (id) {
         "wooden" -> Res.drawable.chest_wooden
         "silver" -> Res.drawable.chest_silver

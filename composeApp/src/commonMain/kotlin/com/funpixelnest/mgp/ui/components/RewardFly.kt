@@ -163,17 +163,26 @@ fun shownAmount(actual: Long, currency: Currency, state: RewardFlyState, holder:
     LaunchedEffect(Unit) { delay(1500); ready = true }
     // When the holder (pop-up) last changed: a reward that lands just after a pop-up closed came from that pop-up.
     var holderChanged by remember { mutableStateOf(TimeSource.Monotonic.markNow()) }
-    LaunchedEffect(Unit) { snapshotFlow { holder() }.collect { holderChanged = TimeSource.Monotonic.markNow() } }
+    var holderBefore by remember { mutableStateOf<Any?>(null) }   // what held rewards before the last change
+    LaunchedEffect(Unit) {
+        var last: Any? = holder()
+        snapshotFlow { holder() }.collect { now ->
+            if (now != last) { holderBefore = last; last = now; holderChanged = TimeSource.Monotonic.markNow() }
+        }
+    }
     LaunchedEffect(actual, ready) {
         val from = shown
         if (!ready || actual <= from) {
             shown = actual
             return@LaunchedEffect
         }
-        // Wait for the counter to be on screen (it's hidden during games and some screens) and for the pop-up that
-        // was open when the reward arrived to close (the icons then start from its Claim / Close button), even if
-        // another pop-up opens next.
-        val heldBy = if (holderChanged.elapsedNow().inWholeMilliseconds < 600) null else holder()
+        // Wait for the counter to be on screen (it's hidden during games and some screens) and for the reward's
+        // pop-up to close (the icons then start from its Claim / Close button). A reward often arrives together with its pop-up (chest, lucky spin): give that pop-up a moment to appear,
+        // then hold the flight until it closes. If a pop-up had just closed and another opened (Welcome -> Daily),
+        // the reward came from the closed one, so fly now.
+        delay(250)
+        val justSwapped = holderChanged.elapsedNow().inWholeMilliseconds < 850 && holderBefore != null
+        val heldBy = if (justSwapped) null else holder()
         snapshotFlow { state.targets[currency] != null && (heldBy == null || holder() != heldBy) }.first { it }
         delay(120) // let the header settle into place
         val icons = state.launch(currency, actual - from)

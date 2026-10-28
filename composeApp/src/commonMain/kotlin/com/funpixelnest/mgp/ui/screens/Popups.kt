@@ -1,5 +1,12 @@
 package com.funpixelnest.mgp.ui.screens
 
+import kotlinx.coroutines.delay
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.alpha
+import androidx.compose.animation.core.animateFloatAsState
+import com.funpixelnest.mgp.ui.components.LocalArtScale
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.layout.BoxWithConstraints
 import com.funpixelnest.mgp.audio.Sfx
 import com.funpixelnest.mgp.audio.LocalUiAudio
 import androidx.compose.material.icons.rounded.OndemandVideo
@@ -132,7 +139,7 @@ fun PopupHost(popup: Popup?, repository: PlatformRepository, actions: PopupActio
     LaunchedEffect(popup) {
         when (popup) {
             null -> Unit
-            is Popup.Reward -> audio.play(Sfx.Reward)
+            is Popup.Reward -> audio.play(if (popup.art != null) Sfx.Popup else Sfx.Reward) // chests chime when they open
             is Popup.LevelUp -> audio.play(Sfx.LevelUp)
             is Popup.Message -> audio.play(if (popup.title == "Oops") Sfx.Error else Sfx.Popup)
             else -> audio.play(Sfx.Popup)
@@ -161,14 +168,18 @@ fun PopupHost(popup: Popup?, repository: PlatformRepository, actions: PopupActio
             label = "popup",
         ) { shown ->
             if (shown != null) {
-                Box(
+                BoxWithConstraints(
                     Modifier
                         .fillMaxSize()
                         .windowInsetsPadding(WindowInsets.safeDrawing)
                         .imePadding()
                         .padding(18.dp),
                     contentAlignment = Alignment.Center,
-                ) { PopupContent(shown, repository, actions) }
+                ) {
+                    // Pop-up art was sized for tall phones; on shorter screens shrink it so buttons stay visible.
+                    val artScale = (maxHeight / 720.dp).coerceIn(0.62f, 1f)
+                    CompositionLocalProvider(LocalArtScale provides artScale) { PopupContent(shown, repository, actions) }
+                }
             }
         }
     }
@@ -340,18 +351,20 @@ private fun WelcomePopup(repository: PlatformRepository, actions: PopupActions, 
 @Composable
 private fun DailyBonusPopup(repository: PlatformRepository, onClaim: () -> Unit, onClose: () -> Unit) {
     val bonus by repository.dailyBonus.collectAsState()
+    val k = LocalArtScale.current // the gift and the space for it shrink together on short screens
     Box(Modifier.widthIn(max = 440.dp).fillMaxWidth()) {
         Column(
             Modifier
-                .padding(top = 50.dp)
+                .padding(top = 50.dp * k)
                 .shadow(18.dp, RoundedCornerShape(28.dp))
                 .clip(RoundedCornerShape(28.dp))
                 .background(MgpColors.Card)
                 .border(3.dp, Color(0xFF5B9BFF), RoundedCornerShape(28.dp))
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { },
+                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { }
+                .verticalScroll(rememberScrollState()),
         ) {
             Column(
-                Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color(0xFF1C56D8), Color(0xFF3D8BFF)))).padding(top = 96.dp, bottom = 16.dp),
+                Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color(0xFF1C56D8), Color(0xFF3D8BFF)))).padding(top = 96.dp * k, bottom = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 DisplayText("DAILY BONUS", size = 36.sp, color = Color.White)
@@ -378,7 +391,7 @@ private fun DailyBonusPopup(repository: PlatformRepository, onClaim: () -> Unit,
         }
         ArtImage(Art.gift, 170.dp, Modifier.align(Alignment.TopCenter))
         Box(
-            Modifier.align(Alignment.TopEnd).padding(top = 64.dp, end = 12.dp).size(40.dp).clip(CircleShape).border(2.dp, Color.White, CircleShape).clickable(onClick = onClose),
+            Modifier.align(Alignment.TopEnd).padding(top = 50.dp * k + 14.dp, end = 12.dp).size(40.dp).clip(CircleShape).border(2.dp, Color.White, CircleShape).clickable(onClick = onClose),
             contentAlignment = Alignment.Center,
         ) { Icon(Icons.Rounded.Close, "Close", tint = Color.White) }
     }
@@ -388,16 +401,19 @@ private fun DailyBonusPopup(repository: PlatformRepository, onClaim: () -> Unit,
 private fun RewardPopup(popup: Popup.Reward, actions: PopupActions, onClose: () -> Unit) {
     var doubled by remember(popup) { mutableStateOf(false) }
     val times = if (doubled) 2 else 1
+    // A chest reward opens first (shake, then the lid pops open); the amount shows once it's open.
+    var revealed by remember(popup) { mutableStateOf(popup.art == null) }
+    val reveal by animateFloatAsState(if (revealed) 1f else 0f, tween(260), label = "reveal")
     PopupCard(onClose = onClose) {
-        val art = when {
-            popup.art != null -> Art.chest(popup.art)
-            popup.reward.gems > 0 && popup.reward.coins == 0L -> Art.gem
-            else -> Art.coinsPile
+        if (popup.art != null) {
+            ChestOpening(popup.art, Modifier.align(Alignment.CenterHorizontally)) { revealed = true }
+        } else {
+            val art = if (popup.reward.gems > 0 && popup.reward.coins == 0L) Art.gem else Art.coinsPile
+            ArtImage(art, 150.dp, Modifier.align(Alignment.CenterHorizontally))
         }
-        ArtImage(art, 150.dp, Modifier.align(Alignment.CenterHorizontally))
         DisplayText(popup.title.uppercase(), size = 26.sp, textAlign = TextAlign.Center, modifier = Modifier.align(Alignment.CenterHorizontally))
-        Text("YOU GOT", color = MgpColors.Primary, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp))
-        Row(Modifier.align(Alignment.CenterHorizontally).padding(vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+        Text("YOU GOT", color = MgpColors.Primary, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp).alpha(reveal))
+        Row(Modifier.align(Alignment.CenterHorizontally).padding(vertical = 10.dp).alpha(reveal).scale(0.85f + 0.15f * reveal), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
             if (popup.reward.coins > 0) CoinAmount(popup.reward.coins * times, iconSize = 40.dp, fontSize = 32.sp)
             if (popup.reward.gems > 0) CoinAmount(popup.reward.gems * times, iconSize = 36.dp, fontSize = 32.sp, gems = true)
         }
@@ -406,6 +422,61 @@ private fun RewardPopup(popup: Popup.Reward, actions: PopupActions, onClose: () 
             DoubleRewardButton(actions, popup.title, listOf(popup.reward), doubled, Modifier.padding(bottom = 10.dp)) { doubled = true }
         }
         GlossyButton(if (doubled) "Collect" else "Awesome!", onClose, color = ButtonColor.Green, modifier = Modifier.fillMaxWidth())
+    }
+}
+
+/** A closed chest that shakes, then pops open (open-chest art, light rays) and calls [onOpened]. */
+@Composable
+private fun ChestOpening(chestId: String, modifier: Modifier = Modifier, onOpened: () -> Unit) {
+    val audio = LocalUiAudio.current
+    var opened by remember(chestId) { mutableStateOf(false) }
+    val shake = remember { Animatable(0f) }
+    val pop = remember { Animatable(1f) }
+    val rays = remember { Animatable(0f) }
+    val spin = rememberInfiniteTransition(label = "chestRays")
+    val angle by spin.animateFloat(0f, 360f, infiniteRepeatable(tween(10_000, easing = LinearEasing)), label = "angle")
+    LaunchedEffect(chestId) {
+        delay(300)
+        repeat(6) { i -> shake.animateTo(if (i % 2 == 0) 1f else -1f, tween(65)) }
+        shake.animateTo(0f, tween(60))
+        opened = true
+        onOpened()
+        audio.play(Sfx.Reward)
+        audio.tick()
+        pop.snapTo(0.7f)
+        launch { rays.animateTo(1f, tween(450)) }
+        pop.animateTo(1f, spring(dampingRatio = 0.42f, stiffness = 260f))
+    }
+    val k = LocalArtScale.current
+    Box(modifier.size(200.dp * k), contentAlignment = Alignment.Center) {
+        if (rays.value > 0f) {
+            Canvas(Modifier.fillMaxSize().rotate(angle).alpha(rays.value)) {
+                val c = center
+                val r = size.minDimension / 2
+                for (i in 0 until 12) {
+                    rotate(i * 30f, c) {
+                        val p = Path().apply {
+                            moveTo(c.x, c.y)
+                            lineTo(c.x - r * 0.13f, c.y - r)
+                            lineTo(c.x + r * 0.13f, c.y - r)
+                            close()
+                        }
+                        drawPath(p, Brush.radialGradient(listOf(Color(0x99FFD54F), Color.Transparent), c, r))
+                    }
+                }
+                drawCircle(Brush.radialGradient(listOf(Color(0x99FFF3B0), Color.Transparent), c, r * 0.7f), r * 0.7f, c)
+            }
+        }
+        ArtImage(
+            if (opened) Art.chestOpen(chestId) else Art.chest(chestId),
+            160.dp,
+            Modifier.graphicsLayer {
+                rotationZ = shake.value * 5f
+                translationX = shake.value * 3.dp.toPx()
+                scaleX = pop.value
+                scaleY = pop.value
+            },
+        )
     }
 }
 

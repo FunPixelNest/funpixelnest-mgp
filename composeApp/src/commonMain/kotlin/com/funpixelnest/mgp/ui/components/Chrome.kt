@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp.ui.components
 
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -216,13 +217,13 @@ private fun BottomItem(tab: Tab, selected: Boolean, badge: Int, onClick: () -> U
                 if (badge > 0) CountBadge(badge, Modifier.align(Alignment.TopEnd).offset(x = 10.dp, y = (-6).dp))
             }
             Spacer(Modifier.height(3.dp))
-            Text(
+            FitText(
                 tab.label.uppercase(),
                 color = tint,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.ExtraBold,
-                maxLines = 1,
-                softWrap = false,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
             )
         }
         Box(

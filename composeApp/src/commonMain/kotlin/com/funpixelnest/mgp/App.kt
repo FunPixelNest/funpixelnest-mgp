@@ -1,6 +1,12 @@
 package com.funpixelnest.mgp
 
 import com.funpixelnest.mgp.ui.StartupLoader
+import com.funpixelnest.mgp.ui.components.Currency
+import com.funpixelnest.mgp.ui.components.LocalRewardFly
+import com.funpixelnest.mgp.ui.components.RewardFlyOverlay
+import com.funpixelnest.mgp.ui.components.rememberRewardFly
+import com.funpixelnest.mgp.ui.components.rewardFlyRoot
+import com.funpixelnest.mgp.ui.components.shownAmount
 import com.funpixelnest.mgp.ui.screens.GameLoadingCover
 import androidx.compose.runtime.CompositionLocalProvider
 import com.funpixelnest.mgp.audio.SettingsGatedAudio
@@ -229,6 +235,14 @@ private fun MainApp(
 ) {
     val wallet by repository.wallet.collectAsState()
     val profile by repository.profile.collectAsState()
+    // Coins / gems fly into the header when the balance goes up; the header shows these lagging values.
+    val rewardFly = rememberRewardFly()
+    // Rewards fly in once the pop-up that gave them closes. The welcome bonus is credited at sign-up, so it is held back
+    // until the player claims it in the Welcome pop-up.
+    val heldWelcome = if (profile.welcomePending) profile.welcomeCoins else 0L
+    val openPopup = { navigator.popup }
+    val shownCoins = shownAmount((wallet.coins - heldWelcome).coerceAtLeast(0), Currency.Coins, rewardFly, openPopup)
+    val shownGems = shownAmount(wallet.gems, Currency.Gems, rewardFly, openPopup)
     val challenges by repository.challenges.collectAsState()
     val scope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
@@ -575,7 +589,8 @@ private fun MainApp(
     }
     val showChrome = joining != null || onTabRoot || current is Screen.GameDetail
 
-    SkyBackground {
+    CompositionLocalProvider(LocalRewardFly provides rewardFly) {
+    SkyBackground(Modifier.rewardFlyRoot(rewardFly)) {
         Column(Modifier.fillMaxSize()) {
             AnimatedVisibility(
                 showChrome,
@@ -586,8 +601,8 @@ private fun MainApp(
                     name = repository.player.displayName,
                     avatarId = profile.avatarId,
                     level = profile.levelInfo,
-                    coins = wallet.coins,
-                    gems = wallet.gems,
+                    coins = shownCoins,
+                    gems = shownGems,
                     unread = profile.unreadNotifications,
                     onAvatarClick = { navigator.push(Screen.Profile) },
                     onCurrencyClick = { navigator.selectTab(Tab.Store) },
@@ -892,6 +907,9 @@ private fun MainApp(
                 modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xE613205B)).padding(horizontal = 18.dp, vertical = 12.dp),
             )
         }
+
+        RewardFlyOverlay(rewardFly)
+    }
     }
 }
 

@@ -114,9 +114,9 @@ fun PlayerHeader(
                 }
             }
             Spacer(Modifier.width(6.dp))
-            CurrencyPill(coins, gems = false, showPlus = !compact, onClick = onCurrencyClick)
+            CurrencyPill(coins, gems = false, showPlus = !compact, onClick = onCurrencyClick, modifier = Modifier.rewardTarget(Currency.Coins))
             Spacer(Modifier.width(5.dp))
-            CurrencyPill(gems, gems = true, showPlus = !compact, onClick = onCurrencyClick)
+            CurrencyPill(gems, gems = true, showPlus = !compact, onClick = onCurrencyClick, modifier = Modifier.rewardTarget(Currency.Gems))
             Spacer(Modifier.width(5.dp))
             TileIconButton(Icons.Rounded.Menu, "More options", onMenuClick, size = 40.dp, tint = MgpColors.Navy, badge = unread)
         }
@@ -137,9 +137,9 @@ fun XpBar(progress: Float, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun CurrencyPill(amount: Long, gems: Boolean, showPlus: Boolean, onClick: () -> Unit) {
+private fun CurrencyPill(amount: Long, gems: Boolean, showPlus: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(
-        Modifier
+        modifier
             .shadow(3.dp, RoundedCornerShape(12.dp))
             .clip(RoundedCornerShape(12.dp))
             .background(MgpColors.Card)

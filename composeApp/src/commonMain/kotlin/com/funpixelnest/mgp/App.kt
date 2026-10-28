@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp
 
+import com.funpixelnest.mgp.ui.StartupLoader
 import com.funpixelnest.mgp.ui.screens.GameLoadingCover
 import androidx.compose.runtime.CompositionLocalProvider
 import com.funpixelnest.mgp.audio.SettingsGatedAudio
@@ -170,7 +171,10 @@ fun App(
         // Live player counts on the game cards (random placeholder numbers until there are real players).
         LaunchedEffect(repository) { LivePlayers.simulate(repository.games().map { it.id }) }
         val scope = rememberCoroutineScope()
-        LaunchedEffect(repository) { repository.initialize() }
+        // Start-up: the first screen's loading bar follows the real work (backend, profile, game art).
+        val startup = remember { StartupLoader() }
+        var startRun by remember { mutableStateOf(0) }
+        LaunchedEffect(repository, startRun) { startup.run(repository) }
 
         // Signed out (first launch or after Log out): start fresh on the Games tab.
         LaunchedEffect(status) {
@@ -186,10 +190,14 @@ fun App(
         }
         Box(root) {
             when (val s = status) {
-                BackendStatus.Loading -> SplashScreen(message = null, onRetry = null)
-                is BackendStatus.Error -> SplashScreen(message = s.message, onRetry = { scope.launch { repository.initialize() } })
-                BackendStatus.SignedOut -> LoginScreen(repository)
-                BackendStatus.Ready -> MainApp(repository, navigator, gameLauncher, settings, ads, analytics)
+                is BackendStatus.Error -> SplashScreen(message = s.message, onRetry = { startRun++ })
+                else -> if (!startup.done) {
+                    SplashScreen(message = null, onRetry = null, progress = startup.progress, step = startup.label)
+                } else when (s) {
+                    BackendStatus.SignedOut -> LoginScreen(repository)
+                    BackendStatus.Ready -> MainApp(repository, navigator, gameLauncher, settings, ads, analytics)
+                    else -> SplashScreen(message = null, onRetry = null, progress = startup.progress, step = startup.label)
+                }
             }
         }
         // Calm music on the sign-in / loading screens too (in the app, MainApp decides).

@@ -1,5 +1,7 @@
 package com.funpixelnest.mgp.ui.screens
 
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -82,9 +84,12 @@ fun Clouds(modifier: Modifier = Modifier) {
     }
 }
 
-/** Splash: logo, loading bar; or an error with Try again. */
+/**
+ * Splash: logo and a loading bar that follows the real start-up work ([progress] 0..1, only forward, with the
+ * current [step] and a percentage); or an error with Try again.
+ */
 @Composable
-fun SplashScreen(message: String?, onRetry: (() -> Unit)?) {
+fun SplashScreen(message: String?, onRetry: (() -> Unit)?, progress: Float = 0f, step: String = "") {
     SkyBackground {
         Clouds(Modifier.align(Alignment.BottomCenter))
         Column(
@@ -95,8 +100,10 @@ fun SplashScreen(message: String?, onRetry: (() -> Unit)?) {
             ArtImage(Art.logo, 280.dp, description = "FunPixelNest")
             Spacer(Modifier.height(48.dp))
             if (message == null) {
-                val t = rememberInfiniteTransition()
-                val p by t.animateFloat(0.05f, 1f, infiniteRepeatable(tween(1_600, easing = LinearEasing), RepeatMode.Restart))
+                // Smooth, forward-only bar (the value comes from StartupLoader).
+                val shown by animateFloatAsState(progress.coerceIn(0f, 1f), tween(350, easing = LinearEasing), label = "load")
+                val shine = rememberInfiniteTransition(label = "shine")
+                val sweep by shine.animateFloat(-0.3f, 1.3f, infiniteRepeatable(tween(1_400, easing = LinearEasing), RepeatMode.Restart), label = "sweep")
                 Box(
                     Modifier
                         .widthIn(max = 260.dp)
@@ -109,14 +116,34 @@ fun SplashScreen(message: String?, onRetry: (() -> Unit)?) {
                 ) {
                     Box(
                         Modifier
-                            .fillMaxWidth(p)
+                            .fillMaxWidth(shown.coerceAtLeast(0.04f))
                             .height(16.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Brush.horizontalGradient(listOf(MgpColors.PrimaryLight, MgpColors.Primary))),
+                            .background(Brush.horizontalGradient(listOf(MgpColors.PrimaryLight, MgpColors.Primary)))
+                            .drawWithContent {
+                                drawContent()
+                                // A soft light sweeping along the filled part.
+                                val x = size.width * sweep
+                                drawRect(
+                                    Brush.horizontalGradient(
+                                        listOf(Color.Transparent, Color.White.copy(alpha = 0.35f), Color.Transparent),
+                                        startX = x - size.height * 2, endX = x + size.height * 2,
+                                    ),
+                                )
+                            },
                     )
                 }
                 Spacer(Modifier.height(14.dp))
-                Text("LOADING...", color = MgpColors.PrimaryDark, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
+                Text(
+                    "LOADING... ${(shown * 100).toInt()}%",
+                    color = MgpColors.PrimaryDark,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 18.sp,
+                )
+                if (step.isNotEmpty()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(step, color = MgpColors.TextMuted, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                }
             } else {
                 Panel {
                     Text("Couldn't connect", fontWeight = FontWeight.ExtraBold, color = MgpColors.Navy, fontSize = 18.sp)

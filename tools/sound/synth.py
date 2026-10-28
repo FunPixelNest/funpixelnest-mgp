@@ -119,12 +119,10 @@ for cycle in range(3):
             pan = prng.uniform(-0.6, 0.6)
             add(total, st, pl * 0.045 * vel, pan)
             add(total, st + beat * 0.75, pl * 0.016 * vel, -pan)  # echo
-    # airy texture: filtered noise shimmer
-na = 3 * N
-air1 = lowpass(highpass(rng.normal(0, 1, N * 2), 3000), 6000)[N:]  # one settled period
-air = np.tile(air1, 3) * 0.004
-air *= 1 + 0.5 * np.sin(2 * np.pi * np.arange(na) / N * 2)
-total[:, 0] += air; total[:, 1] += np.roll(air, 1234)
+# No noise layer: an earlier "airy" noise shimmer sounded like a hiss ("shhh") on phone speakers.
+# Gentle master low-pass so nothing above ~7 kHz (where hiss lives) reaches the loop; it is periodic, so filter
+# the 3-cycle render and keep the settled middle cycle as before.
+total = np.stack([lowpass(total[:, 0], 7000), lowpass(total[:, 1], 7000)], 1)
 
 wet = np.stack([reverb(total[:, 0], 0.35), reverb(total[:, 1], 0.35)], 1)
 loop = wet[N:2 * N]

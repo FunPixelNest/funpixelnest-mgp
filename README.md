@@ -124,7 +124,7 @@ development. The real backend never adds bots.
 
 - Package / bundle ID: `com.funpixelnest.mgp`
 - Game ids and tournament ids in `SampleCatalog` must match `supabase/migrations/*_seed.sql` and the Unity games.
-- "Flappy Bird" is listed as **Flap Dash** (the original name is trademarked).
+- "Flappy Bird" is listed as **Bird Dash** (game id `flap_dash`; the original name is trademarked).
 - The web version can't show emoji (it draws text with the app's fonts), so the UI uses drawn icons; put
   coins in text with `CoinText("… 🪙 …")`.
 

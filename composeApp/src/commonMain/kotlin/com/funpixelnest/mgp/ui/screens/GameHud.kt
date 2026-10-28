@@ -72,7 +72,8 @@ private val Heart = Color(0xFFFF4D6D)
  *
  * It floats over the top of the game (no bar of its own), with a soft shade behind the status bar, so the
  * HUD and the game read as one screen. The game keeps this area clear (launch data hudTop / FPN.insetTop)
- * and hides its own HUD inside the app. Lives and timer are greyed out for games that don't have them.
+ * and hides its own HUD inside the app. The lives pill appears only in games that have lives; the timer is
+ * greyed out for games without one.
  */
 @Composable
 fun GameHudOverlay(
@@ -103,9 +104,14 @@ fun GameHudOverlay(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 PauseButton(onPause)
-                // A game's own count (e.g. arrows left in Arrow Duel) takes the lives slot.
-                val counter = hud.counter
-                if (counter != null) CounterPill(counter, counterKind(gameId)) else LivesPill(hud.lives)
+                // A game's own count (e.g. arrows left in Arrow Duel) takes the lives slot. Games without lives
+                // show nothing here. Solitaire Slots shows its spins next to its own Spin button, so not here.
+                val counter = hud.counter.takeIf { gameId !in GAMES_WITHOUT_HUD_COUNTER }
+                val lives = hud.lives
+                when {
+                    counter != null -> CounterPill(counter, counterKind(gameId))
+                    lives != null -> LivesPill(lives)
+                }
             }
             ScorePill(hud.score, shown = hud.reported, modifier = Modifier.align(Alignment.Center))
             TimerPill(hud.secondsLeft, modifier = Modifier.align(Alignment.CenterEnd))
@@ -132,6 +138,9 @@ private fun PauseButton(onPause: () -> Unit) {
         Icon(Icons.Rounded.Pause, null, tint = Color.White, modifier = Modifier.size(26.dp))
     }
 }
+
+/** Games whose counter is already shown inside the game (Slots: spins next to the Spin button). */
+private val GAMES_WITHOUT_HUD_COUNTER = setOf("slots")
 
 /** What a game's counter counts, shown with its own icon (screen readers say "<label> <count>"). */
 private class CounterKind(val icon: ImageVector, val label: String)
@@ -160,20 +169,18 @@ private fun CounterPill(count: Int, kind: CounterKind) {
 }
 
 @Composable
-private fun LivesPill(lives: Int?) {
-    val enabled = lives != null
+private fun LivesPill(lives: Int) {
     Row(
         Modifier
             .height(36.dp)
             .glass(RoundedCornerShape(18.dp))
-            .alpha(if (enabled) 1f else 0.45f)
             .padding(horizontal = 10.dp)
-            .semantics { contentDescription = if (enabled) "Lives $lives" else "No lives in this game" },
+            .semantics { contentDescription = "Lives $lives" },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Rounded.Favorite, null, tint = if (enabled) Heart else Color(0xFFB8C0D0), modifier = Modifier.size(20.dp))
+        Icon(Icons.Rounded.Favorite, null, tint = Heart, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(5.dp))
-        Text(if (enabled) "$lives" else "–", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+        Text("$lives", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
     }
 }
 

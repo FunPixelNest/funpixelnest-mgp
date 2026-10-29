@@ -50,7 +50,7 @@ object SampleCatalog {
     fun howToPlay(gameId: String): String = when (gameId) {
         "solitaire" -> "Move all cards to the four foundations, Ace to King by suit. Fewer moves and faster finishes score more."
         "block_puzzle" -> "Drag blocks onto the board. Fill a full row or column to clear it. Clear several at once for combo points."
-        "bingo" -> "Tap called numbers on your cards. Complete lines, columns or the full card for a BINGO. Quick daubs earn bonus points."
+        "bingo" -> "Each ball is called with a short timer: tap its number on your card before the timer runs out. Fast taps score more and fill the multiplier. Complete a row, column, diagonal or the four corners for a BINGO, and clear the whole card for a big bonus. Tapping a number that wasn't called costs points. 60-second round."
         "bubble_shooter" -> "Aim and shoot bubbles to match 3 or more of the same colour, drop hanging bubbles for combo points, and clear the board before the timer runs out."
         "mahjong" -> "Tap two matching free tiles (not covered and open on the left or right) to clear them. Chain matches for combo bonuses and clear the board before the 2-minute timer runs out."
         "blackjack" -> "Tap a column to place the dealt card and make 21 in each column. Going over 21 costs one of your 3 lives. Park a card in Hold, use Undo, and clear the deck before time runs out."

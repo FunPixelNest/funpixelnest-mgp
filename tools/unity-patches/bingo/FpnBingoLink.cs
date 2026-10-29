@@ -10,8 +10,8 @@ namespace FunPixelNest.Bingo
     /// <summary>
     /// Bingo Flash inside the FunPixelNest app (gameplay scene only; no menu, themes or results screen):
     /// - The card and the ball order come from the match seed (same game for everyone in a pool).
-    /// - The app draws the HUD (pause, score, timer); Bingo's own HUD row is hidden and the board keeps clear of
-    ///   the app's HUD and the bottom system bar. No lives.
+    /// - The app draws the HUD (pause, score, timer); Bingo's own HUD row is made invisible but keeps its place,
+    ///   so the board, ball lane and multiplier sit exactly where the original game puts them. No lives.
     /// - Pause, Back and settings (music / sound / vibration) come from the app; Bingo's own pause panel is not used.
     /// - At the end the score (with its breakdown) goes to the app, which shows the result.
     /// Outside the app (Bingo's own build) nothing changes.
@@ -19,9 +19,6 @@ namespace FunPixelNest.Bingo
     public static class FpnBingoLink
     {
         public const string SceneName = "BingoFlashGame";
-
-        /// <summary>Height of Bingo's own HUD row (canvas units) that the app's HUD replaces.</summary>
-        private const float OwnHudRow = 110f;
 
         /// <summary>True when Bingo Flash runs inside the FunPixelNest app.</summary>
         public static bool InApp => FpnPlatform.IsHosted;
@@ -40,14 +37,16 @@ namespace FunPixelNest.Bingo
             return s_random.Next(minInclusive, maxExclusive);
         }
 
-        /// <summary>Called from BingoGameController.Start (after its scene wiring): layout, settings, HUD reporting.</summary>
-        public static void Attach(BingoGameController game, BingoHudView hud, Canvas canvas)
+        /// <summary>Called from BingoGameController.Start (after its scene wiring): settings, HUD row, HUD reporting.
+        /// The layout is left exactly as the original game has it.</summary>
+        public static void Attach(BingoGameController game, BingoHudView hud)
         {
             if (!InApp || game == null) return;
 
             ApplySettings(FpnSession.Settings);
 
-            // Bingo's HUD row (score, timer, pause): hidden, the app's HUD takes its place.
+            // Bingo's HUD row (score, timer, pause): invisible and not tappable, but still laid out (keeps the original
+            // alignment); the app's HUD shows these instead.
             if (hud != null)
             {
                 CanvasGroup group = hud.GetComponent<CanvasGroup>();
@@ -57,25 +56,7 @@ namespace FunPixelNest.Bingo
                 group.blocksRaycasts = false;
             }
 
-            // No banner inside the game view (the app puts it below the game).
-            BingoLayout.SetBannerReserve(24f);
-            FitSafeArea(canvas);
-
             if (game.GetComponent<FpnBingoHud>() == null) game.gameObject.AddComponent<FpnBingoHud>();
-        }
-
-        /// <summary>Keeps the play area below the app's HUD (beyond Bingo's own HUD row) and above the system bar.</summary>
-        private static void FitSafeArea(Canvas canvas)
-        {
-            if (canvas == null) return;
-            Transform safe = canvas.transform.Find("SafeArea");
-            SafeAreaFitter fitter = safe != null ? safe.GetComponent<SafeAreaFitter>() : null;
-            if (fitter == null) return;
-
-            float scale = canvas.scaleFactor > 0f ? canvas.scaleFactor : 1f;
-            float topPx = Mathf.Max(0f, FpnPlatform.AppInsetTop * Screen.height - OwnHudRow * scale);
-            float bottomPx = FpnPlatform.AppInsetBottom * Screen.height;
-            fitter.SetExtraPadding(new Vector4(0f, bottomPx, 0f, topPx));
         }
 
         /// <summary>The balls start: the match clock starts.</summary>

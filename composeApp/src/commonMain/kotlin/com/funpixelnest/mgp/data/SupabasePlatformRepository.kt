@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp.data
 
+import kotlinx.coroutines.flow.update
 import com.funpixelnest.mgp.config.BackendConfig
 import com.funpixelnest.mgp.domain.Challenge
 import com.funpixelnest.mgp.domain.ChallengeCategory
@@ -454,7 +455,7 @@ class SupabasePlatformRepository(
     }
 
     private suspend fun afterClaim() {
-        runCatching { refreshWallet() }
+        walletWork { runCatching { refreshWallet() } } // the loader stays until the new balance is in
         runCatching { refreshProgress() }
     }
 
@@ -469,7 +470,7 @@ class SupabasePlatformRepository(
 
     override suspend fun purchasePack(packId: String): PurchaseResult = try {
         val coins = rpcRaw("purchase_pack_demo") { put("p_pack_id", packId) }.trim().toLongOrNull() ?: 0L
-        runCatching { refreshWallet() }
+        walletWork { runCatching { refreshWallet() } }
         PurchaseResult.Success(coins)
     } catch (e: Exception) {
         PurchaseResult.Error(friendlyMessage(e))
@@ -604,9 +605,26 @@ class SupabasePlatformRepository(
 
     // ---------------------------------------------------------------- RPC helpers
 
+    private val _walletBusy = MutableStateFlow(0)
+    override val walletBusy: StateFlow<Int> = _walletBusy.asStateFlow()
+
+    /** Counts [block] as a coin / gem change on the server (drives the app's "Please wait" loader). */
+    private inline fun <T> walletWork(block: () -> T): T {
+        _walletBusy.update { it + 1 }
+        try {
+            return block()
+        } finally {
+            _walletBusy.update { it - 1 }
+        }
+    }
+
     private suspend fun rpcRaw(function: String, params: JsonObjectBuilder.() -> Unit = {}): String {
         val body: JsonObject = buildJsonObject(params)
-        return client.postgrest.rpc(function, body).data
+        return if (function in WALLET_RPCS) {
+            walletWork { client.postgrest.rpc(function, body).data }
+        } else {
+            client.postgrest.rpc(function, body).data
+        }
     }
 
     private suspend fun <T> rpc(
@@ -854,4 +872,10 @@ private data class NotificationDto(
     val title: String,
     val body: String? = null,
     val read: Boolean = false,
+)
+
+/** Server functions that add or take coins / gems (each shows the app's "Please wait" loader while it runs). */
+private val WALLET_RPCS = setOf(
+    "join_tournament", "submit_score", "claim_challenge", "claim_daily_bonus", "open_chest", "spin_wheel",
+    "claim_free_coins", "double_reward", "purchase_pack_demo",
 )

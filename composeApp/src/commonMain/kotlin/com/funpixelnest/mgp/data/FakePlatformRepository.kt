@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp.data
 
+import kotlinx.coroutines.flow.update
 import com.funpixelnest.mgp.domain.LevelRewards
 import com.funpixelnest.mgp.domain.AVATAR_COUNT
 import com.funpixelnest.mgp.domain.Challenge
@@ -188,7 +189,7 @@ class FakePlatformRepository(
 
     override suspend fun joinTournament(tournamentId: String): JoinResult {
         val tournament = tournament(tournamentId) ?: return JoinResult.Error("Tournament not found")
-        val ticket = mutex.withLock {
+        val ticket = mutex.walletLock {
             if (_wallet.value.coins < tournament.entryFee) return JoinResult.InsufficientCoins
             addTransaction(-tournament.entryFee, 0, "Entry: ${label(tournament)}")
             val pool = Pool(
@@ -205,7 +206,7 @@ class FakePlatformRepository(
         return JoinResult.Joined(ticket)
     }
 
-    override suspend fun submitScore(ticket: MatchTicket, result: GameResult): Pool = mutex.withLock {
+    override suspend fun submitScore(ticket: MatchTicket, result: GameResult): Pool = mutex.walletLock {
         check(usedTickets.add(ticket.ticketId)) { "This ticket has already been used" }
         val pool = recordScore(ticket.poolId, player.id, result.score, result.durationMillis)
         addXp(LevelRewards.XP_PER_GAME)
@@ -221,7 +222,7 @@ class FakePlatformRepository(
     private val _challenges = MutableStateFlow(ChallengesState())
     override val challenges: StateFlow<ChallengesState> = _challenges.asStateFlow()
 
-    override suspend fun claimChallenge(challengeId: String): ClaimResult = mutex.withLock {
+    override suspend fun claimChallenge(challengeId: String): ClaimResult = mutex.walletLock {
         val challenge = _challenges.value.challenges.find { it.id == challengeId }
             ?: return ClaimResult.Failed("This challenge isn't available.")
         if (challenge.claimed) return ClaimResult.Failed("Already claimed.")
@@ -256,7 +257,7 @@ class FakePlatformRepository(
     private val _shop = MutableStateFlow(ShopState())
     override val shop: StateFlow<ShopState> = _shop.asStateFlow()
 
-    override suspend fun claimDailyBonus(): ClaimResult = mutex.withLock {
+    override suspend fun claimDailyBonus(): ClaimResult = mutex.walletLock {
         if (bonusClaimedToday) return ClaimResult.Failed("Come back tomorrow for your next bonus.")
         val day = _dailyBonus.value.rewards[bonusDay - 1]
         val grant = if (day.chest != null) chestContents("epic") else RewardGrant(day.coins, day.gems)
@@ -266,7 +267,7 @@ class FakePlatformRepository(
         ClaimResult.Granted(grant, if (day.chest != null) "Epic Chest" else "Day $bonusDay bonus")
     }
 
-    override suspend fun openChest(chestId: String): ClaimResult = mutex.withLock {
+    override suspend fun openChest(chestId: String): ClaimResult = mutex.walletLock {
         if (chestId == "free") {
             if (!freeChestReady) return ClaimResult.Failed("The free chest isn't ready yet.")
             freeChestReady = false
@@ -284,7 +285,7 @@ class FakePlatformRepository(
         ClaimResult.Granted(grant, offer.name)
     }
 
-    override suspend fun spinWheel(): Result<SpinResult> = mutex.withLock {
+    override suspend fun spinWheel(): Result<SpinResult> = mutex.walletLock {
         if (!spinReady) return Result.failure(IllegalStateException("Your next spin is ready tomorrow."))
         spinReady = false
         val weights = listOf(20, 10, 18, 20, 12, 6, 4, 10)
@@ -296,7 +297,7 @@ class FakePlatformRepository(
         Result.success(SpinResult(index, grant))
     }
 
-    override suspend fun claimFreeCoins(): Long = mutex.withLock {
+    override suspend fun claimFreeCoins(): Long = mutex.walletLock {
         if (freeCoinsLeft <= 0) return 0L
         freeCoinsLeft--
         addTransaction(FREE_COINS, 0, "Free coins (video)")
@@ -304,7 +305,7 @@ class FakePlatformRepository(
         FREE_COINS
     }
 
-    override suspend fun doubleReward(reward: RewardGrant): Boolean = mutex.withLock {
+    override suspend fun doubleReward(reward: RewardGrant): Boolean = mutex.walletLock {
         if (reward.isEmpty || reward.coins < 0 || reward.gems < 0) return false
         addTransaction(reward.coins, reward.gems, "Reward (2x video)")
         true
@@ -325,7 +326,7 @@ class FakePlatformRepository(
 
     override fun storePacks(): List<StorePack> = SampleCatalog.storePacks
 
-    override suspend fun purchasePack(packId: String): PurchaseResult = mutex.withLock {
+    override suspend fun purchasePack(packId: String): PurchaseResult = mutex.walletLock {
         val pack = SampleCatalog.storePacks.find { it.id == packId } ?: return PurchaseResult.Error("This pack isn't available.")
         // DEMO: no payment is taken. The real flow goes through Google Play / App Store billing.
         addTransaction(pack.totalCoins, 0, "Store: ${pack.name} (demo, no charge)")
@@ -468,6 +469,20 @@ class FakePlatformRepository(
         }
     }
 
+    private val _walletBusy = MutableStateFlow(0)
+    override val walletBusy: StateFlow<Int> = _walletBusy.asStateFlow()
+
+    /** Like [withLock] for a coin / gem change: counts as server work and takes a moment, like the real server. */
+    private suspend inline fun <T> Mutex.walletLock(action: () -> T): T {
+        _walletBusy.update { it + 1 }
+        try {
+            wait(WALLET_CALL_MS)
+            return withLock(action = action)
+        } finally {
+            _walletBusy.update { it - 1 }
+        }
+    }
+
     private suspend fun wait(millis: Long) {
         val scaled = (millis * simulationSpeed).toLong()
         if (scaled > 0) delay(scaled)
@@ -567,3 +582,6 @@ class FakePlatformRepository(
         val DEMO_NAMES = listOf("Aarav", "Maya", "Leo", "Sofia", "Kabir", "Zoe", "Ishaan", "Emma", "Rohan", "Nora")
     }
 }
+
+/** Pretend server time for coin / gem changes in the demo backend (0 in tests: simulationSpeed = 0). */
+private const val WALLET_CALL_MS = 700L

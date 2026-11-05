@@ -134,7 +134,7 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------------
--- 3. Five players join solitaire_starter and play; payouts 45/27/18
+-- 3. Five players join solitaire_starter (fee 100, no cut) and play; payouts 250/150/100
 -- ---------------------------------------------------------------------------
 create table t.tickets (player int primary key, ticket uuid, pool uuid, seed text);
 grant all on t.tickets to authenticated;
@@ -157,7 +157,7 @@ begin
   perform t.check((select (seed::bigint) > 0 from t.tickets limit 1), 'seed positive');
   select pool into v_pool from t.tickets limit 1;
   perform t.check((select status from public.pools where id = v_pool) = 'full', 'pool is full');
-  perform t.check(t.coins(t.uid(1)) = 980, 'entry fee deducted');
+  perform t.check(t.coins(t.uid(1)) = 900, 'entry fee deducted');
   perform t.check((select description from public.wallet_transactions
                     where player_id = t.uid(1) order by id desc limit 1) = 'Entry: Solitaire Starter',
                   'entry transaction text');
@@ -221,13 +221,13 @@ begin
 
   perform t.check((select array_agg(display_name || ':' || rank || ':' || prize order by rank)
                      from public.pool_entries where pool_id = v_pool)
-                  = array['Bob:1:45','Cara:2:27','Dan:3:18','Alice:4:0','Eve:5:0'], 'ranks and prizes 45/27/18');
-  perform t.check((select sum(prize) from public.pool_entries where pool_id = v_pool) = 90, 'prizes sum to pool 90');
+                  = array['Bob:1:250','Cara:2:150','Dan:3:100','Alice:4:0','Eve:5:0'], 'ranks and prizes 250/150/100');
+  perform t.check((select sum(prize) from public.pool_entries where pool_id = v_pool) = 500, 'prizes sum to pool 500');
   perform t.check((select completed_at is not null from public.pools where id = v_pool), 'completed_at set');
-  perform t.check(t.coins(t.uid(2)) = 1025 and t.coins(t.uid(3)) = 1007 and t.coins(t.uid(4)) = 998
-                  and t.coins(t.uid(5)) = 980 and t.coins(t.uid(1)) = 940, 'wallet balances after payout');
+  perform t.check(t.coins(t.uid(2)) = 1150 and t.coins(t.uid(3)) = 1050 and t.coins(t.uid(4)) = 1000
+                  and t.coins(t.uid(5)) = 900 and t.coins(t.uid(1)) = 700, 'wallet balances after payout');
   perform t.check(exists (select 1 from public.wallet_transactions
-                           where player_id = t.uid(2) and amount = 45
+                           where player_id = t.uid(2) and amount = 250
                              and description = 'Prize: #1 in Solitaire Starter'), 'prize transaction text');
 
   -- Notifications
@@ -235,15 +235,37 @@ begin
                   'one notification per player');
   perform t.check(exists (select 1 from public.notifications where player_id = t.uid(2)
                      and title = '🏆 You placed #1 in Solitaire Starter!'
-                     and body = '+45 coins added to your balance.'
+                     and body = '+250 coins added to your balance.'
                      and data = jsonb_build_object('type','pool_result','pool_id',v_pool,'tournament_id','solitaire_starter',
-                                                   'game_id','solitaire','rank',1,'prize',45)),
+                                                   'game_id','solitaire','rank',1,'prize',250)),
                   'winner notification');
   perform t.check(exists (select 1 from public.notifications where player_id = t.uid(1)
                      and title = 'Results are in: Solitaire Starter'
                      and body = 'You finished #4 of 5. Play again?'), 'no-prize notification');
   -- Vault secrets not configured yet -> trigger did nothing
   perform t.check((select count(*) from net.calls) = 0, 'no push calls without vault secrets');
+end $$;
+
+-- ---------------------------------------------------------------------------
+-- 3b. A pool opened with older terms (e.g. before the 2026-11-05 values) is never joined:
+--     the new player pays today's fee and gets a pool with today's prizes.
+-- ---------------------------------------------------------------------------
+do $$
+declare v jsonb; v_old uuid; v_new uuid;
+begin
+  perform t.admin();
+  insert into auth.users (id, email) values (t.uid(30), 'user30@test');
+  insert into public.pools (tournament_id, seed, pool_size, entry_fee, platform_fee_percent, prize_shares)
+  values ('bingo_pro', 42, 5, 100, 10, array[50, 30, 20]) returning id into v_old;
+  perform t.login(t.uid(30));
+  v := public.join_tournament('bingo_pro');
+  v_new := (v ->> 'pool_id')::uuid;
+  perform t.admin();
+  perform t.check(v_new <> v_old, 'old-terms pool is not joined');
+  perform t.check((select entry_fee from public.pools where id = v_new) = 250
+                  and (select platform_fee_percent from public.pools where id = v_new) = 0, 'new pool has current terms');
+  perform t.check(t.coins(t.uid(30)) = 1000 - 250, 'charged the current fee');
+  perform t.check((select count(*) from public.pool_entries where pool_id = v_old) = 0, 'old pool untouched');
 end $$;
 
 -- ---------------------------------------------------------------------------

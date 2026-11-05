@@ -74,18 +74,19 @@ object SampleCatalog {
         "Practice is free. Warm up before you play for coins!",
     )
 
-    /** Three entry levels per game. Platform fee is a placeholder until the economy is designed. */
+    /** Entry levels per game: 1v1 duels (hidden for now) and five 5-player pool tiers. */
     val tournaments: List<Tournament> = games.flatMap { game ->
         listOf(
             // Async 1v1 duels (same ids as the Supabase seed).
             Tournament.duel("${game.id}_duel_quick", game.id, "Quick", entryFee = 20, platformFeePercent = 10),
             Tournament.duel("${game.id}_duel_high", game.id, "High Stakes", entryFee = 100, platformFeePercent = 10),
             // 5-player pools (same ids as the Supabase seed + migration 20261020000002).
-            Tournament("${game.id}_rookie", game.id, "Rookie", entryFee = 10, platformFeePercent = 10),
-            Tournament("${game.id}_starter", game.id, "Starter", entryFee = 20, platformFeePercent = 10),
-            Tournament("${game.id}_pro", game.id, "Pro", entryFee = 100, platformFeePercent = 10),
-            Tournament("${game.id}_champion", game.id, "Champion", entryFee = 250, platformFeePercent = 10),
-            Tournament("${game.id}_elite", game.id, "Elite", entryFee = 500, platformFeePercent = 10),
+            // Entry 50 / 100 / 250 / 500 / 1000, no platform cut, prizes 50 / 30 / 20 % (migration 20261105000001).
+            Tournament("${game.id}_rookie", game.id, "Rookie", entryFee = 50, platformFeePercent = 0),
+            Tournament("${game.id}_starter", game.id, "Starter", entryFee = 100, platformFeePercent = 0),
+            Tournament("${game.id}_pro", game.id, "Pro", entryFee = 250, platformFeePercent = 0),
+            Tournament("${game.id}_champion", game.id, "Champion", entryFee = 500, platformFeePercent = 0),
+            Tournament("${game.id}_elite", game.id, "Elite", entryFee = 1000, platformFeePercent = 0),
         )
     }
 }

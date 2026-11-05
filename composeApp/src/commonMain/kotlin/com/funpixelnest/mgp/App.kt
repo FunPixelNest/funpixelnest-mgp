@@ -7,6 +7,7 @@ import com.funpixelnest.mgp.ui.components.RewardFlyOverlay
 import com.funpixelnest.mgp.ui.components.rememberRewardFly
 import com.funpixelnest.mgp.ui.components.rewardFlyRoot
 import com.funpixelnest.mgp.ui.components.shownAmount
+import com.funpixelnest.mgp.ui.components.ServerBusyOverlay
 import com.funpixelnest.mgp.ui.screens.GameLoadingCover
 import androidx.compose.runtime.CompositionLocalProvider
 import com.funpixelnest.mgp.audio.SettingsGatedAudio
@@ -234,6 +235,7 @@ private fun MainApp(
     analytics: Analytics,
 ) {
     val wallet by repository.wallet.collectAsState()
+    val walletBusy by repository.walletBusy.collectAsState()
     val profile by repository.profile.collectAsState()
     // Coins / gems fly into the header when the balance goes up; the header shows these lagging values.
     val rewardFly = rememberRewardFly()
@@ -907,6 +909,9 @@ private fun MainApp(
                 modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xE613205B)).padding(horizontal = 18.dp, vertical = 12.dp),
             )
         }
+
+        // Coins / gems being updated on the server: full-screen "Please wait" until it's done.
+        ServerBusyOverlay(walletBusy)
 
         RewardFlyOverlay(rewardFly)
     }

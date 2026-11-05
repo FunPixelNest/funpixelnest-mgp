@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp.data
 
+import kotlinx.coroutines.flow.MutableStateFlow
 import com.funpixelnest.mgp.domain.ChallengesState
 import com.funpixelnest.mgp.domain.ClaimResult
 import com.funpixelnest.mgp.domain.DailyBonusState
@@ -34,6 +35,13 @@ interface PlatformRepository {
 
     /** Connects and restores a saved sign-in. Safe to call again to retry. */
     suspend fun initialize()
+
+    /**
+     * How many coin / gem changes are running on the server right now (joining a tournament, claims, chests,
+     * spins, video coins, 2x, purchases, submitting a score, and the balance refresh after them). The app shows a
+     * full-screen "Please wait" loader while this is above 0.
+     */
+    val walletBusy: StateFlow<Int> get() = NoWalletWork
 
     // ---------------------------------------------------------------- sign-in
 
@@ -174,3 +182,6 @@ object Usernames {
 
     fun toEmail(username: String) = "${username.trim().lowercase()}@$DOMAIN"
 }
+
+/** For repositories without server work: never busy. */
+private val NoWalletWork: StateFlow<Int> = MutableStateFlow(0)

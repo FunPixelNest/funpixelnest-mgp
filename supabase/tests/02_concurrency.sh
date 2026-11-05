@@ -67,7 +67,7 @@ begin
   select count(*) into bad from public.pools p
    where p.tournament_id = '$T' and p.status = 'completed'
      and ( (select count(*) from public.notifications n where n.data ->> 'pool_id' = p.id::text) <> 5
-        or (select sum(prize) from public.pool_entries e where e.pool_id = p.id) <> 450
+        or (select sum(prize) from public.pool_entries e where e.pool_id = p.id) <> 1250
         or (select count(distinct rank) from public.pool_entries e where e.pool_id = p.id) <> 5
         or (select count(*) from public.wallet_transactions x
              where x.description like 'Prize: #% in Arrows Pro'

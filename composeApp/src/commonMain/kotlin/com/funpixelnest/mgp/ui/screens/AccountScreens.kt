@@ -555,7 +555,7 @@ private fun ToggleRow(label: String, checked: Boolean, onChange: (Boolean) -> Un
 
 private val faqs = listOf(
     "How do tournaments work?" to "You join a pool of 5 players. Everyone plays the same board (same seed). When all 5 have finished, the pool closes and prizes are paid. There's no time limit.",
-    "What are the prizes?" to "After a 10% platform fee, 1st place gets 50% of the prize pool, 2nd gets 30% and 3rd gets the rest.",
+    "What are the prizes?" to "All 5 entry fees make the prize pool: 1st place gets 50%, 2nd gets 30% and 3rd gets 20%. For example, in a 50-coin Rookie tournament the pool is 250: 1st wins 125, 2nd 75 and 3rd 50.",
     "What happens with a tie?" to "There are no ties. If scores are equal, the faster finish wins; if that's equal too, whoever submitted first wins.",
     "How do 1v1 duels work?" to "Two players play the same board. The winner takes the whole pot (after the 10% fee).",
     "What are gems for?" to "Gems open chests on the Rewards tab. You earn them from the daily bonus, challenges, the lucky spin and league promotions.",

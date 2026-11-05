@@ -175,7 +175,7 @@ begin
   perform t.check((v -> 'stats' ->> 'matches_played')::int = 2 and (v -> 'stats' ->> 'tournaments_played')::int = 1,
                   'A: 2 matches, 1 tournament');
   perform t.check((v -> 'stats' ->> 'games_won')::int = 1 and (v -> 'stats' ->> 'win_rate')::int = 50, 'A: 1 win, 50%');
-  perform t.check((v -> 'stats' ->> 'coins_won')::int = 45, 'A: coins won 45 (90 pool * 50%)');
+  perform t.check((v -> 'stats' ->> 'coins_won')::int = 250, 'A: coins won 250 (500 pool * 50%)');
   perform t.check((v -> 'stats' ->> 'win_streak')::int = 0, 'A: streak broken by duel loss');
   perform t.check((v ->> 'xp')::int = 120 and (v ->> 'level')::int = 1 and (v ->> 'level_xp')::int = 120, 'A: level 1, 120/250');
   perform t.login(t.uid(202));
@@ -233,7 +233,7 @@ begin
   end loop;
   perform t.check(v ->> 'status' = 'completed', 'pro pool 1 completed');
   -- Pro pool: 5*100*90% = 450; C 1st = 225.
-  perform t.check(t.coins(t.uid(203)) = c_coins - 100 + 225 + 500, 'C: fee, prize, +500 promotion coins');
+  perform t.check(t.coins(t.uid(203)) = c_coins - 250 + 625 + 500, 'C: fee, prize, +500 promotion coins');
   perform t.check(t.gems(t.uid(203)) = c_gems + 10, 'C: +10 promotion gems');
   perform t.check((select count(*) from public.league_promotions where player_id = t.uid(203)) = 1, 'one promotion row');
   perform t.check(exists (select 1 from public.notifications where player_id = t.uid(203)
@@ -256,7 +256,7 @@ begin
     v := t.submit(n, (select ticket from t.tix where name = 'pro2_' || n),
                   case n when 203 then 1000 when 201 then 50 else 250 - n end);
   end loop;
-  perform t.check(t.coins(t.uid(203)) = c_coins - 100 + 225, 'C: no second promotion reward');
+  perform t.check(t.coins(t.uid(203)) = c_coins - 250 + 625, 'C: no second promotion reward');
   perform t.check(t.gems(t.uid(203)) = c_gems + 10, 'C: still +10 gems only');
   perform t.check((select count(*) from public.wallet_transactions
                     where player_id = t.uid(203) and description = 'League promotion: Silver') = 1, 'one promotion tx');

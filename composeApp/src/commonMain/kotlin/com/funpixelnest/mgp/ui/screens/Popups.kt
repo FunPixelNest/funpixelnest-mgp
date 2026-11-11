@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp.ui.screens
 
+import com.funpixelnest.mgp.ui.components.softHeadingShadow
 import kotlinx.coroutines.delay
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.alpha
@@ -496,11 +497,14 @@ private fun LevelUpPopup(popup: Popup.LevelUp, actions: PopupActions, onClose: (
         count.animateTo(1f, tween(900, easing = FastOutSlowInEasing))
     }
     PopupCard(onClose = onClose) {
+        // Golden gradient letters with a clean white edge and a soft warm shadow.
         DisplayText(
             "LEVEL UP!",
-            size = 40.sp,
+            size = 42.sp,
             color = MgpColors.Gold,
-            outline = Color(0xFF8A3B05),
+            brush = Brush.verticalGradient(listOf(Color(0xFFFFC93C), Color(0xFFFF9F1C), Color(0xFFFF6A00))),
+            outline = Color.White,
+            shadow = softHeadingShadow(Color(0x99A04000)),
             textAlign = TextAlign.Center,
             maxLines = 1,
             modifier = Modifier.align(Alignment.CenterHorizontally),

@@ -1,5 +1,8 @@
 package com.funpixelnest.mgp.ui.components
 
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.platform.LocalDensity
 import com.funpixelnest.mgp.audio.Sfx
 import com.funpixelnest.mgp.audio.LocalUiAudio
 import androidx.compose.animation.core.animateFloatAsState
@@ -128,7 +131,10 @@ fun DisplayText(
     outline: Color? = null,
     textAlign: TextAlign? = null,
     maxLines: Int = 2,
+    brush: Brush? = null,
+    shadow: Shadow? = null,
 ) {
+    val density = LocalDensity.current
     val style = MaterialTheme.typography.headlineMedium.copy(
         fontSize = size,
         lineHeight = size * 1.05f,
@@ -136,14 +142,52 @@ fun DisplayText(
         textAlign = textAlign ?: TextAlign.Unspecified,
     )
     // Shrinks to fit narrow screens / large font settings instead of cutting the title ("LEAG...").
+    // Outline: a thick stroke with round corners under the fill (sharp corners looked spiky); the shadow goes on the
+    // outermost layer so it never darkens the letters.
     val layers = buildList {
-        if (outline != null) add(TextLayer(outline, drawStyle = Stroke(width = size.value / 3f)))
-        add(TextLayer(color, shadow = if (outline != null) Shadow(Color(0x55000E40), Offset(0f, 3f), 4f) else null))
+        if (outline != null) {
+            val w = with(density) { size.toPx() } * 0.16f
+            add(TextLayer(outline, drawStyle = Stroke(width = w, join = StrokeJoin.Round, cap = StrokeCap.Round), shadow = shadow))
+            add(TextLayer(color, brush = brush))
+        } else {
+            add(TextLayer(color, brush = brush, shadow = shadow))
+        }
     }
     FitTextLayout(
         text, style, layers, modifier, maxLines, minScale = 0.55f,
         fillWidth = textAlign == TextAlign.Center || textAlign == TextAlign.End,
     )
+}
+
+/**
+ * Game names (cards, game page, joining screen): solid title colour with a slight raised highlight in light mode,
+ * no outline, so they read cleanly on the light cards.
+ */
+@Composable
+fun GameTitleText(
+    text: String,
+    modifier: Modifier = Modifier,
+    size: TextUnit = 17.sp,
+    textAlign: TextAlign? = TextAlign.Center,
+    maxLines: Int = 1,
+) {
+    val lift = with(LocalDensity.current) { 1.5.dp.toPx() }
+    DisplayText(
+        text,
+        modifier,
+        size = size,
+        color = MgpColors.Navy,
+        textAlign = textAlign,
+        maxLines = maxLines,
+        shadow = if (MgpColors.isDark) Shadow(Color(0x66000000), Offset(0f, lift), lift) else Shadow(Color(0xE6FFFFFF), Offset(0f, lift), 0f),
+    )
+}
+
+/** Soft drop shadow for white headings on blue (ribbons): reads clearly without a hard outline. */
+@Composable
+fun softHeadingShadow(color: Color = Color(0x99082A78)): Shadow {
+    val d = LocalDensity.current
+    return with(d) { Shadow(color, Offset(0f, 2.5.dp.toPx()), 5.dp.toPx()) }
 }
 
 @Composable
@@ -374,7 +418,7 @@ fun RibbonBanner(text: String, modifier: Modifier = Modifier, fontSize: TextUnit
             text,
             size = fontSize,
             color = Color.White,
-            outline = Color(0xFF0B3A9C),
+            shadow = softHeadingShadow(),
             modifier = Modifier.padding(bottom = 10.dp),
             maxLines = 1,
         )

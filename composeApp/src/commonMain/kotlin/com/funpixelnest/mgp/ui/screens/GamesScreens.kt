@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp.ui.screens
 
+import com.funpixelnest.mgp.ui.components.GameTitleText
 import com.funpixelnest.mgp.data.LivePlayers
 import androidx.compose.runtime.collectAsState
 import androidx.compose.foundation.shape.CircleShape
@@ -227,15 +228,7 @@ private fun GameTile(game: Game, onClick: () -> Unit) {
             )
             LivePlayersBadge(game.id, Modifier.align(Alignment.TopStart).padding(6.dp))
         }
-        DisplayText(
-            game.name.uppercase(),
-            size = 17.sp,
-            color = Color.White,
-            outline = Color(0xFF173B87),
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            modifier = Modifier.padding(top = 7.dp),
-        )
+        GameTitleText(game.name.uppercase(), Modifier.padding(top = 7.dp), size = 17.sp)
         Row(
             Modifier.padding(top = 2.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -318,7 +311,7 @@ fun GameDetailScreen(
                 ) { GameIcon(game, 88.dp, cornerRadius = 18.dp) }
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
-                    DisplayText(game.name.uppercase(), size = 26.sp, maxLines = 2)
+                    GameTitleText(game.name.uppercase(), size = 26.sp, textAlign = null, maxLines = 2)
                     Text("Play tournaments and win big rewards!", color = MgpColors.Navy, fontSize = 14.sp)
                     LivePlayersBadge(game.id, Modifier.padding(top = 6.dp), compact = false)
                 }
@@ -460,7 +453,7 @@ fun JoiningScreen(game: Game, modifier: Modifier = Modifier) {
             Modifier.scale(pulse).size(190.dp).shadow(10.dp, RoundedCornerShape(42.dp)).clip(RoundedCornerShape(42.dp)).background(MgpColors.Card).padding(10.dp),
         ) { GameIcon(game, 170.dp, cornerRadius = 34.dp) }
         Spacer(Modifier.height(18.dp))
-        DisplayText(game.name.uppercase(), size = 34.sp, color = Color.White, outline = Color(0xFF1655DA), textAlign = TextAlign.Center)
+        GameTitleText(game.name.uppercase(), size = 34.sp, maxLines = 2)
         Spacer(Modifier.height(18.dp))
         Text("Joining Tournament...", color = MgpColors.Navy, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
         Spacer(Modifier.height(16.dp))

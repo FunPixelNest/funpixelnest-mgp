@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp.ui.screens
 
+import com.funpixelnest.mgp.ui.components.GameTitleText
 import androidx.compose.material3.CircularProgressIndicator
 import com.funpixelnest.mgp.audio.Sfx
 import com.funpixelnest.mgp.audio.LocalUiAudio
@@ -99,7 +100,7 @@ fun PlaceholderGameScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
         ) {
             GameIcon(game, 120.dp)
-            DisplayText(game.name.uppercase(), size = 28.sp, textAlign = TextAlign.Center)
+            GameTitleText(game.name.uppercase(), size = 28.sp, maxLines = 2)
             Panel(Modifier.fillMaxWidth().widthIn(max = 480.dp)) {
                 Text("This game's build isn't added yet", fontWeight = FontWeight.ExtraBold, color = MgpColors.Navy)
                 Spacer(Modifier.height(4.dp))
@@ -243,7 +244,7 @@ fun EndGameScreen(
         ) {
             GameIcon(game, 110.dp, cornerRadius = 26.dp)
             Spacer(Modifier.height(14.dp))
-            DisplayText("END GAME NOW?", size = 38.sp, color = Color.White, outline = MgpColors.Primary, textAlign = TextAlign.Center, maxLines = 1)
+            DisplayText("END GAME NOW?", size = 38.sp, color = MgpColors.Navy, textAlign = TextAlign.Center, maxLines = 1)
             Spacer(Modifier.height(10.dp))
             Text(
                 if (isPractice) "If you end the game now, this practice round is over." else

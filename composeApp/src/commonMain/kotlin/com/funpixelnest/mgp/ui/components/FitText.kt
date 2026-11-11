@@ -1,5 +1,6 @@
 package com.funpixelnest.mgp.ui.components
 
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -52,8 +53,8 @@ fun fitStyle(measurer: TextMeasurer, text: String, style: TextStyle, maxLines: I
     }
 }
 
-/** One painted pass of the text (e.g. a white outline under the fill). */
-class TextLayer(val color: Color, val drawStyle: DrawStyle? = null, val shadow: Shadow? = null)
+/** One painted pass of the text (e.g. a white outline under the fill). [brush] (a gradient) replaces [color]. */
+class TextLayer(val color: Color, val drawStyle: DrawStyle? = null, val shadow: Shadow? = null, val brush: Brush? = null)
 
 /**
  * Text that shrinks to fit its width instead of being cut or breaking words. Measures and paints the text
@@ -110,7 +111,9 @@ fun FitTextLayout(
                     else -> 0f
                 }.coerceAtLeast(0f)
                 layers.forEach { l ->
-                    drawText(r, color = l.color, topLeft = androidx.compose.ui.geometry.Offset(dx, 0f), shadow = l.shadow, drawStyle = l.drawStyle)
+                    val at = androidx.compose.ui.geometry.Offset(dx, 0f)
+                    if (l.brush != null) drawText(r, brush = l.brush, topLeft = at, shadow = l.shadow, drawStyle = l.drawStyle)
+                    else drawText(r, color = l.color, topLeft = at, shadow = l.shadow, drawStyle = l.drawStyle)
                 }
             },
         measurePolicy = policy,

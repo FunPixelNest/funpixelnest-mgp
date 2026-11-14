@@ -248,7 +248,7 @@ fun ProfileScreen(
             item {
                 GlossyButton(
                     "Share profile",
-                    onClick = { onCopy("Play with me on FunPixelNest! My player ID: $code", "Copied! Paste it to your friends.") },
+                    onClick = { onCopy("Play with me on Arcade Clash! My player ID: $code", "Copied! Paste it to your friends.") },
                     icon = Icons.Rounded.IosShare,
                     height = 58.dp,
                     modifier = Modifier.fillMaxWidth(),
@@ -623,7 +623,7 @@ fun ReferEarnScreen(onBack: () -> Unit, playerId: String, onCopy: (String, Strin
                 Spacer(Modifier.height(12.dp))
                 GlossyButton(
                     "Copy invite",
-                    { onCopy("Join me on FunPixelNest and let's play! My player code: $code", "Invite copied! Paste it in any chat.") },
+                    { onCopy("Join me on Arcade Clash and let's play! My player code: $code", "Invite copied! Paste it in any chat.") },
                     icon = Icons.Rounded.IosShare,
                     height = 52.dp,
                     modifier = Modifier.fillMaxWidth(),

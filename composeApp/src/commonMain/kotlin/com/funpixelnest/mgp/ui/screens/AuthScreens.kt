@@ -97,7 +97,7 @@ fun SplashScreen(message: String?, onRetry: (() -> Unit)?, progress: Float = 0f,
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            ArtImage(Art.logo, 280.dp, description = "FunPixelNest")
+            ArtImage(Art.logo, 280.dp, description = "Arcade Clash: Skill Games")
             Spacer(Modifier.height(48.dp))
             if (message == null) {
                 // Smooth, forward-only bar (the value comes from StartupLoader).
@@ -196,7 +196,7 @@ fun LoginScreen(repository: PlatformRepository) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            ArtImage(Art.logo, 220.dp, description = "FunPixelNest")
+            ArtImage(Art.logo, 220.dp, description = "Arcade Clash: Skill Games")
             Spacer(Modifier.height(14.dp))
             Panel(Modifier.widthIn(max = 460.dp).fillMaxWidth(), padding = 20.dp, corner = 28.dp) {
                 DisplayText("SIGN IN", size = 26.sp, modifier = Modifier.align(Alignment.CenterHorizontally), maxLines = 1)

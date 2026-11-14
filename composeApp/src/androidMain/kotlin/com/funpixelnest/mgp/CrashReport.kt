@@ -41,7 +41,7 @@ object CrashReport {
             .setMessage(text.take(3_000))
             .setPositiveButton("Copy details") { _, _ ->
                 val clip = activity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                clip.setPrimaryClip(ClipData.newPlainText("FunPixelNest crash", text))
+                clip.setPrimaryClip(ClipData.newPlainText("Arcade Clash crash", text))
                 Toast.makeText(activity, "Copied, please paste it in the chat", Toast.LENGTH_LONG).show()
             }
             .setNegativeButton("Close", null)

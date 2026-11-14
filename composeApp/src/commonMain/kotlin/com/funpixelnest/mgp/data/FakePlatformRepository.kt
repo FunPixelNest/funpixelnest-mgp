@@ -336,7 +336,7 @@ class FakePlatformRepository(
     // ---------------------------------------------------------------- inbox
 
     private val _inbox = MutableStateFlow(
-        listOf(InboxMessage("n1", "Welcome to FunPixelNest!", "Play tournaments, finish in the top 3 and win coins. Good luck!", read = false)),
+        listOf(InboxMessage("n1", "Welcome to Arcade Clash!", "Play tournaments, finish in the top 3 and win coins. Good luck!", read = false)),
     )
     override val inbox: StateFlow<List<InboxMessage>> = _inbox.asStateFlow()
     override suspend fun refreshInbox() = Unit

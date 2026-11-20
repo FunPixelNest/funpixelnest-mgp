@@ -1,0 +1,12 @@
+# Cloudflare Pages: let the FunPixelNest web app (any origin) load game files.
+/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, HEAD, OPTIONS
+  Cross-Origin-Resource-Policy: cross-origin
+
+# Builds never change in place (new version = new folder), so cache them hard.
+/*/v*/Build/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/catalog.json
+  Cache-Control: public, max-age=60
